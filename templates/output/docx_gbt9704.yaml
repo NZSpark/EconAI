@@ -1,0 +1,250 @@
+# GB/T 9704-2012 公文格式 .docx 模版配置
+# 用于 output-service 的 python-docx 生成器
+
+metadata:
+  template_name: "GB/T 9704 公文格式"
+  standard: "GB/T 9704-2012"
+  version: "1.0"
+  description: >
+    依据《党政机关公文格式》(GB/T 9704-2012) 定义的公文排版样式。
+    适用于政策草案、分析报告等正式公文的 .docx 输出。
+
+# ============================================================
+# 页边距 (单位: mm)
+# ============================================================
+page_margins:
+  # 标准公文页边距：上37±1, 下35±1, 左28±1, 右26±1
+  top_mm: 37
+  bottom_mm: 35
+  left_mm: 28
+  right_mm: 26
+  header_mm: 15  # 页眉距边界
+  footer_mm: 15  # 页脚距边界
+
+# ============================================================
+# 纸张
+# ============================================================
+page_setup:
+  paper_size: "A4"       # 210mm × 297mm
+  orientation: "portrait"
+
+# ============================================================
+# 字体映射
+# ============================================================
+fonts:
+  default: &default_font
+    name: "仿宋_GB2312"
+    name_fallback: "仿宋"
+    size_pt: 16           # 三号 = 16pt
+
+  title_h1:
+    <<: *default_font
+    name: "小标宋_GB2312"
+    name_fallback: "宋体"
+    size_pt: 22           # 二号 = 22pt
+    bold: false
+
+  title_h2:
+    <<: *default_font
+    name: "黑体"
+    name_fallback: "黑体"
+    size_pt: 16           # 三号
+
+  title_h3:
+    <<: *default_font
+    name: "楷体_GB2312"
+    name_fallback: "楷体"
+    size_pt: 16           # 三号
+    italic: false
+
+  body:
+    <<: *default_font
+
+  header_line:
+    <<: *default_font
+    size_pt: 14           # 四号
+
+  footer_line:
+    <<: *default_font
+    size_pt: 14           # 四号
+
+  citation_superscript:
+    <<: *default_font
+    size_pt: 10
+    superscript: true
+
+  table_header:
+    <<: *default_font
+    name: "黑体"
+    name_fallback: "黑体"
+    size_pt: 14           # 四号
+
+  table_body:
+    <<: *default_font
+    size_pt: 14           # 四号
+
+# ============================================================
+# 段落样式
+# ============================================================
+paragraph_styles:
+  title:
+    alignment: "center"
+    first_line_indent_mm: 0
+    line_spacing_pt: 36     # 2.25倍行距 → 约36pt
+    space_before_pt: 12
+    space_after_pt: 12
+
+  body:
+    alignment: "justify"
+    first_line_indent_chars: 2    # 首行缩进2字符
+    line_spacing: 1.5             # 1.5倍行距 或 固定值28磅
+    line_spacing_pt: 28           # 固定值 28pt
+    space_before_pt: 0
+    space_after_pt: 0
+
+  heading_l1:                     # 一级标题 (黑体)
+    alignment: "left"
+    first_line_indent_chars: 0
+    line_spacing_pt: 28
+    space_before_pt: 6
+    space_after_pt: 6
+
+  heading_l2:                     # 二级标题 (楷体)
+    alignment: "left"
+    first_line_indent_chars: 0
+    line_spacing_pt: 28
+    space_before_pt: 4
+    space_after_pt: 4
+
+  recipient:                      # 主送机关
+    alignment: "left"
+    first_line_indent_chars: 0
+    line_spacing_pt: 28
+    space_before_pt: 0
+    space_after_pt: 6
+
+  attachment:                     # 附件说明
+    alignment: "left"
+    first_line_indent_chars: 2
+    line_spacing_pt: 28
+    space_before_pt: 6
+    space_after_pt: 0
+
+  signature:                      # 发文机关署名
+    alignment: "right"
+    first_line_indent_chars: 0
+    line_spacing_pt: 28
+    space_before_pt: 12
+    space_after_pt: 0
+
+  date_line:                      # 成文日期
+    alignment: "right"
+    first_line_indent_chars: 0
+    line_spacing_pt: 28
+    space_before_pt: 0
+    space_after_pt: 6
+
+# ============================================================
+# 版头区域 (页眉)
+# ============================================================
+header:
+  enabled: true
+  content:
+    institution_name: "{{ institution_name }}"   # 从配置读取
+    institution_name_font:
+      name: "小标宋_GB2312"
+      name_fallback: "宋体"
+      size_pt: 18
+      bold: false
+      color: "#CC0000"                            # 红色发文机关标志
+    issue_number: "{{ issue_number }}"            # 发文字号
+    issue_number_font:
+      name: "仿宋_GB2312"
+      name_fallback: "仿宋"
+      size_pt: 14
+    separator_line:
+      enabled: true
+      width_pt: 1
+      color: "#CC0000"                            # 红色分隔线
+
+# ============================================================
+# 主体区域
+# ============================================================
+body_structure:
+  order:
+    - "title"             # 标题
+    - "recipient"         # 主送机关 (可选)
+    - "content"           # 正文
+    - "attachment_note"   # 附件说明 (可选)
+    - "signature"         # 发文机关署名
+    - "date"              # 成文日期
+    - "reference_list"    # 参考文献清单
+
+  # 标题层级映射
+  heading_mapping:
+    level_1: "一、"       # 一级标题使用汉字序号
+    level_2: "(一)"       # 二级标题使用带括号的汉字序号
+    level_3: "1."         # 三级标题使用阿拉伯数字
+    level_4: "(1)"        # 四级标题使用带括号的阿拉伯数字
+
+# ============================================================
+# 引用格式 (在正文中的呈现)
+# ============================================================
+citation_display:
+  style: "footnote"       # footnote | endnote
+  superscript: true       # 上标角标
+  bracket_style: "square" # [1] 方括号
+  numbering: "continuous" # 全文连续编号
+
+# ============================================================
+# 版记区域 (页脚)
+# ============================================================
+footer:
+  enabled: true
+  content:
+    cc_list: "{{ cc_list }}"              # 抄送机关列表
+    cc_font:
+      name: "仿宋_GB2312"
+      name_fallback: "仿宋"
+      size_pt: 14
+    issue_date: "{{ issue_date }}"        # 印发日期
+    issue_date_font:
+      name: "仿宋_GB2312"
+      name_fallback: "仿宋"
+      size_pt: 14
+    separator_line:
+      enabled: true
+      width_pt: 0.5
+      color: "#000000"
+
+# ============================================================
+# 参考文献清单
+# ============================================================
+reference_list:
+  title: "参考文献"
+  title_font:
+    name: "黑体"
+    name_fallback: "黑体"
+    size_pt: 16
+  entry_format: "[{index}] {authors}. {title}. {source}. {year}. {page_range}."
+  entry_font:
+    name: "仿宋_GB2312"
+    name_fallback: "仿宋"
+    size_pt: 14            # 四号
+  entry_spacing_pt: 22
+
+# ============================================================
+# 表格样式
+# ============================================================
+table:
+  default_border:
+    style: "single"
+    width_pt: 0.5
+    color: "#000000"
+  header_row:
+    bold: true
+    background_color: "#F0F0F0"
+  alignment:
+    text: "left"
+    number: "right"
+  cell_padding_mm: 1.5

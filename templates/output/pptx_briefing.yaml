@@ -1,0 +1,262 @@
+# PPT 简报 .pptx 模版配置
+# 用于 output-service 的 python-pptx 生成器
+
+metadata:
+  template_name: "EconAI 分析简报"
+  version: "1.0"
+  description: >
+    EconAI 分析任务的结果简报模版。适用于向决策者快速呈现关键发现。
+    默认 16:9 宽屏比例。
+
+# ============================================================
+# 幻灯片尺寸
+# ============================================================
+slide:
+  width_cm: 33.867       # 16:9 宽屏
+  height_cm: 19.05
+  default_theme: "office" # 使用的默认配色主题
+
+# ============================================================
+# 配色方案
+# ============================================================
+colors:
+  primary: "#1F4E79"      # 深蓝 — 标题、强调
+  secondary: "#4472C4"    # 中蓝 — 图表主色
+  accent: "#ED7D31"       # 橙色 — 高亮/警示
+  text_dark: "#333333"    # 正文深色
+  text_light: "#666666"   # 辅助文字
+  background: "#FFFFFF"   # 白色背景
+  slide_number: "#999999" # 页码颜色
+  citation: "#999999"     # 引用小字颜色
+  table_header_bg: "#1F4E79"
+  table_header_text: "#FFFFFF"
+  table_alt_row: "#F2F7FB"
+
+# ============================================================
+# 字体
+# ============================================================
+fonts:
+  title:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 28
+    bold: true
+    color: "primary"
+
+  subtitle:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 18
+    bold: false
+    color: "text_light"
+
+  section_title:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 24
+    bold: true
+    color: "primary"
+
+  body:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 16
+    bold: false
+    color: "text_dark"
+    line_spacing: 1.5
+
+  body_bold:
+    <<: *body
+    bold: true
+
+  bullet_point:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 16
+    bold: false
+    color: "text_dark"
+    bullet_char: "●"
+
+  citation_text:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 9
+    bold: false
+    color: "citation"
+    italic: false
+
+  table_header:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 14
+    bold: true
+    color: "table_header_text"
+
+  table_body:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 13
+    bold: false
+    color: "text_dark"
+
+  page_number:
+    name: "微软雅黑"
+    name_fallback: "Arial"
+    size_pt: 10
+    bold: false
+    color: "slide_number"
+
+# ============================================================
+# 各类型幻灯片定义
+# ============================================================
+
+slides:
+
+  # --- 封面 ---
+  cover:
+    layout: "title_slide"
+    background: "primary"
+    placeholders:
+      - field: "title"
+        position: [4.0, 4.0, 25.0, 4.0]   # [left_cm, top_cm, width_cm, height_cm]
+        font: "title"
+        color: "#FFFFFF"
+        alignment: "center"
+
+      - field: "subtitle"
+        position: [4.0, 8.5, 25.0, 2.5]
+        font: "subtitle"
+        color: "#CCCCCC"
+        alignment: "center"
+
+      - field: "date"
+        position: [4.0, 12.0, 25.0, 1.5]
+        font: "subtitle"
+        color: "#AAAAAA"
+        alignment: "center"
+
+      - field: "organization"
+        position: [4.0, 14.0, 25.0, 1.5]
+        font: "subtitle"
+        color: "#AAAAAA"
+        alignment: "center"
+
+  # --- 目录/概述 ---
+  toc:
+    layout: "content_slide"
+    background: "background"
+    placeholders:
+      - field: "section_title"
+        position: [1.5, 0.8, 30.0, 2.0]
+        font: "section_title"
+        text: "目录"
+
+      - field: "toc_items"
+        position: [3.0, 3.5, 27.0, 12.0]
+        font: "body"
+        max_items: 8
+
+  # --- 关键发现 ---
+  finding:
+    layout: "content_slide"
+    background: "background"
+    max_per_slide: 4      # 每页最多展示的关键发现数
+    placeholders:
+      - field: "section_title"
+        position: [1.5, 0.8, 26.0, 2.0]
+        font: "section_title"
+
+      - field: "finding_title"
+        position: [1.5, 3.2, 14.0, 1.5]
+        font: "body_bold"
+        accent_color: "accent"
+
+      - field: "finding_points"
+        position: [1.5, 5.0, 14.0, 7.0]
+        font: "bullet_point"
+        items_per_finding: 3
+
+      - field: "finding_chart"
+        position: [17.0, 3.2, 15.0, 10.0]
+        optional: true
+
+      - field: "citation"
+        position: [1.5, 17.5, 30.0, 1.0]
+        font: "citation_text"
+
+  # --- 数据/图表页 ---
+  data_chart:
+    layout: "content_slide"
+    background: "background"
+    placeholders:
+      - field: "chart_title"
+        position: [1.5, 0.8, 30.0, 2.0]
+        font: "section_title"
+
+      - field: "chart"
+        position: [1.5, 3.2, 30.0, 12.0]
+        chart_types: ["bar", "line", "pie", "table"]
+
+      - field: "chart_note"
+        position: [1.5, 15.8, 30.0, 1.5]
+        font: "citation_text"
+
+  # --- 政策建议 / 结论 ---
+  recommendations:
+    layout: "content_slide"
+    background: "subtle_gradient"
+    placeholders:
+      - field: "section_title"
+        position: [1.5, 0.8, 30.0, 2.0]
+        font: "section_title"
+        text: "政策建议"
+
+      - field: "recommendation_items"
+        position: [2.0, 3.5, 29.0, 12.0]
+        font: "body"
+        numbered: true
+        max_items: 5
+
+  # --- 引用清单 ---
+  references:
+    layout: "content_slide"
+    background: "background"
+    placeholders:
+      - field: "section_title"
+        position: [1.5, 0.8, 30.0, 2.0]
+        font: "section_title"
+        text: "引用清单"
+
+      - field: "reference_list"
+        position: [1.5, 3.2, 30.0, 14.0]
+        font: "citation_text"
+        format: "[{index}] {authors}. {title}. {source}. {year}. {page_range}."
+        two_columns: true
+        font_size_pt: 8
+
+# ============================================================
+# 全局元素
+# ============================================================
+global:
+  slide_number:
+    enabled: true
+    position: [16.0, 18.0, 2.0, 0.8]
+    font: "page_number"
+
+  footer_line:
+    enabled: true
+    text: "EconAI 分析简报 | {{ organization }} | {{ date }}"
+    position: [1.5, 18.0, 14.0, 0.8]
+    font: "citation_text"
+
+  logo:
+    enabled: false
+    position: [29.0, 17.0, 3.5, 1.5]
+
+# ============================================================
+# 内容溢出处理
+# ============================================================
+overflow:
+  strategy: "split_slide"     # 内容过多时自动分页
+  max_bullets_per_slide: 6
+  max_table_rows_per_slide: 15

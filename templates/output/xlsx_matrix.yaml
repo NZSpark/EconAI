@@ -1,0 +1,276 @@
+# Excel 对比矩阵 .xlsx 模版配置
+# 用于 output-service 的 openpyxl 生成器
+
+metadata:
+  template_name: "EconAI 对比分析矩阵"
+  version: "1.0"
+  description: >
+    EconAI 政策比较任务的 Excel 输出模版。包含对比分析矩阵、
+    引用清单和数据摘要三个工作表。
+
+# ============================================================
+# 全局样式
+# ============================================================
+global:
+  default_font:
+    name: "微软雅黑"
+    size_pt: 11
+  default_row_height_pt: 22
+  freeze_panes: true
+
+# ============================================================
+# 配色
+# ============================================================
+colors:
+  header_bg: "#1F4E79"
+  header_text: "#FFFFFF"
+  alt_row_1: "#FFFFFF"
+  alt_row_2: "#F2F7FB"
+  border: "#BFBFBF"
+  highlight_cell: "#FFF2CC"       # 高亮单元格
+  uncertain_cell: "#FCE4D6"       # 不确定标记
+  direct_citation: "#E2EFDA"      # 置信度 direct
+  fuzzy_citation: "#FFF2CC"       # 置信度 fuzzy
+  uncertain_citation: "#FCE4D6"   # 置信度 uncertain
+  title_font_color: "#1F4E79"
+  link_color: "#0563C1"
+
+# ============================================================
+# Sheet 1: 对比分析
+# ============================================================
+sheet_comparison:
+  name: "对比分析"
+  tab_color: "1F4E79"
+
+  # 工作表头部 (标题区域)
+  header_block:
+    row_1:
+      - field: "report_title"
+        merge_cells: "A1:{last_col}1"
+        font: {"name": "微软雅黑", "size_pt": 16, "bold": true, "color": "1F4E79"}
+        row_height_pt: 36
+    row_2:
+      - field: "report_date"
+        merge_cells: "A2:{last_col}2"
+        font: {"name": "微软雅黑", "size_pt": 11, "color": "666666"}
+        value: "生成日期: {{ date }}"
+
+  # 数据起始行 (1-indexed, 表头区域之后)
+  data_start_row: 4
+
+  # 比较矩阵结构
+  matrix:
+    # 第1列: 比较维度名称
+    dimension_column:
+      header: "比较维度"
+      width: 22
+      font: {"name": "微软雅黑", "size_pt": 11, "bold": true}
+      alignment: {"horizontal": "left", "vertical": "center"}
+
+    # 政策选项列 (动态生成, 从数据中读取)
+    policy_columns:
+      header_pattern: "{{ policy_name }}"
+      width: 35
+      font: {"name": "微软雅黑", "size_pt": 11, "bold": true}
+      alignment: {"horizontal": "left", "vertical": "center", "wrap_text": true}
+
+    # 行定义
+    rows:
+      - dimension: "政策目标"
+        key: "objective"
+        description: "各政策的核心目标"
+      - dimension: "主要手段"
+        key: "measures"
+        description: "实现目标的主要政策手段和工具"
+      - dimension: "覆盖范围"
+        key: "scope"
+        description: "政策的适用对象和覆盖范围"
+      - dimension: "实施成本"
+        key: "cost"
+        description: "预估的财政和实施成本"
+      - dimension: "预期效果"
+        key: "expected_effects"
+        description: "文献中记载或评估的预期效果"
+      - dimension: "主要风险"
+        key: "risks"
+        description: "实施过程中面临的主要风险和挑战"
+      - dimension: "证据强度"
+        key: "evidence_strength"
+        description: "支撑该政策方案的证据质量 (高/中/低)"
+
+    # 维度行的样式
+    dimension_cell:
+      font: {"name": "微软雅黑", "size_pt": 11, "bold": true}
+      fill: "#E8F0FE"
+      alignment: {"horizontal": "left", "vertical": "top", "wrap_text": false}
+
+    # 内容单元格样式
+    content_cell:
+      font: {"name": "微软雅黑", "size_pt": 10}
+      alignment: {"horizontal": "left", "vertical": "top", "wrap_text": true}
+      row_height_pt: 80   # 内容行的默认高度
+
+    # 斑马条纹
+    zebra_stripe: true
+    zebra_colors: ["#FFFFFF", "#F2F7FB"]
+
+    # 单元格边框
+    border:
+      style: "thin"
+      color: "BFBFBF"
+
+  # 矩阵下方: 总结说明
+  summary_block:
+    offset_rows: 2  # 距离矩阵最后的空行数
+    title: "分析说明"
+    title_font: {"name": "微软雅黑", "size_pt": 12, "bold": true, "color": "1F4E79"}
+    content_field: "summary_text"
+    content_font: {"name": "微软雅黑", "size_pt": 10, "color": "333333"}
+    width: 80
+    row_height_pt: 100
+
+# ============================================================
+# Sheet 2: 引用清单
+# ============================================================
+sheet_citations:
+  name: "引用清单"
+  tab_color: "4472C4"
+
+  columns:
+    - field: "index"
+      header: "序号"
+      width: 6
+      alignment: {"horizontal": "center"}
+
+    - field: "document_title"
+      header: "来源文档"
+      width: 30
+      alignment: {"horizontal": "left"}
+
+    - field: "authors"
+      header: "作者/发布机构"
+      width: 20
+      alignment: {"horizontal": "left"}
+
+    - field: "page_range"
+      header: "页码范围"
+      width: 12
+      alignment: {"horizontal": "center"}
+
+    - field: "sentence"
+      header: "引用上下文"
+      width: 45
+      alignment: {"horizontal": "left", "wrap_text": true}
+
+    - field: "confidence"
+      header: "置信度"
+      width: 12
+      alignment: {"horizontal": "center"}
+      # 根据置信度应用单元格底色
+      conditional_fill:
+        direct: "E2EFDA"
+        fuzzy: "FFF2CC"
+        uncertain: "FCE4D6"
+
+    - field: "confidence_label"
+      header: "置信度说明"
+      width: 16
+      alignment: {"horizontal": "left"}
+      value_map:
+        direct: "直接引用 — 页码精确匹配"
+        fuzzy: "段落匹配 — 语义相似"
+        uncertain: "模型推理 — 无直接原文依据"
+
+  header_style:
+    font: {"name": "微软雅黑", "size_pt": 11, "bold": true, "color": "FFFFFF"}
+    fill: "4472C4"
+    row_height_pt: 28
+
+  data_style:
+    font: {"name": "微软雅黑", "size_pt": 10}
+    row_height_pt: 24
+    zebra_stripe: true
+    zebra_colors: ["#FFFFFF", "#F2F7FB"]
+
+  # 置信度汇总行
+  summary_row:
+    enabled: true
+    offset_rows: 2
+    items:
+      - label: "合计"
+        field: "total_count"
+      - label: "直接引用"
+        field: "direct_count"
+        fill: "E2EFDA"
+      - label: "段落匹配"
+        field: "fuzzy_count"
+        fill: "FFF2CC"
+      - label: "模型推理"
+        field: "uncertain_count"
+        fill: "FCE4D6"
+
+# ============================================================
+# Sheet 3: 数据摘要 (可选)
+# ============================================================
+sheet_data_summary:
+  name: "数据摘要"
+  tab_color: "70AD47"
+  enabled: true       # 如果任务不产生结构化数据，可跳过此 sheet
+
+  # 工作表头部
+  header_block:
+    row_1:
+      - field: "sheet_title"
+        merge_cells: "A1:D1"
+        font: {"name": "微软雅黑", "size_pt": 14, "bold": true, "color": "1F4E79"}
+        value: "关键数据指标"
+
+  # 数据指标区域
+  metrics_block:
+    data_start_row: 3
+    columns:
+      - field: "metric_name"
+        header: "指标名称"
+        width: 25
+        alignment: {"horizontal": "left"}
+
+      - field: "metric_value"
+        header: "数值"
+        width: 15
+        alignment: {"horizontal": "right"}
+        number_format: "#,##0"
+
+      - field: "metric_unit"
+        header: "单位"
+        width: 12
+        alignment: {"horizontal": "center"}
+
+      - field: "metric_source"
+        header: "数据来源"
+        width: 40
+        alignment: {"horizontal": "left"}
+
+    header_style:
+      font: {"name": "微软雅黑", "size_pt": 11, "bold": true, "color": "FFFFFF"}
+      fill: "70AD47"
+
+    data_style:
+      font: {"name": "微软雅黑", "size_pt": 10}
+      zebra_stripe: true
+
+# ============================================================
+# 打印设置
+# ============================================================
+print_settings:
+  orientation: "landscape"
+  paper_size: "A4"
+  fit_to_width: 1
+  fit_to_height: 0
+  margins_cm:
+    top: 1.5
+    bottom: 1.5
+    left: 1.5
+    right: 1.5
+  header_footer:
+    header: "&F"            # 文件名
+    footer: "第 &P 页, 共 &N 页"

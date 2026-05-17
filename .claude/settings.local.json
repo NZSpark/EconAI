@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(docker --version)",
+      "Bash(docker compose *)",
+      "Bash(brew list *)",
+      "Bash(pip3 --version)",
+      "Bash(uv --version)",
+      "Bash(git --version)",
+      "Bash(brew services *)",
+      "Bash(pip3 list *)",
+      "Bash(tesseract --version)",
+      "Bash(poetry --version)",
+      "Bash(pdm --version)",
+      "Read(//Applications/**)",
+      "Bash(mdfind \"kMDItemKind == 'Application'\")",
+      "Bash(brew info *)",
+      "Bash(brew install *)",
+      "Bash(mkdir -p ~/.docker)",
+      "Read(//Users/onetreehill/.docker/**)",
+      "Bash(/opt/homebrew/bin/colima start *)",
+      "Bash(docker version *)",
+      "Bash(docker info *)",
+      "Bash(tesseract --list-langs)",
+      "Bash(uv pip *)",
+      "Bash(uv tool *)",
+      "Bash(uv sync *)",
+      "Bash(.venv/bin/pytest --version)",
+      "Bash(.venv/bin/mypy --version)",
+      "Bash(.venv/bin/ruff --version)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
