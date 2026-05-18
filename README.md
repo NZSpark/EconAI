@@ -2,22 +2,22 @@
 
 EconAI ingests policy literature, generates structured analysis reports (literature reviews, policy drafts, policy comparisons, tech interpretations) with sentence-level source citations, and exports to Markdown/.docx/.xlsx/.pptx.
 
-## Architecture
+## Project Status
 
-10 modules deployed as microservices behind an API gateway:
+**Phase: Implementation in progress**
 
 | Module | Service | Port | Status |
 |--------|---------|------|--------|
+| M10 | Infrastructure | - | Completed (30/34) |
+| M8 | User Service | 8007 | Completed (36/42) |
+| M5 | LLM Router | 8004 | Completed (33/33) |
 | M1 | API Gateway | 8000 | Pending |
 | M2 | Document Service | 8001 | Pending |
-| M3 | KB Service | 8002 | Pending |
-| M4 | Orchestration Service | 8003 | Pending |
-| M5 | LLM Router | 8004 | Pending |
 | M6 | Citation Service | 8005 | Pending |
 | M7 | Output Service | 8006 | Pending |
-| M8 | User Service | 8007 | Implemented |
+| M3 | KB Service | 8002 | Pending |
+| M4 | Orchestration Service | 8003 | Pending |
 | M9 | Frontend | - | Pending |
-| M10 | Infrastructure | - | Implemented |
 
 ## Quick Start
 
@@ -55,6 +55,7 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 | `doc/detailed-design.md` | Per-module API specs, algorithms, config |
 | `doc/tasks/*.md` | Subtask checklists per module (376 total) |
 | `doc/tasks/progress.md` | Dependency graph, progress tracking |
+| `doc/prompt.md` | Vibe Coding orchestration protocol |
 
 ## Development
 

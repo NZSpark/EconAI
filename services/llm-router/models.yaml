@@ -1,0 +1,50 @@
+# LLM Router Model Registry Configuration
+# Hot-reloadable: the service watches this file and reloads on changes.
+
+models:
+  - id: "auto"
+    provider: "auto"
+    type: "auto"
+    description: "auto-routing based on sensitivity"
+    capabilities:
+      - chat
+      - tool_use
+
+  - id: "claude-sonnet-4-6"
+    provider: "anthropic"
+    type: "cloud"
+    description: "Anthropic Claude Sonnet 4.6"
+    capabilities:
+      - chat
+      - tool_use
+      - streaming
+
+  - id: "claude-opus-4-7"
+    provider: "anthropic"
+    type: "cloud"
+    description: "Anthropic Claude Opus 4.7"
+    capabilities:
+      - chat
+      - tool_use
+      - streaming
+
+  - id: "local:qwen3-72b"
+    provider: "vllm"
+    type: "local"
+    description: "Qwen3 72B via vLLM"
+    capabilities:
+      - chat
+      - tool_use
+      - streaming
+
+  - id: "local:deepseek-v3"
+    provider: "vllm"
+    type: "local"
+    description: "DeepSeek V3 via vLLM"
+    capabilities:
+      - chat
+      - tool_use
+      - streaming
+
+default_local: "local:qwen3-72b"
+default_cloud: "claude-sonnet-4-6"
