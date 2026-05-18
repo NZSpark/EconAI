@@ -1,0 +1,60 @@
+# =============================================================================
+# EconAI Prometheus Alert Rules
+# =============================================================================
+
+groups:
+  - name: econai_alerts
+    rules:
+      # Task failure rate exceeds 10%
+      - alert: HighTaskFailureRate
+        expr: |
+          rate(econai_task_failures_total[5m]) /
+          rate(econai_tasks_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Task failure rate > 10%"
+          description: "Failure rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      # API latency exceeds 5 seconds (P95)
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API P95 latency > 5s"
+          description: "P95 latency is {{ $value }}s for {{ $labels.service }}."
+
+      # Vector database unavailable
+      - alert: VectorDBUnavailable
+        expr: up{service=~"kb-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "KB service (vector DB) is down"
+          description: "{{ $labels.service }} has been unreachable for 1 minute."
+
+      # Disk usage exceeds 80%
+      - alert: HighDiskUsage
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/data"} /
+           node_filesystem_size_bytes{mountpoint="/data"}) < 0.20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage > 80%"
+          description: "Available disk space below 20% on {{ $labels.instance }}."
+
+      # Service down
+      - alert: ServiceDown
+        expr: up{job!=""} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} is down"
+          description: "{{ $labels.service }} has been unreachable for 2 minutes."

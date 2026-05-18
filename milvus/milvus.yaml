@@ -1,0 +1,17 @@
+# Milvus standalone configuration
+etcd:
+  endpoints:
+    - etcd:2379
+
+minio:
+  address: minio
+  port: 9000
+  accessKeyID: minioadmin
+  secretAccessKey: minioadmin_change_me
+  useSSL: false
+
+standalone:
+  port: 19530
+
+log:
+  level: info

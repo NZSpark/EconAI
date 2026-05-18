@@ -1,0 +1,81 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "title": "API Request Rate",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [{"expr": "sum(rate(http_requests_total[1m])) by (service)", "legendFormat": "{{service}}"}],
+      "yaxes": [{"format": "rps"}]
+    },
+    {
+      "title": "API Latency (P95)",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [{"expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "{{service}}"}],
+      "yaxes": [{"format": "s"}]
+    },
+    {
+      "title": "Error Rate",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [{"expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service) * 100", "legendFormat": "{{service}}"}],
+      "yaxes": [{"format": "percent"}]
+    },
+    {
+      "title": "Task Throughput",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {"expr": "rate(econai_tasks_total{status=\"completed\"}[5m])", "legendFormat": "completed"},
+        {"expr": "rate(econai_tasks_total{status=\"failed\"}[5m])", "legendFormat": "failed"}
+      ],
+      "yaxes": [{"format": "ops"}]
+    },
+    {
+      "title": "LLM Token Usage",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [
+        {"expr": "sum(rate(econai_llm_tokens_total[5m])) by (model)", "legendFormat": "{{model}}"}
+      ],
+      "yaxes": [{"format": "short"}]
+    },
+    {
+      "title": "Celery Queue Length",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "targets": [
+        {"expr": "celery_queue_length{queue=\"document\"}", "legendFormat": "document"},
+        {"expr": "celery_queue_length{queue=\"orchestration\"}", "legendFormat": "orchestration"}
+      ]
+    },
+    {
+      "title": "Active Tasks by Type",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 24},
+      "targets": [
+        {"expr": "econai_tasks_active", "legendFormat": "{{task_type}}"}
+      ]
+    },
+    {
+      "title": "Service Health",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 24},
+      "targets": [
+        {"expr": "up", "legendFormat": "{{service}}"}
+      ],
+      "thresholds": "1,1",
+      "mappingType": 2,
+      "valueMaps": [{"op": "=", "text": "UP", "value": "1"}, {"op": "=", "text": "DOWN", "value": "0"}]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "tags": ["econai"],
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {"refresh_intervals": ["10s", "30s", "1m", "5m"]},
+  "title": "EconAI Overview"
+}

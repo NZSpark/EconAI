@@ -1,0 +1,27 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "panels": [
+    {
+      "title": "API Latency by Endpoint (P95)",
+      "type": "heatmap",
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 0},
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service, endpoint))"}]
+    },
+    {
+      "title": "Status Code Distribution",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 10},
+      "targets": [{"expr": "sum(rate(http_requests_total[5m])) by (status)", "legendFormat": "{{status}}"}]
+    },
+    {
+      "title": "Request Volume by Service",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 10},
+      "targets": [{"expr": "rate(http_requests_total[5m])", "legendFormat": "{{service}}"}]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "title": "EconAI API Performance"
+}

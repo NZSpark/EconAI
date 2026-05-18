@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: default
+    folder: EconAI
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
+    allowUiUpdates: false

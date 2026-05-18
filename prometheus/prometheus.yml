@@ -1,0 +1,73 @@
+# =============================================================================
+# EconAI Prometheus Configuration
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: api-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api-gateway:8000"]
+        labels:
+          service: api-gateway
+
+  - job_name: document-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["document-service:8001"]
+        labels:
+          service: document-service
+
+  - job_name: kb-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["kb-service:8002"]
+        labels:
+          service: kb-service
+
+  - job_name: orchestration-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["orchestration-service:8003"]
+        labels:
+          service: orchestration-service
+
+  - job_name: llm-router
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["llm-router:8004"]
+        labels:
+          service: llm-router
+
+  - job_name: citation-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["citation-service:8005"]
+        labels:
+          service: citation-service
+
+  - job_name: output-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["output-service:8006"]
+        labels:
+          service: output-service
+
+  - job_name: user-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["user-service:8007"]
+        labels:
+          service: user-service

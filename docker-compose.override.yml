@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  api-gateway:
+    volumes:
+      - ./api-gateway:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  document-service:
+    volumes:
+      - ./services/document-service:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+
+  kb-service:
+    volumes:
+      - ./services/kb-service:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+
+  orchestration-service:
+    volumes:
+      - ./services/orchestration-service:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
+
+  llm-router:
+    volumes:
+      - ./services/llm-router:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "llm_router.app:app", "--host", "0.0.0.0", "--port", "8004", "--reload"]
+
+  citation-service:
+    volumes:
+      - ./services/citation-service:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "citation_service.app:app", "--host", "0.0.0.0", "--port", "8005", "--reload"]
+
+  output-service:
+    volumes:
+      - ./services/output-service:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8006", "--reload"]
+
+  user-service:
+    volumes:
+      - ./services/user-service:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8007", "--reload"]
