@@ -13,7 +13,7 @@
 | M5 | LLM 路由服务 | `services/llm-router/` | 33 | [ ] 未开始 |
 | M6 | 来源溯源服务 | `services/citation-service/` | 30 | [ ] 未开始 |
 | M7 | 输出生成服务 | `services/output-service/` | 39 | [ ] 未开始 |
-| M8 | 用户权限服务 | `services/user-service/` | 42 | [ ] 未开始 |
+| M8 | 用户权限服务 | `services/user-service/` | 42 | [x] 已完成 (35/42) |
 | M9 | 前端 SPA | `frontend/` | 38 | [ ] 未开始 |
 | M10 | 基础设施与部署 | 项目根目录 | 34 | [ ] 未开始 |
 
