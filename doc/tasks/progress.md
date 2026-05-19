@@ -6,7 +6,7 @@
 
 | 编号 | 模块 | 目录 | 子任务数 | 状态 |
 |------|------|------|----------|------|
-| M1 | API 网关 | `api-gateway/` | 28 | [ ] 未开始 |
+| M1 | API 网关 | `api-gateway/` | 28 | [x] 已完成 (28/28) |
 | M2 | 文档解析服务 | `services/document-service/` | 43 | [ ] 未开始 |
 | M3 | 知识库服务 | `services/kb-service/` | 35 | [ ] 未开始 |
 | M4 | 任务编排服务 | `services/orchestration-service/` | 54 | [ ] 未开始 |

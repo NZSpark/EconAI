@@ -4,7 +4,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 
 ## Project Status
 
-**Phase: Implementation in progress** (4 of 10 modules complete)
+**Phase: Implementation in progress** (5 of 10 modules complete)
 
 | Module | Service | Port | Status |
 |--------|---------|------|--------|
@@ -12,7 +12,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 | M8 | User Service | 8007 | Completed (42/42) |
 | M5 | LLM Router | 8004 | Completed (33/33) |
 | M6 | Citation Service | 8005 | Completed (30/30) |
-| M1 | API Gateway | 8000 | Pending |
+| M1 | API Gateway | 8000 | Completed (28/28) |
 | M2 | Document Service | 8001 | Pending |
 | M7 | Output Service | 8006 | Pending |
 | M3 | KB Service | 8002 | Pending |
@@ -84,6 +84,14 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 - Citation verifier (page range matching + semantic similarity -> direct/fuzzy/uncertain confidence)
 - Formatters: Markdown (GFM footnotes), .docx (footnotes/endnotes), .xlsx (引用清单 sheet), .pptx
 - REST API: POST /internal/citations/verify, GET citation list/detail
+
+### M1 — API Gateway (8000)
+- JWT authentication middleware (token verification, blacklist check, public path bypass)
+- RBAC permission middleware (4 roles x 6 operations, group-scoped access control)
+- Redis Token Bucket rate limiter (per-user + per-IP, endpoint-group classification)
+- Audit logging via Redis pub/sub (`audit:log` channel), request body capture for sensitive ops
+- Config-driven route registry with httpx-based reverse proxy to 7 backend services
+- Unified error response format, CORS, X-Request-ID propagation, request size limit (100MB)
 
 ## Reference Documents
 

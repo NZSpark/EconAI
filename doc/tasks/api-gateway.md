@@ -5,7 +5,7 @@
 ## 任务列表
 
 ### 项目初始化
-- [ ] M1-01 初始化 FastAPI 项目结构，创建 `api-gateway/` 目录，配置 pyproject.toml/requirements.txt
+- [x] M1-01 初始化 FastAPI 项目结构，创建 `api-gateway/` 目录，配置 pyproject.toml/requirements.txt
 - [ ] M1-02 创建配置管理模块，读取环境变量（JWT_SECRET、CORS_ORIGINS 等），支持 .env 文件
 - [ ] M1-03 配置 Gunicorn + Uvicorn 启动入口，添加 health check 端点 `GET /health`
 - [ ] M1-04 配置结构化日志（JSON 格式），区分 INFO/WARNING/ERROR 级别
