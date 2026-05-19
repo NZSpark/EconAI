@@ -4,7 +4,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 
 ## Project Status
 
-**Phase: Implementation in progress** (7 of 10 modules complete)
+**Phase: Implementation in progress** (8 of 10 modules complete)
 
 | Module | Service | Port | Status |
 |--------|---------|------|--------|
@@ -15,7 +15,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 | M1 | API Gateway | 8000 | Completed (28/28) |
 | M2 | Document Service | 8001 | Completed (43/43) |
 | M7 | Output Service | 8006 | Completed (39/39) |
-| M3 | KB Service | 8002 | Pending |
+| M3 | KB Service | 8002 | Completed (35/35) |
 | M4 | Orchestration Service | 8003 | Pending |
 | M9 | Frontend | - | Pending |
 
@@ -113,6 +113,19 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 - Format router for parallel multi-format generation
 - REST API: POST /internal/output/generate, GET preview, GET export with Content-Disposition
 - MinIO output storage client (upload/download/presigned URLs)
+
+### M3 — KB Service (8002)
+- Embedding generation with Redis caching (text2vec/m3e, configurable dimensions)
+- Vector store abstraction (Milvus/Qdrant unified interface + in-memory mock for testing)
+- BM25 keyword search via PostgreSQL FTS with GIN index on document_chunks
+- Hybrid search pipeline: parallel vector(top-50) + BM25(top-50) → RRF fusion(k=60) → reranker → top-10
+- Reranker with term-overlap heuristics (configurable BGE-Reranker integration)
+- Redis pub/sub consumer on `kb:index:request` channel for auto-indexing
+- Index pipeline: chunk ingestion → embedding generation → vector store insert → BM25 update
+- Knowledge base isolation: per-project and institutional (cross-project) search with archival status check
+- Lifecycle management: archive/restore/delete (cascade) for documents and projects, batch reindex
+- REST API: POST /api/projects/{project_id}/search, POST /api/institutional/search, POST /internal/search
+- Internal endpoints: index chunks, reindex, delete document/project index, archive/restore lifecycle
 
 ## Reference Documents
 
