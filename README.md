@@ -4,7 +4,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 
 ## Project Status
 
-**Phase: Implementation in progress** (5 of 10 modules complete)
+**Phase: Implementation in progress** (6 of 10 modules complete)
 
 | Module | Service | Port | Status |
 |--------|---------|------|--------|
@@ -13,7 +13,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 | M5 | LLM Router | 8004 | Completed (33/33) |
 | M6 | Citation Service | 8005 | Completed (30/30) |
 | M1 | API Gateway | 8000 | Completed (28/28) |
-| M2 | Document Service | 8001 | Pending |
+| M2 | Document Service | 8001 | Completed (43/43) |
 | M7 | Output Service | 8006 | Pending |
 | M3 | KB Service | 8002 | Pending |
 | M4 | Orchestration Service | 8003 | Pending |
@@ -92,6 +92,17 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 - Audit logging via Redis pub/sub (`audit:log` channel), request body capture for sensitive ops
 - Config-driven route registry with httpx-based reverse proxy to 7 backend services
 - Unified error response format, CORS, X-Request-ID propagation, request size limit (100MB)
+
+### M2 — Document Service (8001)
+- Multi-format parsing: PDF (PyMuPDF), Word (python-docx), Markdown/txt, Excel/CSV (openpyxl/pandas), PowerPoint (python-pptx), Email (email stdlib), HTML/MHTML (BeautifulSoup), Image/Image-PDF OCR (Tesseract chi_sim+eng)
+- Magic bytes + extension fallback format identification with PDF text layer detection
+- Multi-granularity chunking: paragraph-level (~300 tokens) + section-level (~2000 tokens) with configurable overlap
+- Metadata extraction (title, author, date, source, page count) from PDF/Word built-in properties and content inference
+- Document state machine: pending -> parsing -> ready/error with reindex recovery
+- MinIO file storage with auto bucket creation for upload/download/delete
+- Celery async processing pipeline (parse -> chunk -> index event)
+- Redis pub/sub index events on `kb:index:request` channel for downstream KB Service consumption
+- REST API: upload, list (paginated + status/format filters), detail, delete (cascade), reindex
 
 ## Reference Documents
 
