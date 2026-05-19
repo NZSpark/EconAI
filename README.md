@@ -4,7 +4,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 
 ## Project Status
 
-**Phase: Implementation in progress** (6 of 10 modules complete)
+**Phase: Implementation in progress** (7 of 10 modules complete)
 
 | Module | Service | Port | Status |
 |--------|---------|------|--------|
@@ -14,7 +14,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 | M6 | Citation Service | 8005 | Completed (30/30) |
 | M1 | API Gateway | 8000 | Completed (28/28) |
 | M2 | Document Service | 8001 | Completed (43/43) |
-| M7 | Output Service | 8006 | Pending |
+| M7 | Output Service | 8006 | Completed (39/39) |
 | M3 | KB Service | 8002 | Pending |
 | M4 | Orchestration Service | 8003 | Pending |
 | M9 | Frontend | - | Pending |
@@ -103,6 +103,16 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 - Celery async processing pipeline (parse -> chunk -> index event)
 - Redis pub/sub index events on `kb:index:request` channel for downstream KB Service consumption
 - REST API: upload, list (paginated + status/format filters), detail, delete (cascade), reindex
+
+### M7 — Output Service (8006)
+- Multi-format generation: Markdown (Jinja2 templates, YAML front-matter, [ref:] -> [^n] footnotes)
+- DOCX GB/T 9704-2012 compliant (版头/主体/版记, heading mapping, reference list)
+- XLSX generation: comparison matrix sheet + citation list sheet + data summary sheet
+- PPTX generation: cover, TOC, findings, recommendations, references slides
+- YAML template loader with built-in fallback defaults
+- Format router for parallel multi-format generation
+- REST API: POST /internal/output/generate, GET preview, GET export with Content-Disposition
+- MinIO output storage client (upload/download/presigned URLs)
 
 ## Reference Documents
 

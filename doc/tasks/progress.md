@@ -12,12 +12,12 @@
 | M4 | 任务编排服务 | `services/orchestration-service/` | 54 | [ ] 未开始 |
 | M5 | LLM 路由服务 | `services/llm-router/` | 33 | [x] 已完成 (33/33) |
 | M6 | 来源溯源服务 | `services/citation-service/` | 30 | [x] 已完成 (30/30) |
-| M7 | 输出生成服务 | `services/output-service/` | 39 | [ ] 未开始 |
+| M7 | 输出生成服务 | `services/output-service/` | 39 | [x] 已完成 (39/39) |
 | M8 | 用户权限服务 | `services/user-service/` | 42 | [x] 已完成 (42/42) |
 | M9 | 前端 SPA | `frontend/` | 38 | [ ] 未开始 |
 | M10 | 基础设施与部署 | 项目根目录 | 34 | [x] 已完成 (34/34) |
 
-**总计子任务：376** | **已完成：210** | **完成率：55.9%**
+**总计子任务：376** | **已完成：249** | **完成率：66.2%**
 
 ## 依赖关系
 
