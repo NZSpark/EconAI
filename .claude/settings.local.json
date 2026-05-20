@@ -31,7 +31,11 @@
       "Bash(.venv/bin/ruff --version)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(docker run *)",
+      "Bash(gh auth *)",
+      "Bash(gh api *)",
+      "Bash(gh repo *)"
     ]
   }
 }

@@ -67,7 +67,7 @@ wheels = [
 [[package]]
 name = "econai-shared"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },

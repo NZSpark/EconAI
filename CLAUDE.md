@@ -64,7 +64,7 @@ Each service will have its own `pyproject.toml` managed by `uv`. The root `pypro
 This project uses a **Vibe Coding** approach defined in `doc/prompt.md`. A main orchestrator agent spawns sub-agents per module in dependency-respecting waves:
 
 1. Read `doc/prompt.md` for the full orchestration protocol
-2. Each sub-agent reads `doc/high-level-design.md` + `doc/detailed-design.md` + `doc/tasks/<module>.md`
+2. Each sub-agent reads `doc/high-level-design.md` + `doc/detailed-design.md` + `doc/tasks/<module-name>.md`
 3. Sub-agent implements all subtasks, writes pytest tests (pure mock, no external deps), passes mypy + ruff
 4. Sub-agent auto-commits: `feat(<code>): implement <module-name>`
 5. 376 subtasks total across 10 modules
