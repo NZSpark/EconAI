@@ -1,178 +1,277 @@
 # EconAI — Institutional-Grade AI Economic Policy Analysis Toolkit
 
-EconAI ingests policy literature, generates structured analysis reports (literature reviews, policy drafts, policy comparisons, tech interpretations) with sentence-level source citations, and exports to Markdown/.docx/.xlsx/.pptx.
-
-## Project Status
-
-**Phase: All 10 modules complete** (376/376 subtasks)
-
-| Module | Service | Port | Status |
-|--------|---------|------|--------|
-| M10 | Infrastructure | - | Completed (34/34) |
-| M8 | User Service | 8007 | Completed (42/42) |
-| M5 | LLM Router | 8004 | Completed (33/33) |
-| M6 | Citation Service | 8005 | Completed (30/30) |
-| M1 | API Gateway | 8000 | Completed (28/28) |
-| M2 | Document Service | 8001 | Completed (43/43) |
-| M7 | Output Service | 8006 | Completed (39/39) |
-| M3 | KB Service | 8002 | Completed (35/35) |
-| M4 | Orchestration Service | 8003 | Completed (54/54) |
-| M9 | Frontend | - | Completed (38/38) |
+EconAI is an AI-powered toolkit for economic policy research institutions. It combines LLM reasoning with a trusted evidence base to generate structured analysis reports — literature reviews, policy drafts, policy comparisons, and technical interpretations — with sentence-level source provenance, and exports to Markdown, .docx (GB/T 9704), .xlsx, and .pptx.
 
 ## Architecture
 
-10 modules deployed as microservices behind an API gateway:
+![System Abstract Architecture](doc/architecture/EconAI_SystemAbstract_Architecture.png)
+
+![Multi-Layer Architecture](doc/architecture/EconAI_MultiLayers_Architecture_EN.png)
+
+10 microservices behind an API gateway, deployed via Docker Compose:
 
 ```
-Client (React 19 + TypeScript 5 + Ant Design/Shadcn)
-    -> API Gateway (FastAPI + Nginx) :8000
-        -> document-service :8001   (upload, parse, chunk)
-        -> kb-service :8002         (embedding, hybrid search)
-        -> orchestration-service :8003 (Agent engine, task lifecycle)
-        -> llm-router :8004         (sensitivity-based LLM routing)
-        -> citation-service :8005   (inline citation parsing, verification, formatting)
-        -> output-service :8006     (Markdown/.docx/.xlsx/.pptx generation)
-        -> user-service :8007       (auth, RBAC, LDAP/SSO, audit)
+Client (React 19 + TypeScript 5 + Ant Design 6)
+    → Nginx (reverse proxy + TLS termination)
+        → API Gateway (FastAPI) :8000   — JWT auth, RBAC, rate limiting, audit, reverse proxy
+            ├── user-service :8007      — Auth, RBAC (4 roles × 6 ops), LDAP/SSO, GDPR
+            ├── llm-router :8004        — Sensitivity-based routing (local vLLM ↔ Claude API)
+            ├── citation-service :8005  — Inline [ref:doc:page] parsing, verification, formatting
+            ├── document-service :8001  — Upload, parse (8 formats), OCR, multi-granularity chunking
+            ├── output-service :8006    — Generate Markdown / .docx(GB/T 9704) / .xlsx / .pptx
+            ├── kb-service :8002        — Embedding, vector index, hybrid search (vector+BM25+Reranker)
+            └── orchestration-service :8003 — Agent engine (ReAct loop), task lifecycle, tool execution
 ```
+
+![Deployment Topology](doc/architecture/EconAI_KB_Deploy.png)
+
+### Data flow
+
+1. **Ingest**: Upload documents → parse (8 formats + OCR) → multi-granularity chunking → embed → index (Milvus + PostgreSQL FTS)
+2. **Analyze**: User creates task → Agent engine executes ReAct loop (Plan → Retrieve → Generate → Verify → Decide, max 5 iterations)
+3. **Cite**: LLM outputs inline `[ref:doc_id:page_range]` → Citation service verifies against source chunks → classifies confidence (direct / fuzzy / uncertain)
+4. **Export**: Output service renders Markdown preview + generates .docx / .xlsx / .pptx with citations
+
+![Data Flow](doc/architecture/EconAI_Data_Flow.png)
+
+### Key design decisions
+
+| Decision | Approach |
+|----------|----------|
+| **LLM routing** | Sensitivity analysis: internal/sensitive docs → local model (vLLM/Ollama), public docs → Claude API |
+| **Hybrid search** | Vector semantic (top-50) + BM25 keyword (top-50) → RRF fusion (k=60) → BGE-Reranker → top-10 |
+| **Chunking** | Paragraph-level (~300 tokens) for precise retrieval + section-level (~2000 tokens) for context window |
+| **Agent loop** | ReAct variant (Plan → Retrieve → Generate → Verify → Decide), max 5 iterations; forces format_output on overflow |
+| **Citations** | Inline `[ref:doc_id:page_range]` format, verified via page range matching + semantic similarity (threshold 0.85) |
+| **GB/T 9704** | Chinese government document standard for .docx: specific fonts (小标宋/黑体/楷体/仿宋), margins, heading numbering |
+| **Tests** | Pure mock — all external dependencies (DB, Redis, Milvus, MinIO, LLM APIs) mocked; 638 tests, zero infra needed |
+
+## Project Status
+
+**All 10 modules complete** (376/376 subtasks). 638 tests passing (Python 622 + TypeScript 16).
+
+| Module | Service | Port | Subtasks | Key Capabilities |
+|--------|---------|------|----------|------------------|
+| M10 | Infrastructure | — | 34/34 | Docker Compose, PostgreSQL schema, Nginx, Prometheus+Grafana, Celery config, Alembic migrations |
+| M8 | User Service | 8007 | 42/42 | JWT auth, RBAC (4 roles × 6 ops), LDAP/SSO, audit log consumer, GDPR APIs |
+| M5 | LLM Router | 8004 | 33/33 | Model registry, sensitivity routing, ClaudeAdapter + LocalAdapter, circuit breaker, retry with backoff |
+| M6 | Citation Service | 8005 | 30/30 | Inline `[ref:...]` parser, verification (page + semantic), formatters (Markdown/docx/xlsx/pptx) |
+| M1 | API Gateway | 8000 | 28/28 | JWT middleware, RBAC middleware, Redis token bucket rate limiter, audit logging (pub/sub), httpx reverse proxy |
+| M2 | Document Service | 8001 | 43/43 | 8-format parsing (PDF/Word/MD/Excel/PPT/Email/HTML/Image-OCR), multi-granularity chunking, MinIO storage, Celery pipeline |
+| M7 | Output Service | 8006 | 39/39 | Markdown (Jinja2), .docx (GB/T 9704), .xlsx (comparison matrix), .pptx generation, MinIO output storage |
+| M3 | KB Service | 8002 | 35/35 | Embedding (text2vec/m3e), Milvus/Qdrant vector store, BM25 (PostgreSQL FTS), hybrid search + reranker, lifecycle management |
+| M4 | Orchestration Service | 8003 | 54/54 | ReAct agent engine, 6 tools, task state machine, sensitivity analysis, Jinja2 prompt templates, progress tracking |
+| M9 | Frontend | 5173 | 38/38 | React 19 + TypeScript 5 + Vite 8 + Ant Design 6, auth flow, project/KB/task management, Markdown preview with citation badges |
 
 ## Quick Start
 
-```bash
-# Activate the project virtual environment
-source .venv/bin/activate
+### Prerequisites
 
-# Start infrastructure services
+| Software | Version | Purpose |
+|----------|---------|---------|
+| Python | 3.12+ (3.14.5 verified) | Backend runtime |
+| uv | 0.5+ | Python package manager |
+| Node.js | 18+ (26.x verified) | Frontend runtime |
+| Colima / Docker | 0.10+ / 24.0+ | Container runtime |
+| Docker Compose | 2.20+ | Multi-container orchestration |
+| Tesseract | 5.5+ | OCR engine (chi_sim language pack) |
+
+### One-time setup
+
+```bash
+# Install runtime dependencies (macOS)
+brew install colima docker docker-compose python@3.14 uv node tesseract
+colima start --cpu 4 --memory 8 --disk 60
+
+# Clone and enter project
+git clone <repo-url> && cd EconAI
+
+# Start infrastructure services (PostgreSQL, Redis, Milvus, MinIO, Nginx, Prometheus, Grafana)
+docker compose up -d
+docker compose ps   # verify all healthy
+
+# Install per-service dependencies
+for dir in api-gateway services/*/ shared; do
+    (cd "$dir" && uv sync)
+done
+cd frontend && npm install
+```
+
+### Start developing
+
+```bash
+# Start infrastructure
 docker compose up -d
 
-# Run per-service quality gate
+# Start all backend services + frontend (see doc/manualstart.md for step-by-step)
+./deploy/manualstart.sh
+
+# Or start a single service for focused development
+cd services/kb-service && uv run uvicorn kb_service.app:app --port 8002 --reload
+```
+
+### Quality gate (per-service, must pass before commit)
+
+```bash
+# Backend
 cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
+
+# Frontend
+cd frontend && npx tsc -b --noEmit && npm run lint && npm test
 ```
 
 ## Technology Stack
 
-- **Backend**: FastAPI + Python 3.12+, Celery + Redis, SQLAlchemy 2.x async
-- **Data Stores**: PostgreSQL 16, Milvus/Qdrant, MinIO
-- **Frontend**: React 19 + TypeScript 5 + Ant Design/Shadcn
-- **Infrastructure**: Docker Compose, Nginx, Prometheus + Grafana
-- **Package Management**: uv
+### Backend (Python 3.12+)
 
-## Key Design Decisions
+| Layer | Technology |
+|-------|-----------|
+| Web framework | FastAPI + Uvicorn (dev) / Gunicorn (prod) |
+| Data validation | Pydantic v2 + pydantic-settings |
+| ORM | SQLAlchemy 2.x async + asyncpg |
+| Task queue | Celery + Redis (broker + backend) |
+| Auth | python-jose (JWT), bcrypt, pyjwt, python-ldap |
+| LLM SDK | anthropic (Claude Messages API) |
+| HTTP client | httpx (async, for reverse proxy + inter-service calls) |
+| Doc parsing | PyMuPDF, pdfplumber, python-docx, openpyxl, pandas, python-pptx, BeautifulSoup4, lxml, Pillow |
+| Output gen | python-docx (GB/T 9704), openpyxl, python-pptx, Jinja2 |
+| Observability | structlog, prometheus-client, starlette-prometheus |
+| Token counting | tiktoken |
 
-- **Inline citations**: LLM outputs use `[ref:doc_id:page_range]` format with confidence levels (direct/fuzzy/uncertain)
-- **Citation verification**: Page range matching + semantic similarity (threshold 0.85) -> confidence classification
-- **Hybrid search**: Vector semantic (top-50) + BM25 keyword (top-50) -> RRF fusion -> BGE-Reranker
-- **LLM routing**: Sensitivity-based (internal docs -> local vLLM, public -> Claude API)
-- **Agent loop**: ReAct variant (Plan -> Retrieve -> Generate -> Verify -> Decide), max 5 iterations
+### Data Stores (Docker)
 
-## Completed Modules
+| Store | Technology | Purpose |
+|-------|-----------|---------|
+| PostgreSQL 16 | `postgres:16-alpine` | Business data + FTS (BM25) + JSONB |
+| Redis 7 | `redis:7-alpine` | Celery broker, token blacklist, rate limit counters, pub/sub |
+| Milvus | `milvusdb/milvus:latest` | Vector index (1024d embeddings) |
+| MinIO | `minio/minio:latest` | S3-compatible object storage (documents + outputs) |
 
-### M10 — Infrastructure & Deployment
-- Docker Compose (all services), PostgreSQL schema, Nginx, Prometheus + Grafana, Celery config
-- Alembic migrations, .env.template, deploy.sh
+### Frontend (Node.js)
 
-### M8 — User Service (8007)
-- JWT auth (bcrypt, access/refresh tokens), RBAC (4 roles x 6 operations)
-- LDAP/SSO integration, user/group/project CRUD, audit log consumer, GDPR APIs
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 + TypeScript 5 (strict mode) |
+| Build | Vite 8 |
+| UI library | Ant Design 6 + @ant-design/icons |
+| Routing | React Router 7 |
+| HTTP | Axios (JWT auto-inject + 401 refresh retry) |
+| Markdown | react-markdown |
+| Testing | Vitest 4 + Testing Library + jsdom |
 
-### M5 — LLM Router (8004)
-- Model registry, sensitivity-based routing (local vs Claude API)
-- ClaudeAdapter + LocalAdapter (OpenAI-compatible), circuit breaker, retry with backoff
-- Token usage tracking
+### Dev tools
 
-### M6 — Citation Service (8005)
-- Inline `[ref:...]` parser (single/multi/uncertain references, Chinese/English sentence splitting)
-- Citation verifier (page range matching + semantic similarity -> direct/fuzzy/uncertain confidence)
-- Formatters: Markdown (GFM footnotes), .docx (footnotes/endnotes), .xlsx (引用清单 sheet), .pptx
-- REST API: POST /internal/citations/verify, GET citation list/detail
+| Tool | Version | Purpose |
+|------|---------|---------|
+| pytest | 9.0.3 | Test framework (638 tests, pure mock) |
+| mypy | 2.1.0 | Static type checking |
+| ruff | 0.15.13 | Linting + formatting (Rust) |
+| ESLint | 10.3 | Frontend linting |
 
-### M1 — API Gateway (8000)
-- JWT authentication middleware (token verification, blacklist check, public path bypass)
-- RBAC permission middleware (4 roles x 6 operations, group-scoped access control)
-- Redis Token Bucket rate limiter (per-user + per-IP, endpoint-group classification)
-- Audit logging via Redis pub/sub (`audit:log` channel), request body capture for sensitive ops
-- Config-driven route registry with httpx-based reverse proxy to 7 backend services
-- Unified error response format, CORS, X-Request-ID propagation, request size limit (100MB)
+## Key Features
 
-### M2 — Document Service (8001)
-- Multi-format parsing: PDF (PyMuPDF), Word (python-docx), Markdown/txt, Excel/CSV (openpyxl/pandas), PowerPoint (python-pptx), Email (email stdlib), HTML/MHTML (BeautifulSoup), Image/Image-PDF OCR (Tesseract chi_sim+eng)
-- Magic bytes + extension fallback format identification with PDF text layer detection
-- Multi-granularity chunking: paragraph-level (~300 tokens) + section-level (~2000 tokens) with configurable overlap
-- Metadata extraction (title, author, date, source, page count) from PDF/Word built-in properties and content inference
-- Document state machine: pending -> parsing -> ready/error with reindex recovery
-- MinIO file storage with auto bucket creation for upload/download/delete
-- Celery async processing pipeline (parse -> chunk -> index event)
-- Redis pub/sub index events on `kb:index:request` channel for downstream KB Service consumption
-- REST API: upload, list (paginated + status/format filters), detail, delete (cascade), reindex
+### Four analysis task types
 
-### M7 — Output Service (8006)
-- Multi-format generation: Markdown (Jinja2 templates, YAML front-matter, [ref:] -> [^n] footnotes)
-- DOCX GB/T 9704-2012 compliant (版头/主体/版记, heading mapping, reference list)
-- XLSX generation: comparison matrix sheet + citation list sheet + data summary sheet
-- PPTX generation: cover, TOC, findings, recommendations, references slides
-- YAML template loader with built-in fallback defaults
-- Format router for parallel multi-format generation
-- REST API: POST /internal/output/generate, GET preview, GET export with Content-Disposition
-- MinIO output storage client (upload/download/presigned URLs)
+| Type | Use Case | Output |
+|------|----------|--------|
+| **Literature Review** | Systematic review of uploaded literature | Structured report with comparison matrix |
+| **Policy Draft** | Draft policy documents | GB/T 9704 compliant .docx |
+| **Policy Comparison** | Cross-analysis of multiple policy documents | Multi-dimension comparison matrix (.xlsx) |
+| **Tech Interpretation** | Interpret technical standards/regulations | Compliance analysis with glossary |
 
-### M3 — KB Service (8002)
-- Embedding generation with Redis caching (text2vec/m3e, configurable dimensions)
-- Vector store abstraction (Milvus/Qdrant unified interface + in-memory mock for testing)
-- BM25 keyword search via PostgreSQL FTS with GIN index on document_chunks
-- Hybrid search pipeline: parallel vector(top-50) + BM25(top-50) → RRF fusion(k=60) → reranker → top-10
-- Reranker with term-overlap heuristics (configurable BGE-Reranker integration)
-- Redis pub/sub consumer on `kb:index:request` channel for auto-indexing
-- Index pipeline: chunk ingestion → embedding generation → vector store insert → BM25 update
-- Knowledge base isolation: per-project and institutional (cross-project) search with archival status check
-- Lifecycle management: archive/restore/delete (cascade) for documents and projects, batch reindex
-- REST API: POST /api/projects/{project_id}/search, POST /api/institutional/search, POST /internal/search
-- Internal endpoints: index chunks, reindex, delete document/project index, archive/restore lifecycle
+### Sentence-level citation provenance
 
-### M4 — Orchestration Service (8003)
-- Agent engine (ReAct variant): Plan -> Execute -> Observe -> Update Progress, max 5 iterations
-- Task state machine: pending -> running/cancelled, running -> completed/failed/cancelled, failed -> running
-- 6 Agent tools: search_kb, generate_section, verify_citations, extract_key_claims, compare_policies, format_output
-- Tool execution framework with 60s timeout, 1 retry, exception isolation, and call history recording
-- Sensitivity analysis (4 rules): internal docs -> high, policy_draft -> high, user preference override, default low
-- 4 task-type workflows with Jinja2 prompt templates: literature_review, policy_draft, policy_comparison, tech_interpretation
-- Progress tracking with per-task-type presets and dynamic step adjustment
-- Max iteration fallback: forces format_output with available content when iteration limit is reached
-- REST API: create, list (paginated + filter by status/type), detail, status poll, cancel, retry
-- Output endpoints: preview, citation list/detail, export (format=docx|md|xlsx|pptx)
+Every AI-generated assertion is traceable to its source:
+
+- **Green** = Direct citation (high confidence, page range match)
+- **Yellow** = Fuzzy citation (medium confidence, semantic match)
+- **Red** = Uncertain (low confidence, inferred content)
+
+Click any citation badge in the UI to see: source document, page range, original excerpt, and AI-generated sentence.
+
+### Hybrid LLM deployment
+
+- **Sensitive/internal documents** → local LLM (vLLM/Ollama, OpenAI-compatible API)
+- **Public/non-sensitive documents** → Claude API
+- Sensitivity classification is automatic; users can override per task
+
+### Enterprise security
+
+- JWT (access + refresh tokens) with Redis blacklist
+- RBAC: 4 roles (analyst, senior_researcher, project_admin, system_admin) × 6 operations
+- Project-group isolation: KB and results scoped per group
+- Full audit trail (Redis pub/sub → PostgreSQL), GDPR data subject APIs
+- Rate limiting: Redis token bucket (per-user + per-IP)
+
+## Module Details
+
+### M1 — API Gateway (port 8000)
+
+Entry point for all client requests. JWT verification + RBAC enforcement + rate limiting on every request. Config-driven route registry with httpx reverse proxy to 7 backend services. Publishes audit events to Redis `audit:log` channel. Unified error responses, CORS, X-Request-ID propagation, 100MB request limit.
+
+### M2 — Document Service (port 8001)
+
+Multi-format parsing pipeline: PDF (PyMuPDF), Word (python-docx), Markdown/txt, Excel/CSV, PowerPoint, Email (.eml), HTML/MHTML, Image/Image-PDF OCR (Tesseract chi_sim+eng). Format identification via magic bytes + extension fallback with PDF text-layer detection. Produces paragraph-level (~300 tokens) and section-level (~2000 tokens) chunks. State machine: pending → parsing → ready/error with reindex recovery. Publishes index events to Redis `kb:index:request`.
+
+### M3 — KB Service (port 8002)
+
+Embedding generation (text2vec/m3e) with Redis cache. Vector store abstraction over Milvus/Qdrant. BM25 keyword search via PostgreSQL FTS with GIN index. Hybrid search pipeline: parallel vector(top-50) + BM25(top-50) → RRF fusion(k=60) → reranker → top-10. Consumes `kb:index:request` channel for auto-indexing. Supports KB isolation (per-project and institutional cross-project) with archive/restore lifecycle.
+
+### M4 — Orchestration Service (port 8003)
+
+Agent engine implementing ReAct variant: Plan → Execute (6 tools) → Observe → Update Progress, max 5 iterations. Task state machine: pending → running/cancelled → completed/failed. 6 agent tools: search_kb, generate_section, verify_citations, extract_key_claims, compare_policies, format_output. Tool execution with 60s timeout, 1 retry, exception isolation. Sensitivity analysis (4 rules). Jinja2 prompt templates for 4 task types. Forces format_output when iteration limit reached.
+
+### M5 — LLM Router (port 8004)
+
+Model registry + sensitivity-based routing. ClaudeAdapter (anthropic SDK, tool_use bidirectional conversion) + LocalAdapter (OpenAI-compatible /v1/chat/completions). Circuit breaker pattern with retry + exponential backoff. Token usage tracking.
+
+### M6 — Citation Service (port 8005)
+
+Inline `[ref:...]` parser supporting single/multi/uncertain references, Chinese/English sentence splitting. Citation verifier: page range matching + semantic similarity (cosine_similarity, threshold 0.85) → confidence classification. Formatters: Markdown (GFM footnotes), .docx (footnotes/endnotes), .xlsx (引用清单 sheet), .pptx.
+
+### M7 — Output Service (port 8006)
+
+Multi-format generation: Markdown (Jinja2, YAML front-matter, [ref:] → [^n] footnotes), .docx (GB/T 9704-2012: 版头/主体/版记, heading mapping, reference list), .xlsx (comparison matrix + citation list + data summary), .pptx (cover, TOC, findings, recommendations, references). Format router for parallel generation. MinIO storage with presigned URLs.
+
+### M8 — User Service (port 8007)
+
+JWT auth with bcrypt password hashing, access/refresh token flow. RBAC: 4 roles × 6 operations. LDAP/SSO integration. User/group/project CRUD. Audit log consumer (Redis pub/sub → PostgreSQL). GDPR data subject APIs (access, rectify, delete, export). Alembic migrations.
 
 ### M9 — Frontend SPA
-- React 19 + TypeScript 5 + Vite 8 + Ant Design 6 + React Router 7
-- Auth flow: login page, token auto-refresh (401 interceptor), route guards (auth + admin role)
-- Project management: list (table/cards/pagination/status search), create dialog, archive confirmation
-- Knowledge base: drag-and-drop upload (progress bar), document list (status filter), search (chunk highlight + relevance score)
-- Task management: type selection (4 types), create form, status polling (3s interval), step progress bar
-- Output view: Markdown preview (react-markdown), citation badges (clickable, color-coded confidence: green/yellow/red), citation drawer (filter by confidence), export format selector
-- Admin: user management (CRUD, disable/enable), group management (create, member add/remove), audit log viewer (time/user/action filters, pagination)
-- Common: sidebar layout (navigation, user info, logout), breadcrumbs, error pages (404/403/500), toast notifications, global loading
-- Tests: 16 tests across 3 test files (auth context, route guards, task creation), Vitest + Testing Library
 
-## Reference Documents
+React 19 + TypeScript 5 + Vite 8 + Ant Design 6 + React Router 7. Auth flow (login, token auto-refresh, route guards). Project management (table/cards, pagination, status search, archive). Knowledge base (drag-and-drop upload with progress, document list, hybrid search with chunk highlight). Task management (type selection, create form, status polling, step progress bar). Output view (Markdown preview, citation badges with color-coded confidence, citation drawer, export format selector). Admin (user CRUD, group management, audit log viewer).
+
+## Documentation
 
 | Document | Content |
 |----------|---------|
-| `doc/proposal.md` | Requirements, user stories, MVP scope, compliance |
-| `doc/high-level-design.md` | Architecture, data flow, API design, Agent engine |
-| `doc/detailed-design.md` | Per-module API specs, algorithms, config |
+| `doc/proposal.md` | Requirements, user stories, MVP scope, compliance (等保二级 + GDPR) |
+| `doc/high-level-design.md` | Architecture, data flow, API design, Agent engine, security design |
+| `doc/detailed-design.md` | Per-module API specs, internal interfaces, algorithms, configuration |
 | `doc/tasks/*.md` | Subtask checklists per module (376 total) |
-| `doc/tasks/progress.md` | Dependency graph, progress tracking |
-| `doc/prompt.md` | Vibe Coding orchestration protocol |
+| `doc/tasks/progress.md` | Dependency graph, suggested order, progress tracking |
+| `doc/devtools.md` | Dev environment setup, all tool/packages versions, quality gate configs |
+| `doc/operation.md` | Deployment, monitoring, backup/restore, scaling, troubleshooting |
+| `doc/usermanual.md` | End-user guide: login, project management, KB upload, task creation, output review |
+| `doc/manualstart.md` | Step-by-step manual dev server startup per terminal |
+| `templates/prompts/*.j2` | Jinja2 System Prompt templates for 4 task types |
+| `templates/output/*.yaml` | Style configs for .docx/.pptx/.xlsx generation |
 
-## Development
+## Deployment
+
+See **[doc/operation.md](doc/operation.md)** for full deployment and operations guide.
 
 ```bash
-# Install per-service dependencies
-cd <service-dir> && uv sync
-
-# Backend quality gate (must pass before commit)
-cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
-
-# Frontend quality gate
-cd frontend && npx tsc -b --noEmit && npm run lint && npm test
+# Production deployment
+cp .env.template .env   # configure all secrets
+./deploy/deploy.sh build
+./deploy/deploy.sh start
+./deploy/deploy.sh status  # verify 18 containers healthy
 ```
+
+**Key operations**: `./deploy/deploy.sh {start|stop|restart|status|logs [service]|build}`
+
+**Monitoring**: Prometheus (`:9090`) + Grafana (`:3000`). MinIO Console (`:9001`).
 
 ## License
 
