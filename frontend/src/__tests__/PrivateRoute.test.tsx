@@ -3,10 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import PrivateRoute from '../components/PrivateRoute';
 import AdminRoute from '../components/AdminRoute';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
-// Mock the AuthContext
-vi.mock('../contexts/AuthContext', () => ({
+// Mock useAuth
+vi.mock('../hooks/useAuth', () => ({
   useAuth: vi.fn(),
 }));
 

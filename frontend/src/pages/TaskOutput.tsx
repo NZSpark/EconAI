@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -99,7 +99,7 @@ export default function TaskOutput() {
 
   // Load output when task completes
   const [outputLoaded, setOutputLoaded] = useState(false);
-  useMemo(() => {
+  useEffect(() => {
     if (task?.status === 'completed' && !outputLoaded && taskId) {
       fetchTaskOutput(taskId)
         .then((res) => {
@@ -127,14 +127,14 @@ export default function TaskOutput() {
       });
     });
     return map;
-  }, [output?.citations]);
+  }, [output]);
 
   // Filtered citations
   const filteredCitations = useMemo(() => {
     if (!output?.citations) return [];
     if (confidenceFilter === 'all') return output.citations;
     return output.citations.filter((c) => c.confidence === confidenceFilter);
-  }, [output?.citations, confidenceFilter]);
+  }, [output, confidenceFilter]);
 
   // Citation summary
   const citationSummary = useMemo(() => {
@@ -147,7 +147,7 @@ export default function TaskOutput() {
       },
       { total: 0, direct: 0, fuzzy: 0, uncertain: 0 }
     );
-  }, [output?.citations]);
+  }, [output]);
 
   const handleExport = () => {
     if (!taskId) return;

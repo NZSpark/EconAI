@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -41,19 +41,15 @@ export default function ProjectList() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  const paramsRef = useRef({ page, pageSize, statusFilter, searchText });
-  paramsRef.current = { page, pageSize, statusFilter, searchText };
-
   const { data, loading, error, run: refresh } = useRequest(
     useCallback(async () => {
-      const p = paramsRef.current;
       return listProjects({
-        page: p.page,
-        page_size: p.pageSize,
-        status: p.statusFilter,
-        search: p.searchText || undefined,
+        page,
+        page_size: pageSize,
+        status: statusFilter,
+        search: searchText || undefined,
       });
-    }, [])
+    }, [page, pageSize, statusFilter, searchText])
   );
 
   const handleCreate = async (values: CreateProjectRequest) => {

@@ -10,7 +10,7 @@ import {
   AuditOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const { Header, Sider, Content } = AntLayout;
 

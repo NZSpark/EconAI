@@ -47,14 +47,7 @@ export default function TaskProgress({ progress, status }: TaskProgressProps) {
     steps.push({ title: `步骤 ${i + 1}` });
   }
 
-  let currentStep = 0;
-  if (status === 'completed') {
-    currentStep = total_steps_estimate;
-  } else if (status === 'failed') {
-    currentStep = step_index;
-  } else {
-    currentStep = step_index;
-  }
+  const currentStep = status === 'completed' ? total_steps_estimate : step_index;
 
   return (
     <div>

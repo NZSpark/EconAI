@@ -4,7 +4,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 
 ## Project Status
 
-**Phase: Implementation in progress** (9 of 10 modules complete)
+**Phase: All 10 modules complete** (376/376 subtasks)
 
 | Module | Service | Port | Status |
 |--------|---------|------|--------|
@@ -17,7 +17,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 | M7 | Output Service | 8006 | Completed (39/39) |
 | M3 | KB Service | 8002 | Completed (35/35) |
 | M4 | Orchestration Service | 8003 | Completed (54/54) |
-| M9 | Frontend | - | Pending |
+| M9 | Frontend | - | Completed (38/38) |
 
 ## Architecture
 
@@ -139,6 +139,17 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 - REST API: create, list (paginated + filter by status/type), detail, status poll, cancel, retry
 - Output endpoints: preview, citation list/detail, export (format=docx|md|xlsx|pptx)
 
+### M9 — Frontend SPA
+- React 19 + TypeScript 5 + Vite 8 + Ant Design 6 + React Router 7
+- Auth flow: login page, token auto-refresh (401 interceptor), route guards (auth + admin role)
+- Project management: list (table/cards/pagination/status search), create dialog, archive confirmation
+- Knowledge base: drag-and-drop upload (progress bar), document list (status filter), search (chunk highlight + relevance score)
+- Task management: type selection (4 types), create form, status polling (3s interval), step progress bar
+- Output view: Markdown preview (react-markdown), citation badges (clickable, color-coded confidence: green/yellow/red), citation drawer (filter by confidence), export format selector
+- Admin: user management (CRUD, disable/enable), group management (create, member add/remove), audit log viewer (time/user/action filters, pagination)
+- Common: sidebar layout (navigation, user info, logout), breadcrumbs, error pages (404/403/500), toast notifications, global loading
+- Tests: 16 tests across 3 test files (auth context, route guards, task creation), Vitest + Testing Library
+
 ## Reference Documents
 
 | Document | Content |
@@ -156,8 +167,11 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 # Install per-service dependencies
 cd <service-dir> && uv sync
 
-# Quality gate (must pass before commit)
+# Backend quality gate (must pass before commit)
 cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
+
+# Frontend quality gate
+cd frontend && npx tsc -b --noEmit && npm run lint && npm test
 ```
 
 ## License

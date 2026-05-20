@@ -1,25 +1,12 @@
 import { Tag } from 'antd';
 import type { CitationConfidence } from '../api/types';
-
-const confidenceColorMap: Record<CitationConfidence, string> = {
-  direct: 'green',
-  fuzzy: 'gold',
-  uncertain: 'red',
-};
-
-const confidenceLabelMap: Record<CitationConfidence, string> = {
-  direct: '直接',
-  fuzzy: '模糊',
-  uncertain: '不确定',
-};
+import { confidenceColorMap } from '../constants/citations';
 
 interface CitationBadgeProps {
   index: number;
   confidence?: CitationConfidence;
   onClick?: () => void;
 }
-
-export { confidenceColorMap, confidenceLabelMap };
 
 export default function CitationBadge({
   index,

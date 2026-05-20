@@ -1,6 +1,6 @@
 import { Popover, Descriptions, Tag, Typography } from 'antd';
 import type { Citation } from '../api/types';
-import { confidenceColorMap, confidenceLabelMap } from './CitationBadge';
+import { confidenceColorMap, confidenceLabelMap } from '../constants/citations';
 
 const { Text, Paragraph } = Typography;
 
