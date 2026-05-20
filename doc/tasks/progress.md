@@ -9,7 +9,7 @@
 | M1 | API 网关 | `api-gateway/` | 28 | [x] 已完成 (28/28) |
 | M2 | 文档解析服务 | `services/document-service/` | 43 | [x] 已完成 (43/43) |
 | M3 | 知识库服务 | `services/kb-service/` | 35 | [x] 已完成 (35/35) |
-| M4 | 任务编排服务 | `services/orchestration-service/` | 54 | [ ] 未开始 |
+| M4 | 任务编排服务 | `services/orchestration-service/` | 54 | [x] 已完成 (54/54) |
 | M5 | LLM 路由服务 | `services/llm-router/` | 33 | [x] 已完成 (33/33) |
 | M6 | 来源溯源服务 | `services/citation-service/` | 30 | [x] 已完成 (30/30) |
 | M7 | 输出生成服务 | `services/output-service/` | 39 | [x] 已完成 (39/39) |
@@ -17,7 +17,7 @@
 | M9 | 前端 SPA | `frontend/` | 38 | [ ] 未开始 |
 | M10 | 基础设施与部署 | 项目根目录 | 34 | [x] 已完成 (34/34) |
 
-**总计子任务：376** | **已完成：284** | **完成率：75.5%**
+**总计子任务：376** | **已完成：338** | **完成率：89.9%**
 
 ## 依赖关系
 

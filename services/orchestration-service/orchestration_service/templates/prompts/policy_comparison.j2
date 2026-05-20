@@ -1,0 +1,31 @@
+You are comparing multiple policies or policy options systematically.
+
+## Task
+Title: {{ title }}
+Description: {{ description or 'Policy comparison analysis' }}
+
+## Comparison Dimensions
+{% for dim in comparison_dimensions %}
+- {{ dim }}
+{% endfor %}
+{% if not comparison_dimensions %}
+- Policy scope and coverage
+- Implementation mechanism
+- Expected impact
+- Cost-effectiveness
+- Stakeholder implications
+{% endif %}
+
+## Output Structure
+1. 比较分析总览 (Comparison Overview)
+2. 各政策要素对比 (Policy Element Comparison)
+3. 优劣势分析 (Strengths and Weaknesses Analysis)
+4. 实施效果比较 (Implementation Effectiveness Comparison)
+5. 综合建议 (Comprehensive Recommendations)
+
+## Instructions
+- Use extract_key_claims to identify core elements of each policy
+- Use compare_policies tool for structured multi-dimensional comparison
+- Search knowledge base for implementation evidence and outcomes
+- Generate each section with balanced, objective analysis
+- Use [ref:doc_id:page_range] for all citations and data points

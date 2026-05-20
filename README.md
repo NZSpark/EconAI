@@ -4,7 +4,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 
 ## Project Status
 
-**Phase: Implementation in progress** (8 of 10 modules complete)
+**Phase: Implementation in progress** (9 of 10 modules complete)
 
 | Module | Service | Port | Status |
 |--------|---------|------|--------|
@@ -16,7 +16,7 @@ EconAI ingests policy literature, generates structured analysis reports (literat
 | M2 | Document Service | 8001 | Completed (43/43) |
 | M7 | Output Service | 8006 | Completed (39/39) |
 | M3 | KB Service | 8002 | Completed (35/35) |
-| M4 | Orchestration Service | 8003 | Pending |
+| M4 | Orchestration Service | 8003 | Completed (54/54) |
 | M9 | Frontend | - | Pending |
 
 ## Architecture
@@ -126,6 +126,18 @@ cd <service-dir> && pytest --tb=short && mypy . --strict && ruff check .
 - Lifecycle management: archive/restore/delete (cascade) for documents and projects, batch reindex
 - REST API: POST /api/projects/{project_id}/search, POST /api/institutional/search, POST /internal/search
 - Internal endpoints: index chunks, reindex, delete document/project index, archive/restore lifecycle
+
+### M4 — Orchestration Service (8003)
+- Agent engine (ReAct variant): Plan -> Execute -> Observe -> Update Progress, max 5 iterations
+- Task state machine: pending -> running/cancelled, running -> completed/failed/cancelled, failed -> running
+- 6 Agent tools: search_kb, generate_section, verify_citations, extract_key_claims, compare_policies, format_output
+- Tool execution framework with 60s timeout, 1 retry, exception isolation, and call history recording
+- Sensitivity analysis (4 rules): internal docs -> high, policy_draft -> high, user preference override, default low
+- 4 task-type workflows with Jinja2 prompt templates: literature_review, policy_draft, policy_comparison, tech_interpretation
+- Progress tracking with per-task-type presets and dynamic step adjustment
+- Max iteration fallback: forces format_output with available content when iteration limit is reached
+- REST API: create, list (paginated + filter by status/type), detail, status poll, cancel, retry
+- Output endpoints: preview, citation list/detail, export (format=docx|md|xlsx|pptx)
 
 ## Reference Documents
 

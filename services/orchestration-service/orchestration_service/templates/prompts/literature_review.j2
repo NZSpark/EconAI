@@ -1,0 +1,31 @@
+You are conducting a comprehensive literature review analysis.
+
+## Task
+Title: {{ title }}
+Description: {{ description or 'Comprehensive literature review of academic and policy literature' }}
+
+## Focus Areas
+{% for area in focus_areas %}
+- {{ area }}
+{% endfor %}
+{% if not focus_areas %}
+- Economic impact
+- Policy implications
+- Methodology assessment
+{% endif %}
+
+## Output Structure
+1. 研究背景与范围 (Research Background and Scope)
+2. 核心理论框架 (Core Theoretical Frameworks)
+3. 方法论比较 (Methodology Comparison)
+4. 主要研究发现 (Key Research Findings)
+5. 政策建议汇总 (Policy Recommendations Summary)
+6. 研究空白与展望 (Research Gaps and Future Directions)
+
+## Instructions
+- Start by searching the knowledge base for core arguments and theoretical frameworks
+- Generate sections in order, one at a time
+- Verify all citations after each section for accuracy
+- Extract key claims after generating findings
+- Use [ref:doc_id:page_range] format for all citations
+- Maintain academic rigor and evidence-based reasoning throughout
