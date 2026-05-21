@@ -40,6 +40,7 @@ from llm_router.models.schemas import (
     RoutingInfo,
     UsageAggregation,
 )
+from shared.models import ErrorDetail
 from llm_router.routing import CircuitBreaker, RoutingDecision, RoutingEngine
 from llm_router.tracker import TokenUsageTracker
 
@@ -439,11 +440,11 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
-            error={
-                "code": f"LLM_{'CLIENT' if exc.status_code < 500 else 'SERVER'}_ERROR",
-                "message": exc.detail,
-                "status_code": exc.status_code,
-            }
+            error=ErrorDetail(
+                code=f"LLM_{'CLIENT' if exc.status_code < 500 else 'SERVER'}_ERROR",
+                message=str(exc.detail),
+                details={"status_code": exc.status_code},
+            )
         ).model_dump(),
     )
 
@@ -454,10 +455,10 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     return JSONResponse(
         status_code=500,
         content=ErrorResponse(
-            error={
-                "code": "LLM_INTERNAL_ERROR",
-                "message": str(exc),
-                "status_code": 500,
-            }
+            error=ErrorDetail(
+                code="LLM_INTERNAL_ERROR",
+                message=str(exc),
+                details={"status_code": 500},
+            )
         ).model_dump(),
     )

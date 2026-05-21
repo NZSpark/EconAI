@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, Field
+from shared.models import ErrorDetail, ErrorResponse, Message
 
 
 class FunctionDef(BaseModel):
@@ -20,16 +21,6 @@ class ToolDef(BaseModel):
 
     type: str = "function"
     function: FunctionDef
-
-
-class Message(BaseModel):
-    """Unified message format."""
-
-    role: str  # system | user | assistant | tool
-    content: str | None = None
-    tool_calls: list[dict[str, Any]] | None = None
-    tool_call_id: str | None = None
-    name: str | None = None
 
 
 class ChatRequest(BaseModel):
@@ -100,10 +91,7 @@ class ModelsResponse(BaseModel):
     default_cloud: str
 
 
-class ErrorResponse(BaseModel):
-    """Standardized error response."""
-
-    error: dict[str, Any]
+# ErrorResponse, ErrorDetail, Message — imported from shared.models
 
 
 class UsageLogEntry(BaseModel):

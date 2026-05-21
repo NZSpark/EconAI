@@ -16,6 +16,7 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "alembic>=1.13.0",
     "python-multipart>=0.0.12",
+    "econai-shared",
 ]
 
 [project.optional-dependencies]
@@ -26,6 +27,9 @@ dev = [
     "mypy>=1.0.0",
     "ruff>=0.4.0",
 ]
+
+[tool.uv.sources]
+econai-shared = { path = "../../shared" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

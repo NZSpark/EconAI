@@ -10,23 +10,9 @@ from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
+from shared.models import ErrorDetail, ErrorResponse, Message, TaskStatus, TaskType
 
-# ── Task type & status enums (mirrored from shared for local use) ────────────
-
-
-class TaskType(StrEnum):
-    literature_review = "literature_review"
-    policy_draft = "policy_draft"
-    policy_comparison = "policy_comparison"
-    tech_interpretation = "tech_interpretation"
-
-
-class TaskStatus(StrEnum):
-    pending = "pending"
-    running = "running"
-    completed = "completed"
-    failed = "failed"
-    cancelled = "cancelled"
+# ── Local enum (orchestration-specific) ────────────────────────────────────
 
 
 class LLMPreference(StrEnum):
@@ -183,14 +169,7 @@ class CitationDetailResponse(BaseModel):
 # ── Agent state ─────────────────────────────────────────────────────────────
 
 
-class Message(BaseModel):
-    """A single message in the Agent conversation."""
-
-    role: str  # system | user | assistant | tool
-    content: str | None = None
-    tool_calls: list[dict[str, Any]] | None = None
-    tool_call_id: str | None = None
-    name: str | None = None
+# Message — imported from shared.models
 
 
 class ChunkInfo(BaseModel):
@@ -319,13 +298,4 @@ class SensitivityResult(BaseModel):
     reason: str
 
 
-# ── Error ───────────────────────────────────────────────────────────────────
-
-
-class ErrorDetail(BaseModel):
-    code: str
-    message: str
-
-
-class ErrorResponse(BaseModel):
-    error: ErrorDetail
+# ErrorDetail, ErrorResponse — imported from shared.models

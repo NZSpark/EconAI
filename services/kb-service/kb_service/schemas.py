@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
+from shared.models import ErrorResponse, HealthResponse, IndexEvent
 
 
 class SearchFilters(BaseModel):
@@ -53,18 +53,6 @@ class SearchResponse(BaseModel):
     search_time_ms: float
 
 
-class IndexEvent(BaseModel):
-    """Event published by document-service to kb:index:request."""
-
-    event_id: str
-    event_type: str = "document.parsed"
-    document_id: str
-    project_id: str
-    chunk_ids: list[str] = Field(default_factory=list)
-    is_internal: bool = False
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
-
-
 class IndexStatusResponse(BaseModel):
     """Response for index operations."""
 
@@ -73,12 +61,4 @@ class IndexStatusResponse(BaseModel):
     indexed_chunks: int = 0
 
 
-class HealthResponse(BaseModel):
-    """Health check response."""
-
-    status: str
-    service: str
-
-
-class ErrorResponse(BaseModel):
-    error: dict[str, Any]
+# HealthResponse, IndexEvent, ErrorResponse — imported from shared.models

@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.0",
     "redis>=5.0",
     "numpy>=1.26",
+    "econai-shared",
 ]
 
 [project.optional-dependencies]
@@ -23,6 +24,9 @@ dev = [
     "mypy>=1.0",
     "ruff>=0.1",
 ]
+
+[tool.uv.sources]
+econai-shared = { path = "../../shared" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

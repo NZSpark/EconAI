@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
@@ -84,3 +86,35 @@ class PaginatedResponse[T](BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+# ----- Common domain models ---------------------------------------------------
+
+
+class HealthResponse(BaseModel):
+    """Health check response shared across all services."""
+
+    status: str
+    service: str
+
+
+class IndexEvent(BaseModel):
+    """Index event published by document-service to kb:index:request."""
+
+    event_id: str = Field(default_factory=lambda: str(uuid4()))
+    event_type: str = "document.parsed"
+    document_id: str
+    project_id: str
+    chunk_ids: list[str] = Field(default_factory=list)
+    is_internal: bool = False
+    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+
+
+class Message(BaseModel):
+    """A single message in the Agent conversation (OpenAI-compatible)."""
+
+    role: str  # system | user | assistant | tool
+    content: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
+    tool_call_id: str | None = None
+    name: str | None = None

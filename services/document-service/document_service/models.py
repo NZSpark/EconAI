@@ -7,7 +7,7 @@ from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
-from shared.models import DocumentFormat, PaginatedResponse
+from shared.models import DocumentFormat, ErrorDetail, ErrorResponse, HealthResponse, IndexEvent, PaginatedResponse
 
 # ---------------------------------------------------------------------------
 # Allowed file extensions and MIME types for validation
@@ -193,35 +193,4 @@ class ReindexResponse(BaseModel):
     message: str
 
 
-class HealthResponse(BaseModel):
-    """Health check response."""
-
-    status: str
-    service: str
-
-
-class IndexEvent(BaseModel):
-    """M2-31/M2-32: Index event published to Redis pub/sub."""
-
-    event_id: str = Field(default_factory=lambda: str(uuid4()))
-    event_type: str = "document.parsed"
-    document_id: str
-    project_id: str
-    chunk_ids: list[str] = Field(default_factory=list)
-    is_internal: bool = False
-    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
-
-
-# ---------------------------------------------------------------------------
-# Error models
-# ---------------------------------------------------------------------------
-
-
-class ErrorDetail(BaseModel):
-    code: str
-    message: str
-    details: dict[str, Any] | None = None
-
-
-class ErrorResponse(BaseModel):
-    error: ErrorDetail
+# HealthResponse, IndexEvent, ErrorDetail, ErrorResponse — imported from shared.models

@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from output_service.config import config as cfg
 from output_service.format_router import EXTENSION_MAP, FormatRouter
+from shared.models import ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
 
@@ -105,17 +106,7 @@ class GenerateResponse(BaseModel):
     outputs: list[OutputItem]
 
 
-class ErrorDetail(BaseModel):
-    """Error detail."""
-
-    code: str
-    message: str
-
-
-class ErrorResponse(BaseModel):
-    """Unified error response."""
-
-    error: ErrorDetail
+# ErrorDetail, ErrorResponse — imported from shared.models
 
 
 # ---------------------------------------------------------------------------

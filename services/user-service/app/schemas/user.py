@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
+from shared.models import UserRole
 
 
 class UserCreate(BaseModel):
@@ -10,12 +11,12 @@ class UserCreate(BaseModel):
     email: str = Field(..., max_length=256)
     display_name: str | None = Field(None, max_length=256)
     password: str = Field(..., min_length=8)
-    role: str = Field(default="analyst")
+    role: UserRole = Field(default=UserRole.analyst)
 
 
 class UserUpdate(BaseModel):
     display_name: str | None = Field(None, max_length=256)
-    role: str | None = None
+    role: UserRole | None = None
     is_active: bool | None = None
 
 

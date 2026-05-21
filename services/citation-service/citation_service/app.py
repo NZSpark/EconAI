@@ -27,6 +27,7 @@ from citation_service.verifier import (
     VerificationResult,
     VerifiedCitation,
 )
+from shared.models import ErrorDetail, ErrorResponse
 
 # ---------------------------------------------------------------------------
 # FastAPI application
@@ -54,7 +55,6 @@ formatter = CitationFormatter()
 _citation_store: dict[str, list[dict[str, Any]]] = {}
 
 
-# ---------------------------------------------------------------------------
 # Pydantic models for request/response
 # ---------------------------------------------------------------------------
 
@@ -136,17 +136,7 @@ class CitationDetailResponse(BaseModel):
     verified_by: str | None = None
 
 
-class ErrorDetail(BaseModel):
-    """Error detail for unified error format."""
-
-    code: str
-    message: str
-
-
-class ErrorResponse(BaseModel):
-    """Unified error format."""
-
-    error: ErrorDetail
+# ErrorDetail, ErrorResponse — imported from shared.models
 
 
 # ---------------------------------------------------------------------------
