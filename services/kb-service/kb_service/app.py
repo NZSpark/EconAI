@@ -26,9 +26,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from kb_service.bm25 import InMemoryBM25Searcher
 from kb_service.config import settings
-from kb_service.embedding import MockEmbeddingClient
+from kb_service.deps import create_bm25_searcher, create_embedding_client, create_vector_store
 from kb_service.hybrid_search import HybridSearcher
 from kb_service.indexer import IndexPipeline
 from kb_service.lifecycle import LifecycleManager
@@ -39,7 +38,6 @@ from kb_service.schemas import (
     SearchRequest,
     SearchResponse,
 )
-from kb_service.vector_store import InMemoryVectorStore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -48,20 +46,17 @@ logger = logging.getLogger(__name__)
 _searcher: HybridSearcher
 _pipeline: IndexPipeline
 _lifecycle: LifecycleManager
-_vector_store: InMemoryVectorStore
-_bm25: InMemoryBM25Searcher
-_embedding: MockEmbeddingClient
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    global _searcher, _pipeline, _lifecycle, _vector_store, _bm25, _embedding
+    global _searcher, _pipeline, _lifecycle
 
     logger.info("KB Service starting up...")
 
-    _vector_store = InMemoryVectorStore(dim=settings.embedding_dim)
-    _embedding = MockEmbeddingClient(dim=settings.embedding_dim)
-    _bm25 = InMemoryBM25Searcher()
+    _vector_store = create_vector_store()
+    _embedding = create_embedding_client()
+    _bm25 = create_bm25_searcher()
     _searcher = HybridSearcher(
         vector_store=_vector_store,
         embedding_client=_embedding,

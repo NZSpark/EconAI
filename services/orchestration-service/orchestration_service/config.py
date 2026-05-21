@@ -31,8 +31,8 @@ class OrchestrationSettings(BaseSettings):
     citation_service_url: str = "http://localhost:8005"
     output_service_url: str = "http://localhost:8006"
 
-    # Prompt templates
-    prompt_templates_dir: str = "orchestration_service/templates/prompts"
+    # Prompt templates (canonical location: repo root templates/prompts/)
+    prompt_templates_dir: str = "templates/prompts"
 
     # Default output formats
     default_output_formats: list[str] = ["md", "docx"]

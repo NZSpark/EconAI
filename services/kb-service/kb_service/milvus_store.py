@@ -1,0 +1,167 @@
+"""Milvus vector store — production implementation using pymilvus."""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+from kb_service.config import settings
+from kb_service.vector_store import VectorStore
+
+logger = logging.getLogger(__name__)
+
+
+class MilvusVectorStore(VectorStore):
+    """Vector store backed by Milvus."""
+
+    def __init__(
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        collection_name: str | None = None,
+        dim: int | None = None,
+    ) -> None:
+        self._host = host or settings.vector_db_host
+        self._port = port or settings.vector_db_port
+        self._collection_name = collection_name or settings.vector_db_collection
+        self._dim = dim or settings.embedding_dim
+        self._connected = False
+
+    async def _ensure_connected(self) -> None:
+        if self._connected:
+            return
+        try:
+            from pymilvus import (  # type: ignore[import-untyped]
+                Collection,
+                CollectionSchema,
+                DataType,
+                FieldSchema,
+                MilvusClient,
+                connections,
+            )
+
+            connections.connect(host=self._host, port=str(self._port))
+            self._client = MilvusClient(uri=f"http://{self._host}:{self._port}")
+
+            if not self._client.has_collection(self._collection_name):
+                schema = CollectionSchema(
+                    fields=[
+                        FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=64),
+                        FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=self._dim),
+                        FieldSchema(name="document_id", dtype=DataType.VARCHAR, max_length=64),
+                        FieldSchema(name="project_id", dtype=DataType.VARCHAR, max_length=64),
+                        FieldSchema(name="chunk_type", dtype=DataType.VARCHAR, max_length=16),
+                    ],
+                )
+                self._client.create_collection(
+                    collection_name=self._collection_name,
+                    schema=schema,
+                    index_params={"metric_type": "IP", "index_type": "IVF_FLAT", "params": {"nlist": 128}},
+                )
+
+            self._collection = Collection(self._collection_name)
+            self._connected = True
+            logger.info("Connected to Milvus: %s:%d, collection=%s", self._host, self._port, self._collection_name)
+        except ImportError:
+            logger.error("pymilvus not installed")
+            raise
+        except Exception:
+            logger.exception("Failed to connect to Milvus")
+            raise
+
+    async def create_collection(self) -> None:
+        await self._ensure_connected()
+
+    async def insert(
+        self,
+        chunk_id: str,
+        vector: list[float],
+        metadata: dict[str, Any],
+    ) -> None:
+        await self._ensure_connected()
+        self._client.insert(
+            collection_name=self._collection_name,
+            data=[{
+                "id": chunk_id,
+                "vector": vector,
+                "document_id": metadata.get("document_id", ""),
+                "project_id": metadata.get("project_id", ""),
+                "chunk_type": metadata.get("chunk_type", "paragraph"),
+            }],
+        )
+
+    async def insert_batch(
+        self,
+        entries: list[tuple[str, list[float], dict[str, Any]]],
+    ) -> None:
+        await self._ensure_connected()
+        data = [
+            {
+                "id": chunk_id,
+                "vector": vector,
+                "document_id": meta.get("document_id", ""),
+                "project_id": meta.get("project_id", ""),
+                "chunk_type": meta.get("chunk_type", "paragraph"),
+            }
+            for chunk_id, vector, meta in entries
+        ]
+        self._client.insert(collection_name=self._collection_name, data=data)
+
+    async def search(
+        self,
+        query_vector: list[float],
+        top_k: int = 50,
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        await self._ensure_connected()
+        filter_expr = self._build_filter(filters)
+        results = self._client.search(
+            collection_name=self._collection_name,
+            data=[query_vector],
+            limit=top_k,
+            filter=filter_expr or None,
+            output_fields=["document_id", "project_id", "chunk_type"],
+        )
+        if not results or not results[0]:
+            return []
+        return [
+            {
+                "chunk_id": hit["id"],
+                "score": hit["distance"],
+                "metadata": {
+                    "document_id": hit.get("entity", {}).get("document_id", ""),
+                    "project_id": hit.get("entity", {}).get("project_id", ""),
+                    "chunk_type": hit.get("entity", {}).get("chunk_type", ""),
+                },
+            }
+            for hit in results[0]
+        ]
+
+    async def delete_by_document(self, document_id: str) -> int:
+        await self._ensure_connected()
+        result = self._client.delete(
+            collection_name=self._collection_name,
+            filter=f'document_id == "{document_id}"',
+        )
+        return len(result) if result else 0
+
+    async def delete_by_project(self, project_id: str) -> int:
+        await self._ensure_connected()
+        result = self._client.delete(
+            collection_name=self._collection_name,
+            filter=f'project_id == "{project_id}"',
+        )
+        return len(result) if result else 0
+
+    @staticmethod
+    def _build_filter(filters: dict[str, Any] | None) -> str | None:
+        if not filters:
+            return None
+        parts: list[str] = []
+        for key, value in filters.items():
+            if isinstance(value, list):
+                in_values = ", ".join(f'"{v}"' for v in value)
+                parts.append(f"{key} in [{in_values}]")
+            else:
+                parts.append(f'{key} == "{value}"')
+        return " and ".join(parts) if parts else None

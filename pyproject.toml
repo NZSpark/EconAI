@@ -3,7 +3,9 @@ name = "econai"
 version = "0.1.0"
 description = "EconAI - Institutional-grade AI economic policy analysis toolkit"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "alembic>=1.18.4",
+]
 
 [project.optional-dependencies]
 dev = [

@@ -22,6 +22,7 @@ from app.errors.handlers import register_error_handlers, to_error_response
 from app.middleware.audit import AuditMiddleware
 from app.middleware.auth import JWTAuthMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.rbac import RBACMiddleware
 from app.routing.proxy import ProxyError, get_proxy
 from app.routing.registry import get_route_registry
 from app.utils.request_id import RequestIDMiddleware
@@ -120,13 +121,16 @@ def create_app() -> FastAPI:
     # 3. Rate Limiting (per-IP first, then per-user after JWT sets request.state.user)
     app.add_middleware(RateLimitMiddleware)
 
-    # 4. JWT Authentication (must wrap RateLimit so user info is available)
+    # 4. JWT Authentication (sets request.state.user before downstream middleware)
     app.add_middleware(JWTAuthMiddleware)
 
-    # 5. Audit Logging (wraps request to capture execution)
+    # 5. RBAC (reads request.state.user set by JWT; must be after JWT)
+    app.add_middleware(RBACMiddleware)
+
+    # 6. Audit Logging (wraps request to capture execution)
     app.add_middleware(AuditMiddleware)
 
-    # 6. Request size limit — handled via middleware on request
+    # 7. Request size limit — handled via middleware on request
     @app.middleware("http")
     async def request_size_limit(request: Request, call_next: Any) -> Any:
         content_length = request.headers.get("content-length")
@@ -171,38 +175,11 @@ def create_app() -> FastAPI:
     async def catch_all(request: Request, path: str) -> Any:
         """Catch-all route that proxies all requests to backend services.
 
-        The middleware pipeline runs before this handler, providing:
-        - JWT authentication
-        - RBAC permission checks
-        - Rate limiting
-        - Audit logging
+        Middleware pipeline (applied before this handler):
+        - RequestID -> CORS -> RateLimit -> JWT Auth -> RBAC -> Audit
         """
         full_path = "/" + path
         log = structlog.get_logger()
-
-        # RBAC permission check
-        user = None
-        if hasattr(request.state, "user"):
-            user = request.state.user
-
-        if user is not None:
-            from app.middleware.rbac import (
-                check_permission,
-                get_required_operation,
-            )
-            operation = get_required_operation(full_path, request.method)
-            if operation is not None:
-                role = user.get("role", "analyst")
-                group_ids = user.get("group_ids", [])
-                if not check_permission(role, operation, group_ids):
-                    return JSONResponse(
-                        status_code=403,
-                        content=to_error_response(
-                            "USER_PERMISSION_DENIED",
-                            f"Insufficient permissions. Required operation: {operation.value}.",
-                            details={"required_operation": operation.value, "role": role},
-                        ),
-                    )
 
         # Resolve route
         registry = request.app.state.registry

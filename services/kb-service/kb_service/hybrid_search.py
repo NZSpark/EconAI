@@ -10,6 +10,7 @@ from typing import Any
 from kb_service.bm25 import BM25Searcher, InMemoryBM25Searcher
 from kb_service.config import settings
 from kb_service.embedding import EmbeddingClient, MockEmbeddingClient
+from kb_service.reranker import NoopReranker, Reranker
 from kb_service.vector_store import InMemoryVectorStore, VectorStore
 
 logger = logging.getLogger(__name__)
@@ -30,10 +31,16 @@ class HybridSearcher:
         vector_store: VectorStore | None = None,
         embedding_client: EmbeddingClient | MockEmbeddingClient | None = None,
         bm25_searcher: BM25Searcher | InMemoryBM25Searcher | None = None,
+        reranker: Reranker | None = None,
     ) -> None:
-        self.vector_store = vector_store or InMemoryVectorStore()
-        self.embedding_client = embedding_client or MockEmbeddingClient()
+        if vector_store is None:
+            raise ValueError("vector_store is required")
+        if embedding_client is None:
+            raise ValueError("embedding_client is required")
+        self.vector_store = vector_store
+        self.embedding_client = embedding_client
         self.bm25 = bm25_searcher
+        self.reranker = reranker or (Reranker() if settings.reranker_enabled else NoopReranker())
         self.rrf_k = settings.hybrid_rrf_k
         self.vector_top_k = settings.hybrid_vector_top_k
         self.bm25_top_k = settings.hybrid_bm25_top_k
@@ -93,7 +100,7 @@ class HybridSearcher:
 
         # Reranker (optional - when enabled and configured)
         if settings.reranker_enabled:
-            fused = await self._rerank(query, fused)
+            fused = await self.reranker.rerank(query, fused)
 
         elapsed_ms = (time.monotonic() - start) * 1000
         return fused[:final_top_k], len(vec_results) + len(bm25_results), elapsed_ms
@@ -199,25 +206,3 @@ class HybridSearcher:
             merged[cid]["score"] = scores[cid]
 
         return [merged[cid] for cid in sorted_ids]
-
-    async def _rerank(
-        self,
-        query: str,
-        candidates: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        """Rerank candidates using cross-encoder based relevance scoring.
-
-        When BGE-Reranker is not available, uses a heuristic score adjustment
-        based on query term overlap.
-        """
-        for candidate in candidates:
-            content = candidate.get("content", "")
-            rrf_score = candidate.get("score", 0.0)
-            # Simple term-overlap heuristic as reranker proxy
-            query_terms = set(query.lower().split())
-            content_terms = set(content.lower().split())
-            overlap_ratio = len(query_terms & content_terms) / len(query_terms) if query_terms else 0.0
-            candidate["score"] = 0.7 * rrf_score + 0.3 * overlap_ratio
-
-        candidates.sort(key=lambda x: x["score"], reverse=True)
-        return candidates

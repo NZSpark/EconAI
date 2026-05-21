@@ -132,16 +132,8 @@ def _simple_tokenize(text: str) -> dict[str, int]:
     return freq
 
 
-def cosine_similarity(vec_a: dict[str, float], vec_b: dict[str, float]) -> float:
-    """Compute cosine similarity between two sparse vectors.
-
-    Args:
-        vec_a: First sparse vector (token -> weight).
-        vec_b: Second sparse vector (token -> weight).
-
-    Returns:
-        Cosine similarity in [0, 1].
-    """
+def cosine_similarity_sparse(vec_a: dict[str, float], vec_b: dict[str, float]) -> float:
+    """Compute cosine similarity between two sparse vectors."""
     if not vec_a or not vec_b:
         return 0.0
 
@@ -149,13 +141,10 @@ def cosine_similarity(vec_a: dict[str, float], vec_b: dict[str, float]) -> float
     norm_a_sq = 0.0
     norm_b_sq = 0.0
 
-    # Dot product over shared keys
     for key, val_a in vec_a.items():
         norm_a_sq += val_a * val_a
-        val_b = vec_b.get(key, 0.0)
-        dot_product += val_a * val_b
+        dot_product += val_a * vec_b.get(key, 0.0)
 
-    # Remaining norm for vec_b
     for val_b in vec_b.values():
         norm_b_sq += val_b * val_b
 
@@ -168,15 +157,52 @@ def cosine_similarity(vec_a: dict[str, float], vec_b: dict[str, float]) -> float
     return dot_product / (norm_a * norm_b)
 
 
+def cosine_similarity_dense(vec_a: list[float], vec_b: list[float]) -> float:
+    """Compute cosine similarity between two dense embedding vectors."""
+    if not vec_a or not vec_b:
+        return 0.0
+
+    dot_product = sum(x * y for x, y in zip(vec_a, vec_b, strict=False))
+    norm_a = math.sqrt(sum(x * x for x in vec_a))
+    norm_b = math.sqrt(sum(y * y for y in vec_b))
+
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+
+    return dot_product / (norm_a * norm_b)
+
+
 def compute_text_similarity(text_a: str, text_b: str) -> float:
     """Compute cosine similarity between two text strings.
 
-    Uses bag-of-words tokenization as a simple semantic proxy.
-    In production, this would use actual embedding vectors.
+    Uses bag-of-words tokenization as a fallback. When an embedding client
+    is available, use compute_text_similarity_with_embeddings() instead.
     """
     vec_a = {k: float(v) for k, v in _simple_tokenize(text_a).items()}
     vec_b = {k: float(v) for k, v in _simple_tokenize(text_b).items()}
-    return cosine_similarity(vec_a, vec_b)
+    return cosine_similarity_sparse(vec_a, vec_b)
+
+
+async def compute_text_similarity_with_embeddings(
+    text_a: str, text_b: str, embed_fn: Any | None = None
+) -> float:
+    """Compute semantic similarity using embedding vectors.
+
+    Falls back to bag-of-words when embed_fn is not provided or fails.
+    """
+    if embed_fn is None:
+        return compute_text_similarity(text_a, text_b)
+
+    try:
+        from typing import Any as _Any
+
+        vectors = await embed_fn([text_a, text_b])
+        if len(vectors) >= 2:
+            return cosine_similarity_dense(vectors[0], vectors[1])
+    except Exception:
+        pass
+
+    return compute_text_similarity(text_a, text_b)
 
 
 # ---------------------------------------------------------------------------

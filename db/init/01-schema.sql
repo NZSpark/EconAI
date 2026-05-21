@@ -85,13 +85,14 @@ CREATE TABLE documents (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     filename        VARCHAR(512) NOT NULL,
-    original_filename VARCHAR(512) NOT NULL,
+    original_name   VARCHAR(512) NOT NULL,
     format          VARCHAR(32) NOT NULL,
-    file_size_bytes BIGINT NOT NULL DEFAULT 0,
-    minio_path      VARCHAR(1024),
+    size_bytes      BIGINT NOT NULL DEFAULT 0,
+    storage_path    VARCHAR(1024),
     parse_status    VARCHAR(16) NOT NULL DEFAULT 'pending'
                     CHECK (parse_status IN ('pending','parsing','ready','error')),
     parse_error     TEXT,
+    is_internal     BOOLEAN NOT NULL DEFAULT FALSE,
     title           VARCHAR(1024),
     author          VARCHAR(512),
     page_count      INTEGER,
@@ -127,8 +128,25 @@ CREATE INDEX idx_chunks_project_id ON document_chunks(project_id);
 CREATE INDEX idx_chunks_embedding_status ON document_chunks(embedding_status);
 
 -- Full-text search index (GIN) for BM25 keyword retrieval
+-- Uses 'simple' config: works well for English/latin scripts but segments
+-- each CJK character as an individual token, limiting Chinese search quality.
 CREATE INDEX idx_chunks_content_fts ON document_chunks
     USING GIN (to_tsvector('simple', content));
+
+-- Trigram index (pg_trgm) for Chinese / mixed-language fuzzy keyword search.
+-- Used as fallback when queries contain CJK characters; also supports
+-- similarity() and word_similarity() for ranked retrieval.
+CREATE INDEX idx_chunks_content_trgm ON document_chunks
+    USING GIN (content gin_trgm_ops);
+
+-- Future improvement: install pg_jieba (Jieba Chinese tokenizer for PostgreSQL)
+-- and replace the 'simple' FTS config with a Chinese-aware one:
+--   CREATE TEXT SEARCH DICTIONARY jieba_dict (TEMPLATE = jieba_parser);
+--   CREATE TEXT SEARCH CONFIGURATION chinese (PARSER = jieba_parser);
+--   ALTER TEXT SEARCH CONFIGURATION chinese ADD MAPPING FOR ALL WITH jieba_dict;
+-- Then rebuild the FTS index:
+--   CREATE INDEX idx_chunks_content_fts_cn ON document_chunks
+--       USING GIN (to_tsvector('chinese', content));
 
 -- ---------------------------------------------------------------------------
 -- Analysis Tasks
@@ -143,6 +161,13 @@ CREATE TABLE analysis_tasks (
                     CHECK (status IN ('pending','running','completed','failed','cancelled')),
     sensitivity     VARCHAR(8) NOT NULL DEFAULT 'low'
                     CHECK (sensitivity IN ('high','low')),
+    llm_route       VARCHAR(32) NOT NULL DEFAULT '',
+    llm_preference  VARCHAR(8) NOT NULL DEFAULT 'auto'
+                    CHECK (llm_preference IN ('auto','local','cloud')),
+    iteration_count INTEGER NOT NULL DEFAULT 0,
+    celery_task_id  VARCHAR(256),
+    completion_type VARCHAR(32) NOT NULL DEFAULT 'normal'
+                    CHECK (completion_type IN ('normal','max_iterations_reached','fallback')),
     title           VARCHAR(512),
     parameters      JSONB NOT NULL DEFAULT '{}',
     progress        JSONB NOT NULL DEFAULT '{}',
