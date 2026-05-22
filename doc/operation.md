@@ -113,14 +113,133 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 
 ### 3.4 配置本地 LLM（可选）
 
-如果使用本地 LLM 推理（vLLM/Ollama），修改 `.env`：
+EconAI 的 LLM Router 支持两种后端提供商：
+
+- **Cloud（Anthropic Claude）**：走 `ClaudeAdapter`，直接调用 Anthropic Messages API
+- **Local（vLLM / Ollama / OpenAI 兼容）**：走 `LocalAdapter`，通过 OpenAI-compatible `/v1/chat/completions` 接口调用
+
+#### 3.4.1 使用 Ollama（推荐本地开发）
+
+**硬件要求**：至少 8 GB RAM（7B 模型），推荐 16 GB 以上。
+
+**1. 安装 Ollama**
 
 ```bash
-LOCAL_LLM_ENDPOINT=http://<llm-server-ip>:8000/v1
-LOCAL_LLM_DEFAULT_MODEL=qwen3-72b
+# macOS
+brew install ollama
+
+# Linux
+curl -fsSL https://ollama.com/install.sh | sh
+
+# 验证安装
+ollama --version
 ```
 
-确保本地 LLM 服务器提供 OpenAI-compatible `/v1/chat/completions` 接口。
+**2. 启动 Ollama 并拉取模型**
+
+```bash
+# 启动服务（macOS 可通过 GUI 启动，或命令行）
+ollama serve &
+
+# 拉取模型（以 qwen2.5-coder:7b 为例）
+ollama pull qwen2.5-coder:7b
+
+# 验证模型可用
+ollama list
+curl http://localhost:11434/v1/models
+```
+
+**3. 修改 EconAI 配置**
+
+编辑 `.env`，设置 Ollama 的 OpenAI 兼容端点：
+
+```bash
+# .env 中修改以下两项
+LOCAL_LLM_ENDPOINT=http://localhost:11434/v1
+LOCAL_LLM_DEFAULT_MODEL=qwen2.5-coder:7b
+```
+
+编辑 `services/llm-router/models.yaml`，注册 Ollama 模型并设为默认本地模型：
+
+```yaml
+# models.yaml
+models:
+  - id: "auto"
+    provider: "auto"
+    # ... 保持不变 ...
+
+  - id: "claude-sonnet-4-6"
+    provider: "anthropic"
+    # ... 保持不变 ...
+
+  - id: "local:qwen2.5-coder:7b"
+    provider: "ollama"
+    type: "local"
+    description: "Qwen2.5-Coder 7B via Ollama"
+    capabilities:
+      - chat
+      - tool_use
+      - streaming
+
+default_local: "local:qwen2.5-coder:7b"
+default_cloud: "claude-sonnet-4-6"
+```
+
+> **注意**：`provider` 字段只要不是 `"anthropic"` 就会走 `LocalAdapter`（OpenAI 兼容协议）。  
+> `LocalAdapter` 会自动去掉模型 ID 中的 `local:` 前缀再发给 Ollama。
+
+**4. 验证连接**
+
+```bash
+# 检查 LLM Router 是否识别到新模型
+curl http://localhost:8004/internal/llm/models | python3 -m json.tool
+
+# 发送一次实际对话测试
+curl -X POST http://localhost:8004/internal/llm/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "auto",
+    "sensitivity": "high",
+    "messages": [{"role": "user", "content": "Hello, introduce yourself briefly."}],
+    "max_tokens": 100,
+    "temperature": 0.3
+  }'
+```
+
+**5. 路由行为说明**
+
+| `sensitivity` | 路由目标 | 对应模型 |
+|---------------|----------|----------|
+| `"high"` | 本地模型（数据敏感，不出网） | `default_local` |
+| `"low"` | 云端模型（能力强，低敏感任务） | `default_cloud` |
+
+云端模型不可达时，`sensitivity=low` 的请求会自动降级到本地模型。
+
+#### 3.4.2 使用 vLLM（高性能生产环境）
+
+```bash
+# .env
+LOCAL_LLM_ENDPOINT=http://<vllm-server-ip>:8000/v1
+LOCAL_LLM_DEFAULT_MODEL=qwen3-72b
+
+# models.yaml 中注册模型
+- id: "local:qwen3-72b"
+  provider: "vllm"
+  type: "local"
+  description: "Qwen3 72B via vLLM"
+```
+
+#### 3.4.3 不使用本地 LLM
+
+如果只使用 Anthropic Claude API，确保 `.env` 中：
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-xxxxx         # 填写有效的 API Key
+LOCAL_LLM_ENDPOINT=                     # 留空
+```
+
+`CLOUD_LLM_DEFAULT_MODEL` 默认使用 `claude-sonnet-4-6`。  
+没有本地 LLM 时，所有 `sensitivity=high` 请求将失败（建议在调用侧统一使用 `sensitivity=low`）。
 
 ### 3.5 启动服务
 
@@ -411,12 +530,41 @@ docker compose logs llm-router
 # 检查 Claude API 密钥
 grep ANTHROPIC_API_KEY .env
 
-# 检查本地 LLM 连通性
-curl -s http://<llm-server>:8000/v1/models
+# 检查本地 LLM 连通性（Ollama 端口 11434，vLLM 端口 8000）
+curl -s http://localhost:11434/v1/models      # Ollama
+curl -s http://<llm-server>:8000/v1/models   # vLLM
+
+# 验证 LLM Router 本身可达
+curl http://localhost:8004/health
+
+# 验证 LLM Router 已注册模型
+curl http://localhost:8004/internal/llm/models
 
 # 启用降级模式（Claude 不可达时自动切换本地 LLM）
 # 确认 LLM_ROUTER_HOST 和 LOCAL_LLM_ENDPOINT 配置正确
 ```
+
+**Ollama 特定问题排查**：
+
+```bash
+# Ollama 是否在运行
+pgrep -a ollama
+
+# Ollama 服务状态（macOS）
+launchctl list | grep ollama
+
+# 模型是否已拉取
+ollama list
+
+# 重启 Ollama
+killall ollama && ollama serve &
+```
+
+**本地 LLM 超时**：如果模型响应慢，增大 `.env` 中的 `LLM_REQUEST_TIMEOUT_S`（默认 120 秒）。 7B 模型在 CPU 上的首 token 延迟可能达 10-30 秒。<｜end▁of▁thinking｜>-
+
+<｜｜DSML｜｜tool_calls>
+<｜｜DSML｜｜invoke name="read_file">
+<｜｜DSML｜｜parameter name="filePath" string="true">/Users/onetreehill/EconAI/doc/operation.md
 
 ### 任务卡在 running 状态
 

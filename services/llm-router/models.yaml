@@ -28,23 +28,14 @@ models:
       - tool_use
       - streaming
 
-  - id: "local:qwen3-72b"
-    provider: "vllm"
+  - id: "local:qwen2.5-coder:7b"
+    provider: "ollama"
     type: "local"
-    description: "Qwen3 72B via vLLM"
+    description: "Qwen2.5-Coder 7B via Ollama"
     capabilities:
       - chat
       - tool_use
       - streaming
 
-  - id: "local:deepseek-v3"
-    provider: "vllm"
-    type: "local"
-    description: "DeepSeek V3 via vLLM"
-    capabilities:
-      - chat
-      - tool_use
-      - streaming
-
-default_local: "local:qwen3-72b"
+default_local: "local:qwen2.5-coder:7b"
 default_cloud: "claude-sonnet-4-6"

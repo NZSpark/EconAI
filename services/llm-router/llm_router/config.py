@@ -2,16 +2,31 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Locate the project-root .env file, regardless of where the process is started.
+# Priority: ENV_FILE env var > ../../.env (from this file's location) > .env (CWD)
+_ENV_FILE = Path(__file__).resolve().parent.parent.parent.parent / ".env"
+_ENV_FILE_PATH = _ENV_FILE if _ENV_FILE.exists() else Path(".env")
 
 
 class Settings(BaseSettings):
     """LLM Router service configuration.
 
     All values can be overridden via environment variables (uppercase).
+    In Docker, values come from the compose environment; locally, from the
+    project-root .env file.
     """
 
-    model_config = SettingsConfigDict(env_prefix="LLM_", case_sensitive=False)
+    model_config = SettingsConfigDict(
+        env_prefix="",
+        case_sensitive=False,
+        env_file=str(_ENV_FILE_PATH),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # Anthropic / Claude API
     anthropic_api_key: str = ""
