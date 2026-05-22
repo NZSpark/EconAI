@@ -647,6 +647,122 @@ curl http://localhost:8000/health
 
 ---
 
+## 11. 完全关闭与磁盘清理
+
+以下步骤将停止所有 Docker 服务和主机级进程，并清理磁盘空间。
+
+### 11.1 停止所有服务
+
+```bash
+# 1. 停止 Docker Compose 管理的所有服务
+./deploy/deploy.sh stop
+
+# 预期输出：18 个容器依次停止并移除网络
+```
+
+### 11.2 停止主机级进程
+
+如果使用 Ollama（非 Docker 方式运行）：
+
+```bash
+# 检查 Ollama 是否在运行
+pgrep -a ollama
+
+# 停止 Ollama
+killall ollama
+
+# 或通过 launchctl（macOS）
+launchctl unload ~/Library/LaunchAgents/com.ollama.ollama.plist 2>/dev/null
+```
+
+如果手动启动了 LLM Router（uvicorn）：
+
+```bash
+# 查找并终止占用 8004 端口的进程
+lsof -i :8004 -P -n -t | xargs kill
+```
+
+### 11.3 查看磁盘占用
+
+```bash
+# 查看 Docker 磁盘使用概况
+docker system df
+
+# 列出所有镜像及大小
+docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+# 列出所有 Docker 卷
+docker volume ls
+```
+
+### 11.4 删除 Docker 镜像（释放磁盘空间）
+
+> **注意**：删除后再次启动需要重新拉取镜像，需联网且耗时数分钟。
+
+```bash
+# 删除单个镜像
+docker rmi <image-name>:<tag>
+
+# 删除所有未使用的镜像
+docker image prune -a
+
+# 删除所有镜像（谨慎！）
+docker rmi $(docker images -q)
+```
+
+典型可删除的 EconAI 基础设施镜像：
+
+| 镜像 | 大小 | 说明 |
+|------|------|------|
+| `milvusdb/milvus:v2.4.0` | ~2 GB | Milvus 向量数据库 |
+| `postgres:16-alpine` | ~390 MB | PostgreSQL |
+| `quay.io/coreos/etcd:v3.5.5` | ~260 MB | Milvus 元数据协调 |
+| `minio/minio:latest` | ~230 MB | 对象存储 |
+| `minio/mc:latest` | ~110 MB | MinIO 客户端 |
+| `redis:7-alpine` | ~60 MB | Redis |
+
+### 11.5 清理 Docker 卷（可选，将删除所有数据）
+
+> **危险操作**：卷中包含数据库、向量索引和上传文件。确认不需要数据后再执行。
+
+```bash
+# 查看 EconAI 相关卷
+docker volume ls --filter "name=econai"
+
+# 删除所有 EconAI 卷（数据不可恢复！）
+docker volume rm econai-etcd-data econai-milvus-data \
+                econai-minio-data econai-postgres-data \
+                econai-redis-data
+
+# 或删除所有未使用的卷
+docker volume prune
+```
+
+### 11.6 完全清理（一键）
+
+```bash
+# 停止并清理所有 EconAI 相关资源
+./deploy/deploy.sh stop
+docker image prune -a --force
+docker volume prune --force
+
+# 如果是开发环境，确认后执行
+docker system prune -a --volumes --force
+```
+
+### 11.7 重新启动
+
+```bash
+# 如果需要重新启动系统（镜像会自动拉取）
+./deploy/deploy.sh start
+
+# 如果使用 Ollama
+ollama serve &
+ollama pull qwen2.5-coder:7b
+```
+
+---
+
 ## 快速参考
 
 | 操作 | 命令 |
@@ -657,6 +773,9 @@ curl http://localhost:8000/health
 | 状态 | `./deploy/deploy.sh status` |
 | 日志 | `./deploy/deploy.sh logs [service]` |
 | 构建 | `./deploy/deploy.sh build` |
+| 查看磁盘占用 | `docker system df` |
+| 删除所有镜像 | `docker rmi $(docker images -q)` |
+| 清理未使用资源 | `docker system prune -a` |
 | 进入 PostgreSQL | `docker exec -it econai-postgres psql -U econai` |
 | 进入 Redis | `docker exec -it econai-redis redis-cli -a <password>` |
 | API 健康检查 | `curl http://localhost:8000/health` |
