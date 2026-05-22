@@ -10,7 +10,10 @@ from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
-from shared.models import ErrorDetail, ErrorResponse, Message, TaskStatus, TaskType
+from shared.models import ErrorDetail, ErrorResponse, Message, TaskType
+from shared.models import TaskStatus as TaskStatusEnum
+
+TaskStatus = TaskStatusEnum
 
 # ── Local enum (orchestration-specific) ────────────────────────────────────
 
@@ -299,3 +302,42 @@ class SensitivityResult(BaseModel):
 
 
 # ErrorDetail, ErrorResponse — imported from shared.models
+
+__all__ = [
+    # Local
+    "LLMPreference",
+    "KBSources",
+    "AnalysisParams",
+    "CreateTaskRequest",
+    "CreateTaskResponse",
+    "ProgressDetails",
+    "TaskProgress",
+    "TaskListItem",
+    "TaskListResponse",
+    "TaskDetailResponse",
+    "TaskStatusResponse",
+    "CitationItem",
+    "OutputPreviewResponse",
+    "CitationDetailResponse",
+    "ChunkInfo",
+    "SectionInfo",
+    "CitationInfo",
+    "ToolCallRecord",
+    "AgentStateData",
+    "ToolParameterSchema",
+    "ToolDefinition",
+    "SearchKBResult",
+    "GenerateSectionResult",
+    "VerifyCitationsResult",
+    "ExtractClaimsResult",
+    "ComparePoliciesResult",
+    "FormatOutputResult",
+    "SensitivityResult",
+    # Re-exports from shared.models
+    "Message",
+    "TaskType",
+    "TaskStatus",
+    "TaskStatusEnum",
+    "ErrorDetail",
+    "ErrorResponse",
+]

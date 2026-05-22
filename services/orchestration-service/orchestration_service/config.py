@@ -2,20 +2,18 @@
 
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings
+from shared.config import AppSettings
 
 
-class OrchestrationSettings(BaseSettings):
-    """Task Orchestration Service configuration."""
+class OrchestrationSettings(AppSettings):
+    """Task Orchestration Service configuration — inherits common DB/Redis/JWT from AppSettings."""
 
     # Service identity
     service_name: str = "orchestration-service"
     service_port: int = 8003
 
-    # Database
+    # Override parent computed properties with direct defaults for Docker compatibility
     database_url: str = "postgresql+asyncpg://econai:econai_secret_change_me@localhost:5432/econai"
-
-    # Redis / Celery
     redis_url: str = "redis://localhost:6379/0"
     celery_orchestration_queue: str = "orchestration"
 
@@ -37,7 +35,7 @@ class OrchestrationSettings(BaseSettings):
     # Default output formats
     default_output_formats: list[str] = ["md", "docx"]
 
-    model_config = {"env_prefix": "ORCH_", "case_sensitive": False}
+    model_config = {"case_sensitive": False, "env_prefix": "ORCH_"}
 
 
 @lru_cache

@@ -92,7 +92,12 @@ class PaginatedResponse[T](BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Health check response shared across all services."""
+    """Health check response — shared across all services.
+
+    Allows extra fields so services can include dependency status and config info.
+    """
+
+    model_config = {"extra": "allow"}
 
     status: str
     service: str

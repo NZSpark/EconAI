@@ -104,7 +104,15 @@ def _generate_id() -> str:
 @app.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
     """Health check endpoint."""
-    return HealthResponse(status="ok", service=config.SERVICE_NAME)
+    return HealthResponse(
+        status="ok",
+        service=config.SERVICE_NAME,
+        dependencies={
+            "minio_endpoint": config.MINIO_ENDPOINT,
+            "minio_bucket": config.MINIO_BUCKET,
+            "ocr_enabled": config.OCR_ENABLED,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

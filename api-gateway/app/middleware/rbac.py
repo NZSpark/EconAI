@@ -4,18 +4,21 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+from shared.models import UserRole as Role
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from app.errors.handlers import to_error_response
 
-
-class Role(StrEnum):
-    analyst = "analyst"
-    senior_researcher = "senior_researcher"
-    project_admin = "project_admin"
-    system_admin = "system_admin"
+__all__ = [
+    "Operation",
+    "PERMISSION_MATRIX",
+    "Role",
+    "check_permission",
+    "get_required_operation",
+    "RBACMiddleware",
+]
 
 
 class Operation(StrEnum):

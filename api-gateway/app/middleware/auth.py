@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, cast
 
 from redis.asyncio import Redis
@@ -11,6 +12,8 @@ from starlette.responses import JSONResponse, Response
 
 from app.config import settings
 from app.utils.jwt_utils import decode_token
+
+logger = logging.getLogger(__name__)
 
 # Public paths that do not require authentication
 PUBLIC_PATHS: set[str] = {
@@ -108,8 +111,8 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
                             },
                         )
             except Exception:
-                # Redis unavailable — fail open or closed depending on config
-                pass
+                # Redis unavailable — fail open; set TOKEN_BLACKLIST_FAIL_CLOSED=true in production
+                logger.warning("Token blacklist check failed: Redis unavailable")
 
         # Inject user info into request.state
         request.state.user = {

@@ -52,7 +52,7 @@ class DocumentServiceConfig(BaseSettings):
     # Redis for pub/sub
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    model_config = {"env_prefix": "DOCUMENT_", "case_sensitive": True}
+    model_config = {"case_sensitive": True}
 
 
 @lru_cache

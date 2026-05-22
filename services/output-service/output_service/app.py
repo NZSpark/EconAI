@@ -16,10 +16,10 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from shared.models import ErrorResponse
 
 from output_service.config import config as cfg
 from output_service.format_router import EXTENSION_MAP, FormatRouter
-from shared.models import ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
 
@@ -115,9 +115,17 @@ class GenerateResponse(BaseModel):
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
+async def health() -> dict[str, object]:
     """Health check endpoint."""
-    return {"status": "ok", "service": cfg.SERVICE_NAME}
+    return {
+        "status": "ok",
+        "service": cfg.SERVICE_NAME,
+        "config": {
+            "minio_bucket": cfg.MINIO_BUCKET,
+            "output_storage_path": cfg.OUTPUT_STORAGE_PATH,
+            "docx_default_font": cfg.DOCX_DEFAULT_FONT,
+        },
+    }
 
 
 # ---------------------------------------------------------------------------

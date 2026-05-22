@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -84,7 +85,7 @@ def _make_mock_proxy() -> MagicMock:
 
 
 @pytest.fixture
-def test_app(mock_settings: Settings, mock_redis: AsyncMock) -> FastAPI:
+def test_app(mock_settings: Settings, mock_redis: AsyncMock) -> Generator[FastAPI, None, None]:
     """Create a FastAPI test app with all middleware and mock dependencies.
 
     Patches settings in all modules that cache their own reference to
@@ -188,4 +189,4 @@ def expired_token(mock_settings: Settings) -> str:
         "jti": "expired-jti",
         "type": "access",
     }
-    return jwt.encode(payload, mock_settings.jwt_secret, algorithm=mock_settings.jwt_algorithm)
+    return jwt.encode(payload, mock_settings.jwt_secret, algorithm=mock_settings.jwt_algorithm)  # type: ignore[no-any-return]

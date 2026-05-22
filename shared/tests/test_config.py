@@ -48,5 +48,5 @@ class TestAppSettings:
 
     def test_extra_fields_allowed(self) -> None:
         """Extra fields should be allowed (extra=allow)."""
-        settings = AppSettings(some_custom_key="value")  # type: ignore[call-arg]
+        settings = AppSettings(some_custom_key="value")
         assert settings.some_custom_key == "value"  # type: ignore[attr-defined]

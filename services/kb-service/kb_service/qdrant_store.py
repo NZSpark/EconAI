@@ -31,8 +31,8 @@ class QdrantVectorStore(VectorStore):
         if self._client is not None:
             return
         try:
-            from qdrant_client import QdrantClient  # type: ignore[import-untyped]
-            from qdrant_client.models import Distance, VectorParams  # type: ignore[import-untyped]
+            from qdrant_client import QdrantClient
+            from qdrant_client.models import Distance, VectorParams
 
             self._client = QdrantClient(host=self._host, port=self._port)
 
@@ -59,7 +59,7 @@ class QdrantVectorStore(VectorStore):
         vector: list[float],
         metadata: dict[str, Any],
     ) -> None:
-        from qdrant_client.models import PointStruct  # type: ignore[import-untyped]
+        from qdrant_client.models import PointStruct
 
         await self._ensure_connected()
         self._client.upsert(
@@ -71,7 +71,7 @@ class QdrantVectorStore(VectorStore):
         self,
         entries: list[tuple[str, list[float], dict[str, Any]]],
     ) -> None:
-        from qdrant_client.models import PointStruct  # type: ignore[import-untyped]
+        from qdrant_client.models import PointStruct
 
         await self._ensure_connected()
         points = [
@@ -86,7 +86,7 @@ class QdrantVectorStore(VectorStore):
         top_k: int = 50,
         filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        from qdrant_client.models import FieldCondition, Filter, MatchValue  # type: ignore[import-untyped]
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         await self._ensure_connected()
         qdrant_filter = None
@@ -115,7 +115,7 @@ class QdrantVectorStore(VectorStore):
         ]
 
     async def delete_by_document(self, document_id: str) -> int:
-        from qdrant_client.models import FieldCondition, Filter, MatchValue  # type: ignore[import-untyped]
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         await self._ensure_connected()
         result = self._client.delete(
@@ -127,7 +127,7 @@ class QdrantVectorStore(VectorStore):
         return result.status.get("deleted_count", 0) if result else 0
 
     async def delete_by_project(self, project_id: str) -> int:
-        from qdrant_client.models import FieldCondition, Filter, MatchValue  # type: ignore[import-untyped]
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         await self._ensure_connected()
         result = self._client.delete(

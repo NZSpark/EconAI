@@ -23,7 +23,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(
         String(64), unique=True, nullable=False, index=True
     )
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     role: Mapped[str] = mapped_column(String(32), nullable=False, default="analyst")
     auth_provider: Mapped[str] = mapped_column(

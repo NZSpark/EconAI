@@ -95,8 +95,24 @@ app.add_middleware(
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok", "service": "kb-service"}
+async def health() -> dict[str, object]:
+    """Health check — reports service status and initialized components."""
+    deps_status: dict[str, str] = {}
+    deps_status["hybrid_searcher"] = "initialized" if _searcher is not None else "missing"
+    deps_status["index_pipeline"] = "initialized" if _pipeline is not None else "missing"
+    deps_status["lifecycle_manager"] = "initialized" if _lifecycle is not None else "missing"
+
+    return {
+        "status": "healthy" if all(v == "initialized" for v in deps_status.values()) else "degraded",
+        "service": "kb-service",
+        "config": {
+            "vector_db_type": settings.vector_db_type,
+            "embedding_dim": settings.embedding_dim,
+            "embedding_model": settings.embedding_model,
+            "reranker_enabled": settings.reranker_enabled,
+        },
+        "dependencies": deps_status,
+    }
 
 
 # ── Permission helpers ──────────────────────────────────────────────────────
@@ -288,5 +304,5 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     logger.exception("Unhandled exception in KB Service")
     return JSONResponse(
         status_code=500,
-        content={"error": {"code": "KB_INTERNAL_ERROR", "message": str(exc)}},
+        content={"error": {"code": "KB_INTERNAL_ERROR", "message": "An internal error occurred. Please try later."}},
     )

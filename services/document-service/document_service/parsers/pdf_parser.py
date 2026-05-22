@@ -39,7 +39,7 @@ class PDFParser(BaseParser):
             for level, title, page in toc:
                 sections.append(SectionInfo(title=title, level=level, page_start=page))
         except Exception:
-            pass  # No TOC available
+            logger.warning("Failed to extract PDF table of contents", exc_info=True)
 
         for page_num in range(len(doc)):
             page = doc[page_num]
@@ -66,7 +66,9 @@ class PDFParser(BaseParser):
                         }
                         all_tables.append(table_data)
             except Exception:
-                pass  # Table extraction is best-effort
+                logger.warning(
+                    "PDF table extraction failed on page %d of %s", page_num + 1, filename, exc_info=True
+                )
 
             full_text_parts.append(page_text)
 

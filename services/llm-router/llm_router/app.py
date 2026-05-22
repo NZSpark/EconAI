@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from shared.models import ErrorDetail
 
 from llm_router.adapters import (
     AdapterAuthError,
@@ -40,7 +41,6 @@ from llm_router.models.schemas import (
     RoutingInfo,
     UsageAggregation,
 )
-from shared.models import ErrorDetail
 from llm_router.routing import CircuitBreaker, RoutingDecision, RoutingEngine
 from llm_router.tracker import TokenUsageTracker
 
@@ -125,8 +125,18 @@ app.add_middleware(
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, object]:
+    """Health check — reports router configuration."""
+    return {
+        "status": "ok",
+        "service": "llm-router",
+        "config": {
+            "local_model": settings.local_llm_default_model,
+            "cloud_model": settings.cloud_llm_default_model,
+            "request_timeout_s": settings.llm_request_timeout_s,
+            "circuit_breaker_enabled": settings.circuit_breaker_failure_threshold > 0,
+        },
+    }
 
 
 # ── Model list ───────────────────────────────────────────────────────────

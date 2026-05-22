@@ -5,8 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from kb_service.config import settings
-
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +19,7 @@ class Reranker:
         if self._model is not None:
             return self._model
         try:
-            from FlagEmbedding import FlagReranker  # type: ignore[import-untyped]
+            from FlagEmbedding import FlagReranker
 
             self._model = FlagReranker(self._model_name, use_fp16=True)
             logger.info("Loaded BGE-Reranker model: %s", self._model_name)

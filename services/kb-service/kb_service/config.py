@@ -2,20 +2,18 @@
 
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings
+from shared.config import AppSettings
 
 
-class KBSettings(BaseSettings):
-    """Knowledge Base Service configuration."""
+class KBSettings(AppSettings):
+    """Knowledge Base Service configuration — inherits common DB/Redis/JWT from AppSettings."""
 
     # Service identity
     service_name: str = "kb-service"
     service_port: int = 8002
 
-    # Database
+    # Override parent computed properties with direct defaults for Docker compatibility
     database_url: str = "postgresql+asyncpg://econai:econai_secret_change_me@localhost:5432/econai"
-
-    # Redis
     redis_url: str = "redis://localhost:6379/0"
 
     # Vector DB

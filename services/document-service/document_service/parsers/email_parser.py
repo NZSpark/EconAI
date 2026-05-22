@@ -57,7 +57,7 @@ class EmailParser(BaseParser):
                         if isinstance(payload_bytes, bytes):
                             body_text += payload_bytes.decode("utf-8", errors="replace") + "\n"
                     except Exception:
-                        pass
+                        logger.warning("Failed to decode email payload part", exc_info=True)
         else:
             try:
                 body_text = str(msg.get_content())

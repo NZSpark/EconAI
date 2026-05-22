@@ -54,10 +54,10 @@ def identify_format(magic_bytes: bytes, extension: str) -> DocumentFormat:
             return fmt  # PDF has distinct magic bytes
 
     # No magic byte match — use extension fallback
-    fmt = EXTENSION_FORMAT_MAP.get(extension)
-    if fmt is None:
+    fallback_fmt: DocumentFormat | None = EXTENSION_FORMAT_MAP.get(extension)
+    if fallback_fmt is None:
         raise ValueError(f"Cannot identify format for extension '{extension}'")
-    return fmt
+    return fallback_fmt
 
 
 def detect_pdf_text_layer(file_data: bytes) -> bool:

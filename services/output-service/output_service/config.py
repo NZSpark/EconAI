@@ -32,7 +32,7 @@ class OutputServiceConfig(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://econai:econai_secret_change_me@localhost:5432/econai"
 
-    model_config = {"env_prefix": "OUTPUT_", "case_sensitive": True}
+    model_config = {"case_sensitive": True}
 
 
 config = OutputServiceConfig()

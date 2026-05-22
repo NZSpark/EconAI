@@ -194,3 +194,26 @@ class ReindexResponse(BaseModel):
 
 
 # HealthResponse, IndexEvent, ErrorDetail, ErrorResponse — imported from shared.models
+
+__all__ = [
+    "ALLOWED_EXTENSIONS",
+    "ALLOWED_MIME_TYPES",
+    "ChunkRecord",
+    "DocumentDetailResponse",
+    "DocumentFormat",
+    "DocumentListItem",
+    "DocumentListResponse",
+    "DocumentMetadata",
+    "DocumentUploadResponse",
+    "ErrorDetail",
+    "ErrorResponse",
+    "EXTENSION_FORMAT_MAP",
+    "HealthResponse",
+    "IndexEvent",
+    "MAGIC_BYTES",
+    "PageContent",
+    "PaginatedResponse",
+    "ParsedContent",
+    "ReindexResponse",
+    "SectionInfo",
+]

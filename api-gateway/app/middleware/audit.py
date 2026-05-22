@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -12,6 +13,8 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 AUDIT_CHANNEL = "audit:log"
 
@@ -204,4 +207,4 @@ class AuditMiddleware(BaseHTTPMiddleware):
             await redis.publish(AUDIT_CHANNEL, json.dumps(event))
         except Exception:
             # Audit is best-effort; suppress errors
-            pass
+            logger.warning("Failed to publish audit event to Redis", exc_info=True)

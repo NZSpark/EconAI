@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, Field
-from shared.models import ErrorResponse, HealthResponse, IndexEvent
+from shared.models import ErrorDetail, ErrorResponse, HealthResponse, IndexEvent
 
 
 class SearchFilters(BaseModel):
@@ -62,3 +62,17 @@ class IndexStatusResponse(BaseModel):
 
 
 # HealthResponse, IndexEvent, ErrorResponse — imported from shared.models
+
+__all__ = [
+    "SearchFilters",
+    "SearchRequest",
+    "InternalSearchRequest",
+    "ChunkResult",
+    "SearchResponse",
+    "IndexStatusResponse",
+    # Re-exports
+    "HealthResponse",
+    "IndexEvent",
+    "ErrorDetail",
+    "ErrorResponse",
+]

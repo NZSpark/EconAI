@@ -51,8 +51,9 @@ class RoutingInfo(BaseModel):
     """Information about the routing decision."""
 
     target: str  # cloud | local
-    reason: str
-    model_used: str
+    reason: str = ""
+    model_used: str = ""
+    fallback_used: bool = False
 
 
 class Choice(BaseModel):
@@ -81,6 +82,7 @@ class ModelInfo(BaseModel):
     type: str  # cloud | local | auto
     description: str
     capabilities: list[str] = Field(default_factory=list)
+    sensitivity: str = "low"
 
 
 class ModelsResponse(BaseModel):
@@ -89,9 +91,6 @@ class ModelsResponse(BaseModel):
     models: list[ModelInfo]
     default_local: str
     default_cloud: str
-
-
-# ErrorResponse, ErrorDetail, Message — imported from shared.models
 
 
 class UsageLogEntry(BaseModel):
@@ -119,3 +118,24 @@ class UsageAggregation(BaseModel):
     avg_latency_ms: float = 0.0
     by_model: dict[str, Usage] = Field(default_factory=dict)
     by_routing: dict[str, Usage] = Field(default_factory=dict)
+
+
+# ErrorResponse, ErrorDetail, Message — imported from shared.models
+
+__all__ = [
+    "FunctionDef",
+    "ToolDef",
+    "ChatRequest",
+    "Usage",
+    "RoutingInfo",
+    "Choice",
+    "ChatResponse",
+    "ModelInfo",
+    "ModelsResponse",
+    "UsageLogEntry",
+    "UsageAggregation",
+    # Re-exports
+    "ErrorDetail",
+    "ErrorResponse",
+    "Message",
+]

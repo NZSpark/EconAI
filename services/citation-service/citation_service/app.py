@@ -15,6 +15,7 @@ from typing import Annotated, Any
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
+from shared.models import ErrorResponse
 
 from citation_service.config import config as cfg
 from citation_service.formatter import (
@@ -27,7 +28,6 @@ from citation_service.verifier import (
     VerificationResult,
     VerifiedCitation,
 )
-from shared.models import ErrorDetail, ErrorResponse
 
 # ---------------------------------------------------------------------------
 # FastAPI application
@@ -201,9 +201,17 @@ def _verification_result_to_citations(result: VerificationResult) -> list[dict[s
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
+async def health() -> dict[str, object]:
     """Health check endpoint."""
-    return {"status": "ok", "service": cfg.SERVICE_NAME}
+    return {
+        "status": "ok",
+        "service": cfg.SERVICE_NAME,
+        "config": {
+            "similarity_threshold": cfg.CITATION_SIMILARITY_THRESHOLD,
+            "verify_batch_size": cfg.CITATION_VERIFY_BATCH_SIZE,
+            "format": "footnote" if cfg.CITATION_FORMAT_FOOTNOTE else "endnote",
+        },
+    }
 
 
 # ---------------------------------------------------------------------------

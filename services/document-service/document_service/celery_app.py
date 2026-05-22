@@ -53,7 +53,7 @@ celery_app = create_celery_app()
 
 
 # Register the document processing task
-@celery_app.task(bind=True, max_retries=0, name="process_document")  # type: ignore[untyped-decorator]
+@celery_app.task(bind=True, max_retries=0, name="process_document")
 def process_document_task(
     self: Any,
     document_id: str,

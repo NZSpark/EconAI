@@ -11,7 +11,7 @@ from kb_service.bm25 import BM25Searcher, InMemoryBM25Searcher
 from kb_service.config import settings
 from kb_service.embedding import EmbeddingClient, MockEmbeddingClient
 from kb_service.reranker import NoopReranker, Reranker
-from kb_service.vector_store import InMemoryVectorStore, VectorStore
+from kb_service.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 

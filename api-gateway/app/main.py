@@ -121,11 +121,13 @@ def create_app() -> FastAPI:
     # 3. Rate Limiting (per-IP first, then per-user after JWT sets request.state.user)
     app.add_middleware(RateLimitMiddleware)
 
-    # 4. JWT Authentication (sets request.state.user before downstream middleware)
-    app.add_middleware(JWTAuthMiddleware)
-
-    # 5. RBAC (reads request.state.user set by JWT; must be after JWT)
+    # 4. RBAC (reads request.state.user set by JWT)
+    #    ⚠️ Must be added BEFORE JWTAuthMiddleware so it wraps after it
+    #    (Starlette processes add_middleware in reverse — last added runs first)
     app.add_middleware(RBACMiddleware)
+
+    # 5. JWT Authentication (sets request.state.user)
+    app.add_middleware(JWTAuthMiddleware)
 
     # 6. Audit Logging (wraps request to capture execution)
     app.add_middleware(AuditMiddleware)

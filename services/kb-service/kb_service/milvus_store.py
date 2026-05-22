@@ -31,7 +31,7 @@ class MilvusVectorStore(VectorStore):
         if self._connected:
             return
         try:
-            from pymilvus import (  # type: ignore[import-untyped]
+            from pymilvus import (
                 Collection,
                 CollectionSchema,
                 DataType,

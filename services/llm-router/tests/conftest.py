@@ -32,6 +32,7 @@ def sample_models() -> list[ModelInfo]:
             type="auto",
             description="auto-routing",
             capabilities=["chat", "tool_use"],
+            sensitivity="auto",
         ),
         ModelInfo(
             id="claude-sonnet-4-6",
@@ -39,6 +40,7 @@ def sample_models() -> list[ModelInfo]:
             type="cloud",
             description="Claude Sonnet 4.6",
             capabilities=["chat", "tool_use", "streaming"],
+            sensitivity="high",
         ),
         ModelInfo(
             id="local:qwen3-72b",
@@ -46,6 +48,7 @@ def sample_models() -> list[ModelInfo]:
             type="local",
             description="Qwen3 72B",
             capabilities=["chat", "tool_use", "streaming"],
+            sensitivity="low",
         ),
         ModelInfo(
             id="local:deepseek-v3",
@@ -53,6 +56,7 @@ def sample_models() -> list[ModelInfo]:
             type="local",
             description="DeepSeek V3",
             capabilities=["chat", "tool_use", "streaming"],
+            sensitivity="low",
         ),
     ]
 

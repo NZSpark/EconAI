@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from fastapi.testclient import TestClient
 
 from app.middleware.rbac import (
     PERMISSION_MATRIX,
@@ -149,7 +150,7 @@ class TestRBACIntegration:
     """Integration-level RBAC tests via the test app."""
 
     def test_analyst_cannot_create_project(
-        self, client, analyst_token: str
+        self, client: TestClient, analyst_token: str
     ) -> None:
         """Analyst should not be able to create projects."""
         response = client.post(
@@ -162,7 +163,7 @@ class TestRBACIntegration:
         assert data["error"]["code"] == "USER_PERMISSION_DENIED"
 
     def test_admin_can_manage_users(
-        self, client, admin_token: str
+        self, client: TestClient, admin_token: str
     ) -> None:
         """System admin should be able to access admin endpoints."""
         response = client.get(
@@ -173,7 +174,7 @@ class TestRBACIntegration:
         assert response.status_code == 200
 
     def test_analyst_cannot_access_admin(
-        self, client, analyst_token: str
+        self, client: TestClient, analyst_token: str
     ) -> None:
         """Analyst should be denied on admin endpoints."""
         response = client.get(
@@ -183,7 +184,7 @@ class TestRBACIntegration:
         assert response.status_code == 403
 
     def test_researcher_can_create_task(
-        self, client, access_token: str
+        self, client: TestClient, access_token: str
     ) -> None:
         """Senior researcher should be able to create tasks."""
         response = client.post(
@@ -195,7 +196,7 @@ class TestRBACIntegration:
         assert response.status_code == 200
 
     def test_analyst_cannot_view_audit(
-        self, client, analyst_token: str
+        self, client: TestClient, analyst_token: str
     ) -> None:
         """Analyst should be denied on audit log access."""
         response = client.get(

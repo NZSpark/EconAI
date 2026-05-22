@@ -100,8 +100,24 @@ app.add_middleware(
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok", "service": settings.service_name}
+async def health() -> dict[str, object]:
+    """Health check — reports agent configuration and defaults."""
+    return {
+        "status": "ok",
+        "service": settings.service_name,
+        "config": {
+            "agent_max_iterations": settings.agent_max_iterations,
+            "agent_tool_timeout_s": settings.agent_tool_timeout_s,
+            "task_timeout_minutes": settings.task_timeout_minutes,
+            "default_output_formats": settings.default_output_formats,
+        },
+        "dependencies": {
+            "llm_router": settings.llm_router_url,
+            "kb_service": settings.kb_service_url,
+            "citation_service": settings.citation_service_url,
+            "output_service": settings.output_service_url,
+        },
+    }
 
 
 # ── Helper: build task detail ───────────────────────────────────────────────

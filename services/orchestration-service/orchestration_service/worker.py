@@ -31,7 +31,7 @@ app.conf.update(
 )
 
 
-@app.task(name="orchestration.run_agent", bind=True)  # type: ignore[untyped-decorator]
+@app.task(name="orchestration.run_agent", bind=True)
 def run_agent_task(self: object, task_id: str) -> dict[str, str]:
     """Celery task wrapper for the Agent loop."""
     logger.info("Celery task started for task_id=%s", task_id)
@@ -47,11 +47,11 @@ def run_agent_task(self: object, task_id: str) -> dict[str, str]:
     return {"task_id": task_id, "status": "completed"}
 
 
-@task_prerun.connect  # type: ignore[untyped-decorator]
+@task_prerun.connect
 def on_task_prerun(task_id: str | None = None, task: object | None = None, **kwargs: object) -> None:
     logger.info("Celery task starting: %s", task_id)
 
 
-@task_failure.connect  # type: ignore[untyped-decorator]
+@task_failure.connect
 def on_task_failure(task_id: str | None = None, exception: Exception | None = None, **kwargs: object) -> None:
     logger.error("Celery task failed: %s — %s", task_id, exception)

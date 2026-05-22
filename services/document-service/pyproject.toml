@@ -49,6 +49,7 @@ python_version = "3.12"
 ignore_missing_imports = true
 disallow_untyped_decorators = false
 disable_error_code = ["misc", "no-any-return"]
+plugins = "pydantic.mypy"
 
 [tool.ruff]
 target-version = "py312"

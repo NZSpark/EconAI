@@ -1,102 +1,48 @@
-"""MinIO output storage client (M7-04).
-
-Handles upload, download, presigned URL generation for generated output files.
-"""
+"""MinIO output storage client — delegates to shared.minio_client for output service."""
 
 from __future__ import annotations
 
-import io
 import logging
-from datetime import timedelta
 
-from minio import Minio
-from minio.error import S3Error
+from shared.minio_client import MinIOClient, MinIOConfig
 
 from output_service.config import config
 
 logger = logging.getLogger(__name__)
 
-_client: Minio | None = None
+_cfg = MinIOConfig(
+    endpoint=config.MINIO_ENDPOINT,
+    access_key=config.MINIO_ACCESS_KEY,
+    secret_key=config.MINIO_SECRET_KEY,
+    bucket=config.MINIO_BUCKET,
+    secure=config.MINIO_SECURE,
+)
+_client = MinIOClient(_cfg)
 
 
-def get_minio_client() -> Minio:
-    """Get or create a MinIO client singleton."""
-    global _client
-    if _client is None:
-        _client = Minio(
-            endpoint=config.MINIO_ENDPOINT,
-            access_key=config.MINIO_ACCESS_KEY,
-            secret_key=config.MINIO_SECRET_KEY,
-            secure=config.MINIO_SECURE,
-        )
-        _ensure_bucket(_client)
+def get_minio_client() -> MinIOClient:
+    """Get the output-service MinIO client."""
     return _client
 
 
 def reset_minio_client() -> None:
-    """Reset the singleton client (for testing)."""
-    global _client
-    _client = None
-
-
-def _ensure_bucket(client: Minio) -> None:
-    """Ensure the configured bucket exists."""
-    try:
-        if not client.bucket_exists(config.MINIO_BUCKET):
-            client.make_bucket(config.MINIO_BUCKET)
-            logger.info("Created MinIO bucket: %s", config.MINIO_BUCKET)
-    except S3Error as e:
-        logger.error("Failed to check/create MinIO bucket: %s", e)
-        raise
+    """Reset the client singleton (for testing)."""
+    _client.reset()
 
 
 def upload_file(file_data: bytes, object_path: str, content_type: str = "application/octet-stream") -> str:
     """Upload file bytes to MinIO. Returns the object_path."""
-    client = get_minio_client()
-    try:
-        client.put_object(
-            bucket_name=config.MINIO_BUCKET,
-            object_name=object_path,
-            data=io.BytesIO(file_data),
-            length=len(file_data),
-            content_type=content_type,
-        )
-        logger.info("Uploaded output to MinIO: %s", object_path)
-        return object_path
-    except S3Error as e:
-        logger.error("Failed to upload to MinIO: %s", e)
-        raise
+    return _client.upload_file(file_data, object_path, content_type)
 
 
 def download_file(object_path: str) -> bytes:
     """Download file bytes from MinIO."""
-    client = get_minio_client()
-    try:
-        response = client.get_object(
-            bucket_name=config.MINIO_BUCKET,
-            object_name=object_path,
-        )
-        data = response.read()
-        response.close()
-        response.release_conn()
-        return data
-    except S3Error as e:
-        logger.error("Failed to download from MinIO: %s", e)
-        raise
+    return _client.download_file(object_path)
 
 
 def get_presigned_url(object_path: str, expires: int = 3600) -> str:
     """Generate a presigned URL for temporary access."""
-    client = get_minio_client()
-    try:
-        return client.presigned_get_object(
-            bucket_name=config.MINIO_BUCKET,
-            object_name=object_path,
-            expires=timedelta(seconds=expires),
-        )
-    except S3Error as e:
-        logger.error("Failed to generate presigned URL: %s", e)
-        raise
+    return _client.get_presigned_url(object_path, expires)
 
 
 def generate_output_path(task_id: str, format_name: str) -> str:

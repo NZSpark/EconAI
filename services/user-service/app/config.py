@@ -1,11 +1,15 @@
-"""EconAI User & Permission Service (M8) — configuration management."""
+"""EconAI User & Permission Service (M8) — configuration management.
+
+Inherits common DB/Redis/JWT defaults from shared.config.AppSettings.
+"""
 
 from __future__ import annotations
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
+from shared.config import AppSettings
 
 
-class Settings(BaseSettings):
+class Settings(AppSettings):
     """Application settings loaded from environment variables and .env file."""
 
     model_config = SettingsConfigDict(
@@ -19,12 +23,11 @@ class Settings(BaseSettings):
     port: int = 8007
 
     # ——— Database ———
+    # Override parent computed properties with direct defaults
     database_url: str = "postgresql+asyncpg://econai:econai@localhost:5432/econai"
     database_url_sync: str = "postgresql+psycopg2://econai:econai@localhost:5432/econai"
 
-    # ——— JWT ———
-    jwt_secret: str = "change-me-in-production"
-    jwt_algorithm: str = "HS256"
+    # ——— JWT (jwt_secret, jwt_algorithm inherited from AppSettings) ———
     jwt_access_expire_minutes: int = 120
     jwt_refresh_expire_hours: int = 24
 

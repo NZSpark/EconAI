@@ -27,9 +27,9 @@ def _setup_isolation_test_data() -> None:
     emb = MockEmbeddingClient(dim=768)
     bm25 = InMemoryBM25Searcher()
 
-    app_module._vector_store = vs
-    app_module._embedding = emb
-    app_module._bm25 = bm25
+    app_module._vector_store = vs  # type: ignore[attr-defined]
+    app_module._embedding = emb  # type: ignore[attr-defined]
+    app_module._bm25 = bm25  # type: ignore[attr-defined]
     app_module._searcher = HybridSearcher(vector_store=vs, embedding_client=emb, bm25_searcher=bm25)
     app_module._pipeline = IndexPipeline(vector_store=vs, embedding_client=emb, bm25_searcher=bm25)
     app_module._lifecycle = LifecycleManager(app_module._pipeline)

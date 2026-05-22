@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from typing import Any
 
 from citation_service.parser import CitationParserResult, CitationRef
 
@@ -194,7 +195,6 @@ async def compute_text_similarity_with_embeddings(
         return compute_text_similarity(text_a, text_b)
 
     try:
-        from typing import Any as _Any
 
         vectors = await embed_fn([text_a, text_b])
         if len(vectors) >= 2:

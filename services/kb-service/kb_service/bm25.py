@@ -83,7 +83,7 @@ class BM25Searcher:
         top_k: int,
     ) -> tuple[str, list[Any]]:
         params: list[Any] = [tsquery]
-        fts_cond = f"to_tsvector('simple', content) @@ to_tsquery('simple', $1)"
+        fts_cond = "to_tsvector('simple', content) @@ to_tsquery('simple', $1)"
         where = " AND ".join([fts_cond] + conditions)
         sql = f"""
             SELECT
@@ -115,7 +115,7 @@ class BM25Searcher:
         params: list[Any] = [query]
         # word_similarity() scores how well the query matches substrings in content.
         # The gin_trgm_ops index on content supports the %> operator efficiently.
-        trgm_cond = f"content %> $1"
+        trgm_cond = "content %> $1"
         where = " AND ".join([trgm_cond] + conditions)
         sql = f"""
             SELECT
@@ -161,7 +161,6 @@ class BM25Searcher:
             params[1:1] = extra_params
             # Fix param indices in merged params — _build_trgm_sql returns
             # [query, top_k], extra_params are for conditions starting at $2
-            param_strs = [f"${i}" for i in range(1, len(params) + 1)]
             logger.debug("BM25 using pg_trgm path (CJK detected)")
         else:
             tokens = query.split()

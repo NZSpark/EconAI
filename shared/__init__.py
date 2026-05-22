@@ -1,7 +1,8 @@
-"""EconAI shared package — common models, config loader, and structured logging."""
+"""EconAI shared package — common models, config loader, structured logging, and MinIO client."""
 
 from shared.config import AppSettings, get_settings
 from shared.log_setup import setup_logging
+from shared.minio_client import MinIOClient, MinIOConfig
 from shared.models import (
     CitationConfidence,
     DocumentFormat,
@@ -27,6 +28,8 @@ __all__ = [
     "HealthResponse",
     "IndexEvent",
     "Message",
+    "MinIOClient",
+    "MinIOConfig",
     "PaginatedResponse",
     "PaginationParams",
     "ParseStatus",

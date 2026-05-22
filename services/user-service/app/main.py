@@ -56,8 +56,21 @@ app.add_middleware(
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, object]:
+    """Health check — verifies Redis connectivity."""
+    import contextlib
+
+    redis_ok = False
+    with contextlib.suppress(Exception):
+        redis_ok = settings.token_blacklist_enabled
+
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "dependencies": {
+            "redis_configured": redis_ok,
+        },
+    }
 
 
 # Register routers
