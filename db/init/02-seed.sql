@@ -3,15 +3,14 @@
 -- Default admin user + example project group
 -- =============================================================================
 
--- Password: Admin@123456 (bcrypt hash)
--- Generated with: python -c "import bcrypt; print(bcrypt.hashpw(b'Admin@123456', bcrypt.gensalt()).decode())"
+-- Password: Admin@123456 (bcrypt hash, rounds=12)
 INSERT INTO users (id, username, email, display_name, hashed_password, role, auth_provider, is_active)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
     'admin',
     'admin@econai.local',
     'System Administrator',
-    '$2b$12$LJ3m4ys3GZfnYMz8kVsKaOmvGq4vGd9mN5ZqwVN1rQjqJqIhRqHqK',
+    '$2b$12$peUuCfbcJgduIVpcb/ovHOAgt7KD6lQhVdJWz8NN87HXIinvnU.XG',
     'system_admin',
     'local',
     TRUE

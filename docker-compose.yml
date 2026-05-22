@@ -85,14 +85,13 @@ services:
     environment:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
-      MINIO_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-econai_access_key}
-      MINIO_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY:-econai_secret_key_change_me}
+      MINIO_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin_change_me}
     ports:
       - "${MILVUS_PORT:-19530}:19530"
       - "9091:9091"
     volumes:
       - milvus-data:/var/lib/milvus
-      - ./milvus/milvus.yaml:/milvus/configs/milvus.yaml:ro
     command: ["milvus", "run", "standalone"]
     depends_on:
       etcd:
@@ -104,7 +103,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 90s
 
   etcd:
     <<: *common-service
@@ -148,8 +147,10 @@ services:
 
   # MinIO client to create buckets on startup
   minio-init:
-    <<: *common-service
     image: minio/mc:latest
+    restart: "no"
+    networks:
+      - econai-network
     container_name: econai-minio-init
     entrypoint: >
       /bin/sh -c "

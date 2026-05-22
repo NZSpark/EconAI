@@ -73,9 +73,9 @@ async def list_audit_logs(
                 user_id=str(log.user_id) if log.user_id else None,
                 action=log.action,
                 resource_type=log.resource_type,
-                resource_id=log.resource_id,
+                resource_id=str(log.resource_id) if log.resource_id else None,
                 details=log.details,
-                ip_address=log.ip_address,
+                ip_address=str(log.ip_address) if log.ip_address else None,
                 user_agent=log.user_agent,
                 created_at=str(log.created_at),
             )

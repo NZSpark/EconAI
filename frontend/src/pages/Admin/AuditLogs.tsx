@@ -40,8 +40,8 @@ export default function AuditLogs() {
     if (userIdFilter) params.user_id = userIdFilter;
     if (actionFilter) params.action = actionFilter;
     if (dateRange) {
-      params.from = dateRange[0];
-      params.to = dateRange[1];
+      params.from_date = dateRange[0];
+      params.to_date = dateRange[1];
     }
     return listAuditLogs(params as never);
   }, [page, pageSize, userIdFilter, actionFilter, dateRange]);
@@ -83,11 +83,14 @@ export default function AuditLogs() {
       key: 'resource_id',
       width: 200,
       ellipsis: true,
-      render: (text: string) => (
-        <Typography.Text copyable={{ text }} style={{ fontSize: 12 }}>
-          {text.substring(0, 8)}...
-        </Typography.Text>
-      ),
+      render: (text: string | null) =>
+        text ? (
+          <Typography.Text copyable={{ text }} style={{ fontSize: 12 }}>
+            {text.substring(0, 8)}...
+          </Typography.Text>
+        ) : (
+          <Typography.Text type="secondary">-</Typography.Text>
+        ),
     },
     {
       title: 'IP地址',
@@ -181,7 +184,7 @@ export default function AuditLogs() {
       <Table<AuditLogEntry>
         columns={columns}
         dataSource={data?.items || []}
-        rowKey="log_id"
+        rowKey="audit_id"
         loading={loading}
         locale={{
           emptyText: <Empty description="暂无审计日志" />,

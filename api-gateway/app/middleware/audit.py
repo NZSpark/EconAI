@@ -121,7 +121,7 @@ def _extract_resource_id(path: str) -> str:
     for part in parts:
         if len(part) >= 32 and "-" in part:
             return part
-    return ""
+    return None
 
 
 async def _read_body_summary(request: Request) -> str | None:
@@ -178,9 +178,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             # Redis not available — audit is best-effort
             return
 
-        user_id = ""
+        user_id = None
         if hasattr(request.state, "user"):
-            user_id = request.state.user.get("user_id", "")
+            user_id = request.state.user.get("user_id") or None
 
         action = _derive_action(request.method, request.url.path)
         resource_type = _derive_resource_type(request.url.path)

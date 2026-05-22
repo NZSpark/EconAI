@@ -84,8 +84,8 @@ export async function listAuditLogs(params?: {
   user_id?: string;
   action?: string;
   resource_type?: string;
-  from?: string;
-  to?: string;
+  from_date?: string;
+  to_date?: string;
 }): Promise<PaginatedResponse<AuditLogEntry>> {
   const response = await client.get<PaginatedResponse<AuditLogEntry>>(
     '/admin/audit-logs',

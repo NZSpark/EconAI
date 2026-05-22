@@ -24,6 +24,7 @@ CREATE TABLE users (
                 CHECK (role IN ('analyst','senior_researcher','project_admin','system_admin')),
     auth_provider VARCHAR(16) NOT NULL DEFAULT 'local'
                 CHECK (auth_provider IN ('local','ldap')),
+    ldap_dn     VARCHAR(255),
     is_active   BOOLEAN NOT NULL DEFAULT TRUE,
     consent_given_at TIMESTAMPTZ,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -67,7 +68,7 @@ CREATE TABLE projects (
     name        VARCHAR(512) NOT NULL,
     description TEXT,
     group_id    UUID NOT NULL REFERENCES project_groups(id) ON DELETE CASCADE,
-    owner_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_by  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     status      VARCHAR(16) NOT NULL DEFAULT 'active'
                 CHECK (status IN ('active','archived')),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -75,7 +76,7 @@ CREATE TABLE projects (
 );
 
 CREATE INDEX idx_projects_group_id ON projects(group_id);
-CREATE INDEX idx_projects_owner_id ON projects(owner_id);
+CREATE INDEX idx_projects_created_by ON projects(created_by);
 CREATE INDEX idx_projects_status ON projects(status);
 
 -- ---------------------------------------------------------------------------

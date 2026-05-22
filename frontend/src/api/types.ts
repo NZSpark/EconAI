@@ -304,13 +304,13 @@ export interface CreateGroupRequest {
 }
 
 export interface AuditLogEntry {
-  log_id: string;
+  audit_id: string;
   user_id: string;
-  username: string;
+  username?: string;
   action: string;
   resource_type: string;
-  resource_id: string;
-  details: Record<string, unknown>;
+  resource_id: string | null;
+  details: Record<string, unknown> | null;
   ip_address: string;
   user_agent: string;
   created_at: string;
