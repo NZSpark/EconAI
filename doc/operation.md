@@ -763,6 +763,183 @@ ollama pull qwen2.5-coder:7b
 
 ---
 
+## 12. 配置排错经验
+
+### 12.1 JWT Secret 不匹配 —— pydantic-settings `env_prefix` 陷阱
+
+**现象**：所有经过 API Gateway 的请求返回 `401 AUTH_TOKEN_INVALID`，但手工启动时正常。
+
+**根因**：`api-gateway/app/config.py` 和 `user-service/app/config.py` 都使用了 `pydantic-settings` 的 `env_prefix`：
+
+```python
+# api-gateway/app/config.py
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="API_GATEWAY_")
+
+# user-service/app/config.py
+class UserServiceSettings(AppSettings):
+    model_config = SettingsConfigDict(env_prefix="USER_SERVICE_")
+```
+
+`docker-compose.yml` 中设置的是不加前缀的通用变量名：
+
+```yaml
+# ❌ 错误 —— 会被两个服务的 env_prefix 双双忽略
+- JWT_SECRET=econai_jwt_secret_change_me_min_32_chars
+- JWT_ALGORITHM=HS256
+```
+
+两个服务的 `JWT_SECRET` 字段都回退到各自的硬编码默认值且不相同，导致 user-service 签发的 JWT 被 api-gateway 拒绝。
+
+**修复**：在 `docker-compose.yml` 中为每个服务使用带前缀的环境变量：
+
+```yaml
+# ✅ 正确 —— api-gateway 环境变量
+- API_GATEWAY_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+- API_GATEWAY_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+- API_GATEWAY_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
+- API_GATEWAY_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
+
+# ✅ 正确 —— user-service 环境变量
+- USER_SERVICE_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+- USER_SERVICE_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+- USER_SERVICE_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
+- USER_SERVICE_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
+```
+
+**验证方法**：
+
+```bash
+docker exec econai-api-gateway python -c "from app.config import settings; print(settings.jwt_secret)"
+docker exec econai-user-service python -c "from app.config import settings; print(settings.jwt_secret)"
+# 两个输出必须完全一致
+```
+
+### 12.2 Ollama 容器内不可达 —— `localhost` vs `host.docker.internal`
+
+**现象**：LLM Router 调用本地 Ollama 返回 `503 Circuit breaker open for local`，但宿主机 `curl http://localhost:11434/api/tags` 正常。
+
+**根因**：`docker-compose.yml` 或 `.env` 中 `LOCAL_LLM_ENDPOINT` 使用了 `http://localhost:11434/v1`。在容器内，`localhost` 指向容器自身，不是宿主机。
+
+**修复**：将 Ollama 端点改为 `host.docker.internal`：
+
+```bash
+# .env
+LOCAL_LLM_ENDPOINT=http://host.docker.internal:11434/v1
+```
+
+```yaml
+# docker-compose.yml
+- LOCAL_LLM_ENDPOINT=${LOCAL_LLM_ENDPOINT:-http://host.docker.internal:11434/v1}
+```
+
+> **注意**：修改 `.env` 后必须用 `--force-recreate` 重建容器，`restart` 不会重载环境变量。  
+> ```bash
+> docker compose up -d --no-deps --force-recreate llm-router
+> ```
+
+### 12.3 集成测试数据隔离
+
+**现象**：全量跑测试时偶现 `assert 404 == 200` 之类的失败，但单独跑同一模块的测试全部通过。
+
+**根因**：`test_integration_flows.py` 先执行创建用户和项目，`test_m8_*` 模块假设数据库是干净的状态（如 `list_users` 期望分页首页包含刚创建的用户），被前面的测试数据污染。
+
+**排查**：检查数据库中是否有累积的孤儿测试数据：
+
+```bash
+docker exec econai-postgres psql -U econai -d econai -c \
+  "SELECT username FROM users WHERE username LIKE 'lifecycle_%' OR username LIKE 'test%';"
+docker exec econai-postgres psql -U econai -d econai -c \
+  "SELECT name FROM projects ORDER BY created_at DESC LIMIT 20;"
+```
+
+**清理**：
+
+```bash
+docker exec econai-postgres psql -U econai -d econai -c \
+  "DELETE FROM projects; DELETE FROM users WHERE username != 'admin';"
+```
+
+> **建议**：在 `conftest.py` 中添加 session 级 fixture 在测试开始时自动清理，或调整 pytest 执行顺序（`test_m8_*` 在 `test_integration_flows` 之前跑）。
+
+### 12.4 重建容器 vs 重启容器
+
+修改 `docker-compose.yml` 或 `.env` 后，`docker compose restart` **不会**重载环境变量。必须使用 `--force-recreate`：
+
+```bash
+# ❌ 无效 —— 环境变量不更新
+docker compose restart service-name
+
+# ✅ 正确 —— 重新创建容器，环境变量生效
+docker compose up -d --no-deps --force-recreate service-name
+```
+
+---
+
+## 13. Dockerfile 构建规范
+
+EconAI 所有服务 Dockerfile 遵循统一的构建模式。以下四个关键要素是多次踩坑后沉淀的硬性规范，修改 Dockerfile 时必须遵守：
+
+### 13.1 不使用 BuildKit bind mount
+
+```dockerfile
+# ❌ 错误（Colima / 旧版 Docker daemon 不兼容，直接卡死）
+RUN --mount=type=bind,source=shared,target=/shared ...
+
+# ✅ 正确（所有 Docker 环境通用）
+COPY shared /shared
+```
+
+**原因**：`--mount=type=bind` 需要 Docker daemon 启用 BuildKit。Colima 默认使用 legacy builder，遇到不认识的 `--mount` 语法会直接 hang。而 `COPY` 在所有环境通用，shared 只有 8 个 `.py` 文件，空间影响可忽略。
+
+### 13.2 `shared/pyproject.toml` 使用 `where = ["."]`
+
+```toml
+# ❌ 错误（容器内 ".." 解析为 /，setuptools 扫描整个 Linux 根文件系统）
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["shared"]
+
+# ✅ 正确（只在 pyproject.toml 所在目录搜索，本地和容器行为一致）
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["shared"]
+```
+
+**原因**：`where = [".."]` 在宿主机上解析为项目根目录（~20 个目录，秒完成），但在容器 `/shared/pyproject.toml` 中解析为 `/`（根文件系统），setuptools 会递归扫描 `/proc`、`/sys`、`/usr` 等数万个目录，永远跑不完。
+
+### 13.3 不用 `--only-binary :all:`
+
+```dockerfile
+# ❌ 错误（禁止所有源码安装，包括自己的 econai-shared 和 `uv pip install .`）
+RUN uv pip install --only-binary :all: --system .
+
+# ✅ 正确（所有依赖已有 ARM64 预编译 wheel）
+RUN uv pip install --system .
+```
+
+**原因**：`--only-binary :all:` 源自早期 `python-ldap` 在 ARM64 下无 wheel 的临时方案。现已换成纯 Python 的 `ldap3`，所有依赖都有预编译 wheel，无需此限制。
+
+### 13.4 用 `sed` 将相对路径改为绝对路径
+
+```dockerfile
+# 单阶段 service（7 个）
+RUN sed -i 's|path = "../../shared"|path = "/shared"|g' pyproject.toml && \
+    uv pip install --system .
+
+# api-gateway builder 阶段
+RUN sed -i 's|path = "../shared"|path = "/shared"|g' pyproject.toml && \
+    uv pip install --system --no-cache .
+```
+
+**原因**：服务 `pyproject.toml` 中的 `[tool.uv.sources]` 使用相对路径指向 shared：
+```toml
+econai-shared = { path = "../../shared" }
+```
+`uv pip install .` 会强制解析此路径。从 `/app/` 计算 `../../shared` 逃出基目录，uv 直接报错。先用 `sed` 改成容器内绝对路径 `/shared` 即可让 uv 正常解析。
+
+---
+
 ## 快速参考
 
 | 操作 | 命令 |

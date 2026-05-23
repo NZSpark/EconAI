@@ -2,8 +2,6 @@
 # EconAI Docker Compose - All Services
 # =============================================================================
 
-version: "3.9"
-
 x-common-service: &common-service
   restart: unless-stopped
   networks:
@@ -178,14 +176,17 @@ services:
     <<: *microservice
     container_name: econai-api-gateway
     build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+      args:
+        SERVICE_DIR: api-gateway
     environment:
       - API_GATEWAY_HOST=${API_GATEWAY_HOST:-0.0.0.0}
       - API_GATEWAY_PORT=${API_GATEWAY_PORT:-8000}
-      - JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
-      - JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
-      - JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+      - API_GATEWAY_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
+      - API_GATEWAY_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
+      - API_GATEWAY_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+      - API_GATEWAY_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - CORS_ORIGINS=${CORS_ORIGINS:-[\"*\"]}
       - AUDIT_LOG_ENABLED=${AUDIT_LOG_ENABLED:-true}
       - RATE_LIMIT_PER_USER=${RATE_LIMIT_PER_USER:-100}
@@ -197,6 +198,7 @@ services:
       - KB_SERVICE_URL=http://kb-service:8002
       - ORCHESTRATION_SERVICE_URL=http://orchestration-service:8003
       - OUTPUT_SERVICE_URL=http://output-service:8006
+      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
     ports:
       - "${API_GATEWAY_PORT:-8000}:8000"
     depends_on:
@@ -205,7 +207,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -215,8 +217,10 @@ services:
     <<: *microservice
     container_name: econai-document-service
     build:
-      context: ./services/document-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/document-service/Dockerfile
+      args:
+        SERVICE_DIR: services/document-service
     environment:
       - DOCUMENT_SERVICE_HOST=${DOCUMENT_SERVICE_HOST:-0.0.0.0}
       - DOCUMENT_SERVICE_PORT=${DOCUMENT_SERVICE_PORT:-8001}
@@ -246,7 +250,7 @@ services:
       minio-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -256,8 +260,10 @@ services:
     <<: *microservice
     container_name: econai-kb-service
     build:
-      context: ./services/kb-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/kb-service/Dockerfile
+      args:
+        SERVICE_DIR: services/kb-service
     environment:
       - KB_SERVICE_HOST=${KB_SERVICE_HOST:-0.0.0.0}
       - KB_SERVICE_PORT=${KB_SERVICE_PORT:-8002}
@@ -283,7 +289,7 @@ services:
       milvus:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -293,8 +299,10 @@ services:
     <<: *microservice
     container_name: econai-orchestration-service
     build:
-      context: ./services/orchestration-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/orchestration-service/Dockerfile
+      args:
+        SERVICE_DIR: services/orchestration-service
     environment:
       - ORCHESTRATION_SERVICE_HOST=${ORCHESTRATION_SERVICE_HOST:-0.0.0.0}
       - ORCHESTRATION_SERVICE_PORT=${ORCHESTRATION_SERVICE_PORT:-8003}
@@ -308,6 +316,7 @@ services:
       - LLM_ROUTER_URL=http://llm-router:8004
       - CITATION_SERVICE_URL=http://citation-service:8005
       - OUTPUT_SERVICE_URL=http://output-service:8006
+      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
       - PROMPT_TEMPLATES_DIR=${PROMPT_TEMPLATES_DIR:-templates/prompts}
     ports:
       - "${ORCHESTRATION_SERVICE_PORT:-8003}:8003"
@@ -321,7 +330,7 @@ services:
       llm-router:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -331,13 +340,15 @@ services:
     <<: *microservice
     container_name: econai-llm-router
     build:
-      context: ./services/llm-router
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/llm-router/Dockerfile
+      args:
+        SERVICE_DIR: services/llm-router
     environment:
       - LLM_ROUTER_HOST=${LLM_ROUTER_HOST:-0.0.0.0}
       - LLM_ROUTER_PORT=${LLM_ROUTER_PORT:-8004}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - LOCAL_LLM_ENDPOINT=${LOCAL_LLM_ENDPOINT:-http://localhost:8000/v1}
+      - LOCAL_LLM_ENDPOINT=${LOCAL_LLM_ENDPOINT:-http://host.docker.internal:11434/v1}
       - LOCAL_LLM_DEFAULT_MODEL=${LOCAL_LLM_DEFAULT_MODEL:-qwen3-72b}
       - CLOUD_LLM_DEFAULT_MODEL=${CLOUD_LLM_DEFAULT_MODEL:-claude-sonnet-4-6}
       - LLM_DEFAULT_TEMPERATURE=${LLM_DEFAULT_TEMPERATURE:-0.3}
@@ -351,7 +362,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -361,8 +372,10 @@ services:
     <<: *microservice
     container_name: econai-citation-service
     build:
-      context: ./services/citation-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/citation-service/Dockerfile
+      args:
+        SERVICE_DIR: services/citation-service
     environment:
       - CITATION_SERVICE_HOST=${CITATION_SERVICE_HOST:-0.0.0.0}
       - CITATION_SERVICE_PORT=${CITATION_SERVICE_PORT:-8005}
@@ -375,7 +388,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -385,8 +398,10 @@ services:
     <<: *microservice
     container_name: econai-output-service
     build:
-      context: ./services/output-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/output-service/Dockerfile
+      args:
+        SERVICE_DIR: services/output-service
     environment:
       - OUTPUT_SERVICE_HOST=${OUTPUT_SERVICE_HOST:-0.0.0.0}
       - OUTPUT_SERVICE_PORT=${OUTPUT_SERVICE_PORT:-8006}
@@ -406,7 +421,7 @@ services:
       minio-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -416,21 +431,31 @@ services:
     <<: *microservice
     container_name: econai-user-service
     build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/user-service/Dockerfile
+      args:
+        SERVICE_DIR: services/user-service
     environment:
       - USER_SERVICE_HOST=${USER_SERVICE_HOST:-0.0.0.0}
       - USER_SERVICE_PORT=${USER_SERVICE_PORT:-8007}
-      - JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
-      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
-      - JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
-      - JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
+      - USER_SERVICE_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+      - USER_SERVICE_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - USER_SERVICE_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
+      - USER_SERVICE_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
       - LDAP_ENABLED=${LDAP_ENABLED:-false}
       - LDAP_SERVER=${LDAP_SERVER:-ldap://localhost:389}
       - LDAP_BASE_DN=${LDAP_BASE_DN:-dc=institution,dc=cn}
       - LDAP_USER_FILTER=${LDAP_USER_FILTER:-(uid=%(username)s)}
       - AUDIT_LOG_RETENTION_MONTHS=${AUDIT_LOG_RETENTION_MONTHS:-6}
       - TOKEN_BLACKLIST_ENABLED=${TOKEN_BLACKLIST_ENABLED:-true}
+      - USER_SERVICE_POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - USER_SERVICE_POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - USER_SERVICE_POSTGRES_DB=${POSTGRES_DB:-econai}
+      - USER_SERVICE_POSTGRES_USER=${POSTGRES_USER:-econai}
+      - USER_SERVICE_POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-econai_secret_change_me}
+      - USER_SERVICE_REDIS_HOST=${REDIS_HOST:-redis}
+      - USER_SERVICE_REDIS_PORT=${REDIS_PORT:-6379}
+      - USER_SERVICE_REDIS_PASSWORD=${REDIS_PASSWORD:-econai_redis_change_me}
     ports:
       - "${USER_SERVICE_PORT:-8007}:8007"
     depends_on:
@@ -439,7 +464,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8007/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -453,10 +478,12 @@ services:
     <<: *microservice
     container_name: econai-celery-document
     build:
-      context: ./services/document-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/document-service/Dockerfile
+      args:
+        SERVICE_DIR: services/document-service
     command: >
-      celery -A econai_document.worker worker
+      celery -A document_service.celery_app:celery_app worker
       --loglevel=${LOG_LEVEL:-INFO}
       --concurrency=2
       --max-memory-per-child=${CELERY_WORKER_MAX_MEMORY_PER_CHILD:-512000}
@@ -488,10 +515,12 @@ services:
     <<: *microservice
     container_name: econai-celery-orchestration
     build:
-      context: ./services/orchestration-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/orchestration-service/Dockerfile
+      args:
+        SERVICE_DIR: services/orchestration-service
     command: >
-      celery -A econai_orchestration.worker worker
+      celery -A orchestration_service.worker:app worker
       --loglevel=${LOG_LEVEL:-INFO}
       --concurrency=${CELERY_WORKER_CONCURRENCY:-4}
       --max-memory-per-child=${CELERY_WORKER_MAX_MEMORY_PER_CHILD:-512000}
@@ -506,6 +535,7 @@ services:
       - LLM_ROUTER_URL=http://llm-router:8004
       - CITATION_SERVICE_URL=http://citation-service:8005
       - OUTPUT_SERVICE_URL=http://output-service:8006
+      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
       - PROMPT_TEMPLATES_DIR=${PROMPT_TEMPLATES_DIR:-templates/prompts}
       - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
@@ -522,10 +552,12 @@ services:
     <<: *microservice
     container_name: econai-celery-beat
     build:
-      context: ./services/orchestration-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/orchestration-service/Dockerfile
+      args:
+        SERVICE_DIR: services/orchestration-service
     command: >
-      celery -A econai_orchestration.worker beat
+      celery -A orchestration_service.worker:app beat
       --loglevel=${LOG_LEVEL:-INFO}
       --schedule=/var/run/celery/celerybeat-schedule
     environment:
@@ -563,7 +595,7 @@ services:
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
