@@ -21,6 +21,7 @@ PUBLIC_PATHS: set[str] = {
     "/api/auth/refresh",
     "/api/auth/logout",
     "/health",
+    "/metrics",
 }
 
 # Paths that require a valid token but not necessarily for all roles

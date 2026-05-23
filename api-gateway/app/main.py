@@ -26,6 +26,7 @@ from app.middleware.rbac import RBACMiddleware
 from app.routing.proxy import ProxyError, get_proxy
 from app.routing.registry import get_route_registry
 from app.utils.request_id import RequestIDMiddleware
+from shared.metrics import setup_metrics
 
 
 def setup_logging() -> None:
@@ -105,6 +106,9 @@ def create_app() -> FastAPI:
     )
 
     # ——— Register middleware in pipeline order ———
+
+    # 0. Prometheus metrics (before any middleware, so all requests are tracked)
+    setup_metrics(app)
 
     # 1. Request ID — first, so every request has an ID
     app.add_middleware(RequestIDMiddleware)

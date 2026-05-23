@@ -28,6 +28,7 @@ from citation_service.verifier import (
     VerificationResult,
     VerifiedCitation,
 )
+from shared.metrics import setup_metrics
 
 # ---------------------------------------------------------------------------
 # FastAPI application
@@ -38,6 +39,8 @@ app = FastAPI(
     version="0.1.0",
     description="Inline citation parsing, verification, and formatting (M6).",
 )
+
+setup_metrics(app)
 
 # ---------------------------------------------------------------------------
 # Service instances

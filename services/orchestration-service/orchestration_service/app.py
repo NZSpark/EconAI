@@ -53,6 +53,7 @@ from orchestration_service.task_workflows import (
     render_system_prompt,
 )
 from orchestration_service.tools import create_tool_registry, reset_http_client
+from shared.metrics import setup_metrics
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -86,6 +87,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+setup_metrics(app)
 
 app.add_middleware(
     CORSMiddleware,

@@ -38,6 +38,7 @@ from kb_service.schemas import (
     SearchRequest,
     SearchResponse,
 )
+from shared.metrics import setup_metrics
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -81,6 +82,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+setup_metrics(app)
 
 app.add_middleware(
     CORSMiddleware,

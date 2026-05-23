@@ -20,6 +20,7 @@ from shared.models import ErrorResponse
 
 from output_service.config import config as cfg
 from output_service.format_router import EXTENSION_MAP, FormatRouter
+from shared.metrics import setup_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,8 @@ app = FastAPI(
     version="0.1.0",
     description="Multi-format output generation (Markdown, DOCX GB/T 9704, XLSX, PPTX).",
 )
+
+setup_metrics(app)
 
 router = FormatRouter()
 

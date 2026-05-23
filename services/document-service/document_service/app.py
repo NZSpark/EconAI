@@ -41,6 +41,7 @@ from document_service.models import (
 )
 from document_service.parsers.router import parse_document
 from document_service.validation import FileValidationError, validate_file
+from shared.metrics import setup_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,8 @@ app = FastAPI(
     version="0.1.0",
     description="Document upload, parsing, chunking, and management (M2).",
 )
+
+setup_metrics(app)
 
 # ---------------------------------------------------------------------------
 # In-memory document store (MVP, no PostgreSQL dependency for development/test)

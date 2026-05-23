@@ -13,6 +13,7 @@ from redis.asyncio import Redis
 
 from app.config import settings
 from app.database import async_session_factory
+from shared.metrics import setup_metrics
 
 
 @asynccontextmanager
@@ -45,6 +46,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+setup_metrics(app)
 
 app.add_middleware(
     CORSMiddleware,
