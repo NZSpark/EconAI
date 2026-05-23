@@ -44,6 +44,29 @@ def _require_system_admin(request: Request) -> None:
         )
 
 
+def _get_caller_role(request: Request) -> str:
+    """Extract the caller's role from the request."""
+    return request.headers.get("X-User-Role") or getattr(request.state, "user_role", "")
+
+
+# Roles that require system_admin to assign (privilege escalation check)
+PRIVILEGED_ROLES = {"system_admin"}
+
+
+def _check_role_escalation(caller_role: str, target_role: str) -> None:
+    """Reject if caller tries to assign a role they are not privileged to grant."""
+    if target_role in PRIVILEGED_ROLES and caller_role not in PRIVILEGED_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": {
+                    "code": "USER_ROLE_ESCALATION",
+                    "message": f"Cannot assign role '{target_role}': insufficient privileges",
+                }
+            },
+        )
+
+
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     body: UserCreate,
@@ -51,6 +74,7 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
     _require_admin(request)
+    _check_role_escalation(_get_caller_role(request), body.role.value)
 
     existing = await db.execute(select(User).where(User.username == body.username))
     if existing.scalar_one_or_none():
@@ -149,6 +173,7 @@ async def update_user(
     if body.display_name is not None:
         user.display_name = body.display_name
     if body.role is not None:
+        _check_role_escalation(_get_caller_role(request), body.role.value)
         user.role = body.role
     if body.is_active is not None:
         user.is_active = body.is_active

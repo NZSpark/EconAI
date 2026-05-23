@@ -11,7 +11,7 @@ RUN sed -i 's|path = "../../shared"|path = "/shared"|g' pyproject.toml && uv pip
 
 COPY ${SERVICE_DIR}/. .
 
-RUN chown -R econai:econai /app
+RUN mkdir -p /var/run/celery && chown -R econai:econai /app /var/run/celery
 USER econai
 
 EXPOSE 8003

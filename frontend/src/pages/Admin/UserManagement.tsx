@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   Table,
   Button,
@@ -18,6 +18,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../../hooks/useRequest';
 import { listUsers, createUser, updateUser, disableUser } from '../../api/admin';
 import type { AdminUser, CreateUserRequest } from '../../api/types';
+import { useAuth } from '../../contexts/auth-context';
 
 const { Title } = Typography;
 
@@ -36,11 +37,25 @@ const roleLabelMap: Record<string, string> = {
 };
 
 export default function UserManagement() {
+  const { user: currentUser } = useAuth();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [form] = Form.useForm();
+
+  // Only system_admin can assign the system_admin role
+  const roleOptions = useMemo(() => {
+    const options = [
+      { label: '分析员', value: 'analyst' },
+      { label: '高级研究员', value: 'senior_researcher' },
+      { label: '项目管理员', value: 'project_admin' },
+    ];
+    if (currentUser?.role === 'system_admin') {
+      options.push({ label: '系统管理员', value: 'system_admin' });
+    }
+    return options;
+  }, [currentUser?.role]);
 
   const loadUsers = useCallback(async () => {
     return listUsers({ page, page_size: pageSize });
@@ -61,8 +76,17 @@ export default function UserManagement() {
       setEditingUser(null);
       form.resetFields();
       refresh();
-    } catch {
-      message.error(editingUser ? '更新失败' : '创建失败');
+    } catch (err: any) {
+      // Extract backend validation errors (422) or API error message
+      const detail = err?.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        const msgs = detail.map((d: any) => d.msg).join('；');
+        message.error(msgs);
+      } else if (err?.message) {
+        message.error(err.message);
+      } else {
+        message.error(editingUser ? '更新失败' : '创建失败');
+      }
     }
   };
 
@@ -245,9 +269,12 @@ export default function UserManagement() {
             <Form.Item
               name="password"
               label="密码"
-              rules={[{ required: true, message: '请输入密码' }]}
+              rules={[
+                { required: true, message: '请输入密码' },
+                { min: 8, message: '密码至少8位' },
+              ]}
             >
-              <Input.Password placeholder="初始密码" />
+              <Input.Password placeholder="初始密码（至少8位）" />
             </Form.Item>
           )}
           <Form.Item
@@ -272,14 +299,7 @@ export default function UserManagement() {
             label="角色"
             rules={[{ required: true, message: '请选择角色' }]}
           >
-            <Select
-              options={[
-                { label: '分析员', value: 'analyst' },
-                { label: '高级研究员', value: 'senior_researcher' },
-                { label: '项目管理员', value: 'project_admin' },
-                { label: '系统管理员', value: 'system_admin' },
-              ]}
-            />
+            <Select options={roleOptions} />
           </Form.Item>
         </Form>
       </Modal>
