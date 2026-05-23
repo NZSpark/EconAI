@@ -1,0 +1,48 @@
+# Python virtual environments
+**/.venv/
+**/venv/
+**/.env
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.egg-info/
+**/.eggs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+**/Dockerfile
+**/.dockerignore
+
+# Test & dev artifacts
+**/tests/
+**/test_*/
+**/test-results/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Node (frontend)
+**/node_modules/
+
+# Documentation
+doc/
+
+# Build context
+.cursor/
+.codebuddy/

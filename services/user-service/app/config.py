@@ -23,16 +23,16 @@ class Settings(AppSettings):
     port: int = 8007
 
     # ——— Database ———
-    # Override parent computed properties with direct defaults
-    database_url: str = "postgresql+asyncpg://econai:econai@localhost:5432/econai"
-    database_url_sync: str = "postgresql+psycopg2://econai:econai@localhost:5432/econai"
+    # Inherit database_url @property from AppSettings (computed from postgres_* fields)
+    # Use env vars: USER_SERVICE_POSTGRES_HOST, USER_SERVICE_POSTGRES_PORT, etc.
 
     # ——— JWT (jwt_secret, jwt_algorithm inherited from AppSettings) ———
     jwt_access_expire_minutes: int = 120
     jwt_refresh_expire_hours: int = 24
 
     # ——— Redis ———
-    redis_url: str = "redis://localhost:6379/0"
+    # Inherit redis_url @property from AppSettings (computed from redis_* fields)
+    # Use env vars: USER_SERVICE_REDIS_HOST, USER_SERVICE_REDIS_PORT, etc.
     token_blacklist_enabled: bool = True
 
     # ——— LDAP ———

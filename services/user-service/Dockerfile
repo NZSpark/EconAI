@@ -1,13 +1,15 @@
 FROM python:3.12-slim
+ARG SERVICE_DIR=.
 
 WORKDIR /app
 RUN groupadd -r econai && useradd -r -g econai econai
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml .
-RUN uv pip install --system --no-cache .
+COPY shared /shared
+COPY ${SERVICE_DIR}/pyproject.toml .
+RUN sed -i 's|path = "../../shared"|path = "/shared"|g' pyproject.toml && uv pip install --system .
 
-COPY . .
+COPY ${SERVICE_DIR}/. .
 
 RUN chown -R econai:econai /app
 USER econai

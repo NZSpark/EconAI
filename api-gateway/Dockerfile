@@ -1,22 +1,27 @@
 FROM python:3.12-slim AS builder
+ARG SERVICE_DIR=.
 
 WORKDIR /app
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml .
-RUN uv pip install --system --no-cache -r <(uv pip compile pyproject.toml 2>/dev/null || echo "")
+COPY shared /shared
+COPY ${SERVICE_DIR}/pyproject.toml .
+RUN sed -i 's|path = "../shared"|path = "/shared"|g' pyproject.toml && uv pip install --system --no-cache .
 
 FROM python:3.12-slim
+ARG SERVICE_DIR=.
 
 WORKDIR /app
 RUN groupadd -r econai && useradd -r -g econai econai
+
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml .
-RUN uv pip install --system --no-cache .
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local /usr/local
 
-COPY . .
+COPY ${SERVICE_DIR}/pyproject.toml .
+RUN uv pip install --system --no-deps .
+
+COPY ${SERVICE_DIR}/. .
 
 RUN chown -R econai:econai /app
 USER econai

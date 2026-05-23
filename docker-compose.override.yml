@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   api-gateway:
     volumes:
@@ -15,7 +13,7 @@ services:
     environment:
       - DEBUG=true
       - LOG_LEVEL=DEBUG
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+    command: ["uvicorn", "document_service.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
 
   kb-service:
     volumes:
@@ -23,7 +21,7 @@ services:
     environment:
       - DEBUG=true
       - LOG_LEVEL=DEBUG
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+    command: ["uvicorn", "kb_service.app:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
 
   orchestration-service:
     volumes:
@@ -31,7 +29,7 @@ services:
     environment:
       - DEBUG=true
       - LOG_LEVEL=DEBUG
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
+    command: ["uvicorn", "orchestration_service.app:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
 
   llm-router:
     volumes:
@@ -55,7 +53,7 @@ services:
     environment:
       - DEBUG=true
       - LOG_LEVEL=DEBUG
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8006", "--reload"]
+    command: ["uvicorn", "output_service.app:app", "--host", "0.0.0.0", "--port", "8006", "--reload"]
 
   user-service:
     volumes:

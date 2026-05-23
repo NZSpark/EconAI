@@ -13,6 +13,10 @@ dependencies = [
     "redis>=5.0",
     "celery>=5.4",
     "econai-shared",
+]
+
+[project.optional-dependencies]
+dev = [
     "pytest>=9.0.3",
     "ruff>=0.15.13",
     "mypy>=2.1.0",
