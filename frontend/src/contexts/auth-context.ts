@@ -11,6 +11,8 @@ export interface AuthState {
 export interface AuthContextValue extends AuthState {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
+  hasForcePasswordChange: boolean;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

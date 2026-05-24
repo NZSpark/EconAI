@@ -189,3 +189,100 @@ class TestProjectCRUD:
         """No token → 401 on project endpoints."""
         resp = httpx.get(f"{base_url}/api/projects", timeout=10)
         assert resp.status_code == 401
+
+    def test_cannot_create_project_in_foreign_group(
+        self, base_url: str, auth_headers: dict[str, str]
+    ) -> None:
+        """Project admin cannot create a project in a group they don't belong to (403).
+
+        Users can only create projects in groups they are members of.
+        """
+        import time as _time
+        # Create a project_admin with their own group
+        uname = f"pa_foreign_{int(_time.time() * 1000) % 1000000}"
+        resp = httpx.post(
+            f"{base_url}/api/admin/users",
+            json={
+                "username": uname,
+                "email": f"{uname}@example.com",
+                "password": "ForeignPass1",
+                "role": "project_admin",
+                "group_name": f"{uname}-own-group",
+            },
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert resp.status_code == 201, f"Failed to create project_admin: {resp.text}"
+
+        # Login as this project_admin
+        _time.sleep(0.3)
+        login_resp = httpx.post(
+            f"{base_url}/api/auth/login",
+            json={"username": uname, "password": "ForeignPass1", "provider": "local"},
+            timeout=10,
+        )
+        assert login_resp.status_code == 200
+        pa_token = login_resp.json()["access_token"]
+
+        # Try to create a project in a foreign group (admin's default group, e.g.)
+        _time.sleep(0.3)
+        foreign_group_id = "00000000-0000-0000-0000-000000000010"  # likely admin's default group
+        resp2 = httpx.post(
+            f"{base_url}/api/projects",
+            json={
+                "name": "Foreign Group Attempt",
+                "description": "Should be rejected",
+                "group_id": foreign_group_id,
+            },
+            headers={"Authorization": f"Bearer {pa_token}"},
+            timeout=10,
+        )
+        assert resp2.status_code == 403, (
+            f"Expected 403 for cross-group project creation, got {resp2.status_code}: {resp2.text}"
+        )
+
+    def test_cannot_update_archived_project(
+        self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
+    ) -> None:
+        """Updating an archived project returns 400.
+
+        Archived projects are read-only and cannot be modified.
+        """
+        # Create a group + project
+        resp = httpx.post(
+            f"{base_url}/api/admin/groups",
+            json={"name": "ArchUpdate Group"},
+            headers=auth_headers,
+            timeout=10,
+        )
+        if resp.status_code != 201:
+            pytest.skip("Cannot create group")
+        group_id = resp.json()["group_id"]
+        _add_admin_to_group(base_url, auth_headers, admin_user_id, group_id)
+
+        resp2 = httpx.post(
+            f"{base_url}/api/projects",
+            json={"name": "To Archive Then Update", "group_id": group_id},
+            headers=auth_headers,
+            timeout=10,
+        )
+        project_id = resp2.json()["project_id"]
+
+        # Archive it
+        resp3 = httpx.delete(
+            f"{base_url}/api/projects/{project_id}",
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert resp3.status_code == 204
+
+        # Try to update the archived project
+        resp4 = httpx.put(
+            f"{base_url}/api/projects/{project_id}",
+            json={"name": "Should Not Work"},
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert resp4.status_code == 400, (
+            f"Expected 400 when updating archived project, got {resp4.status_code}: {resp4.text}"
+        )

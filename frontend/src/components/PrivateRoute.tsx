@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Spin } from 'antd';
 
@@ -8,12 +8,12 @@ interface PrivateRouteProps {
 }
 
 export default function PrivateRoute({ children }: PrivateRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, hasForcePasswordChange } = useAuth();
+  const location = useLocation();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!isLoading) {
-      // Small delay to avoid flicker
       const timer = setTimeout(() => setChecking(false), 200);
       return () => clearTimeout(timer);
     }
@@ -36,6 +36,11 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Redirect to force password change page (unless already there)
+  if (hasForcePasswordChange && location.pathname !== '/force-password-change') {
+    return <Navigate to="/force-password-change" replace />;
   }
 
   return <>{children}</>;

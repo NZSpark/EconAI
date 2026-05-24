@@ -30,6 +30,7 @@ class UserInfo(BaseModel):
     display_name: str | None = None
     role: str
     groups: list[GroupInfo] = Field(default_factory=list)
+    force_password_change: bool = False
 
 
 class LoginResponse(BaseModel):
@@ -51,4 +52,10 @@ class MeResponse(BaseModel):
     role: str
     auth_provider: str
     is_active: bool
+    force_password_change: bool
     groups: list[GroupInfo]
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)

@@ -16,6 +16,11 @@ ADMIN_USERNAME = os.environ.get("ECONAI_TEST_ADMIN_USERNAME", "admin")
 _LOGIN_PACE = float(os.environ.get("ECONAI_TEST_AUTH_PACE", "0.5"))
 
 
+def _unique_username(name: str) -> str:
+    """Generate a unique username to avoid collision with previous test runs."""
+    return f"{name}_{int(time.time() * 1000) % 1000000}"
+
+
 class TestLogin:
     """POST /api/auth/login — Section 9.2.1."""
 
@@ -153,6 +158,63 @@ class TestTokenRefresh:
             timeout=10,
         )
         assert resp2.status_code == 401
+
+    def test_refresh_preserves_project_admin_role(self, base_url: str, auth_headers: dict[str, str]) -> None:
+        """After token refresh, project_admin role is preserved (not downgraded to analyst).
+
+        Regression test: refresh endpoint used to read username/role from the
+        refresh-token payload, which only carries `sub` and `type`, causing a
+        silent downgrade to analyst. Now fixed to query the database.
+        """
+        uname = _unique_username("refresh_pa")
+        # Create a project_admin with inline group
+        resp = httpx.post(
+            f"{base_url}/api/admin/users",
+            json={
+                "username": uname,
+                "email": f"{uname}@example.com",
+                "password": "RefreshTest1",
+                "role": "project_admin",
+                "group_name": f"{uname}-group",
+            },
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert resp.status_code == 201, f"Failed to create project_admin: {resp.text}"
+
+        # Login as project_admin
+        time.sleep(_LOGIN_PACE)
+        login_resp = httpx.post(
+            f"{base_url}/api/auth/login",
+            json={"username": uname, "password": "RefreshTest1", "provider": "local"},
+            timeout=10,
+        )
+        assert login_resp.status_code == 200
+        assert login_resp.json()["user"]["role"] == "project_admin"
+
+        refresh_token = login_resp.json()["refresh_token"]
+
+        # Refresh token
+        time.sleep(_LOGIN_PACE)
+        refresh_resp = httpx.post(
+            f"{base_url}/api/auth/refresh",
+            json={"refresh_token": refresh_token},
+            timeout=10,
+        )
+        assert refresh_resp.status_code == 200, refresh_resp.text
+
+        # Use the new token to call /me — role must still be project_admin
+        new_token = refresh_resp.json()["access_token"]
+        me_resp = httpx.get(
+            f"{base_url}/api/auth/me",
+            headers={"Authorization": f"Bearer {new_token}"},
+            timeout=10,
+        )
+        assert me_resp.status_code == 200
+        assert me_resp.json()["role"] == "project_admin", (
+            f"Role downgraded to {me_resp.json()['role']} after refresh! "
+            "Expected project_admin."
+        )
 
 
 class TestUserMe:

@@ -1523,8 +1523,10 @@ templates/output/
 | DELETE | `/api/admin/users/{id}` | 停用用户 | system_admin |
 | POST | `/api/admin/groups` | 创建项目组 | system_admin |
 | GET | `/api/admin/groups` | 项目组列表 | project_admin+ |
+| GET | `/api/admin/groups/{id}/members` | 列出组成员（含用户名/显示名称） | project_admin+ |
 | POST | `/api/admin/groups/{id}/members` | 添加组成员 | project_admin+ |
 | DELETE | `/api/admin/groups/{id}/members/{user_id}` | 移除组成员 | project_admin+ |
+| GET | `/api/admin/groups/{id}/non-members` | 搜索非组成员用户（用于添加成员选择） | project_admin+ |
 | GET | `/api/admin/audit-logs` | 查询审计日志 | system_admin |
 
 **查询审计日志**:

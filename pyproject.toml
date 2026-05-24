@@ -44,3 +44,8 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[dependency-groups]
+dev = [
+    "prometheus-fastapi-instrumentator>=7.1.0",
+]

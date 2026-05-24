@@ -9,6 +9,7 @@ import {
   LogoutOutlined,
   AuditOutlined,
   TeamOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -17,6 +18,7 @@ const { Header, Sider, Content } = AntLayout;
 const breadcrumbNameMap: Record<string, string> = {
   '/projects': '项目列表',
   '/projects/create': '创建项目',
+  '/profile': '个人设置',
   '/admin': '管理',
   '/admin/users': '用户管理',
   '/admin/groups': '项目组管理',
@@ -36,6 +38,13 @@ export default function AppLayout() {
   };
 
   const userMenuItems: MenuProps['items'] = [
+    {
+      key: 'profile',
+      icon: <IdcardOutlined />,
+      label: '个人设置',
+      onClick: () => navigate('/profile'),
+    },
+    { type: 'divider' },
     {
       key: 'logout',
       icon: <LogoutOutlined />,

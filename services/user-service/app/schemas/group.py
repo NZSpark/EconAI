@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -20,6 +22,14 @@ class GroupResponse(BaseModel):
     name: str
     description: str | None
     member_count: int = 0
+    created_at: datetime
+
+
+class GroupListResponse(BaseModel):
+    items: list[GroupResponse]
+    total: int
+    page: int = 1
+    page_size: int = 50
 
 
 class GroupMemberResponse(BaseModel):

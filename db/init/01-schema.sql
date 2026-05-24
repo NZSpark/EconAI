@@ -19,13 +19,14 @@ CREATE TABLE users (
     username    VARCHAR(128) NOT NULL UNIQUE,
     email       VARCHAR(256) NOT NULL UNIQUE,
     display_name VARCHAR(256),
-    hashed_password VARCHAR(256) NOT NULL,
+    hashed_password VARCHAR(256),
     role        VARCHAR(32)  NOT NULL DEFAULT 'analyst'
                 CHECK (role IN ('analyst','senior_researcher','project_admin','system_admin')),
     auth_provider VARCHAR(16) NOT NULL DEFAULT 'local'
                 CHECK (auth_provider IN ('local','ldap')),
     ldap_dn     VARCHAR(255),
     is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+    force_password_change BOOLEAN NOT NULL DEFAULT FALSE,
     consent_given_at TIMESTAMPTZ,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -44,6 +45,8 @@ CREATE TABLE project_groups (
     description TEXT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX idx_project_groups_name_unique ON project_groups(name);
 
 -- ---------------------------------------------------------------------------
 -- Project Group Members (many-to-many: groups <-> users)
@@ -201,10 +204,15 @@ CREATE TABLE task_outputs (
     content         TEXT,
     minio_path      VARCHAR(1024),
     citation_count  INTEGER NOT NULL DEFAULT 0,
+    review_status   VARCHAR(16) NOT NULL DEFAULT 'draft'
+                    CHECK (review_status IN ('draft','reviewing','approved','revision')),
+    reviewed_by     UUID REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at     TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_outputs_task_id ON task_outputs(task_id);
+CREATE INDEX idx_outputs_review_status ON task_outputs(review_status);
 
 -- ---------------------------------------------------------------------------
 -- Citations
@@ -233,6 +241,7 @@ CREATE INDEX idx_citations_confidence ON citations(confidence);
 CREATE TABLE audit_logs (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id         UUID,
+    group_id        UUID REFERENCES project_groups(id) ON DELETE SET NULL,
     action          VARCHAR(64) NOT NULL,
     resource_type   VARCHAR(32) NOT NULL,
     resource_id     UUID,
@@ -248,6 +257,8 @@ CREATE INDEX idx_audit_resource_type ON audit_logs(resource_type);
 CREATE INDEX idx_audit_created_at ON audit_logs(created_at DESC);
 CREATE INDEX idx_audit_user_action ON audit_logs(user_id, action);
 CREATE INDEX idx_audit_resource ON audit_logs(resource_type, resource_id);
+CREATE INDEX idx_audit_group_id ON audit_logs(group_id);
+CREATE INDEX idx_audit_user_group ON audit_logs(user_id, group_id);
 
 -- ---------------------------------------------------------------------------
 -- LLM Usage Logs (cost tracking)
@@ -303,5 +314,26 @@ CREATE TRIGGER trg_documents_updated_at
 CREATE TRIGGER trg_analysis_tasks_updated_at
     BEFORE UPDATE ON analysis_tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- User Consents (GDPR compliance)
+-- ---------------------------------------------------------------------------
+BEGIN;
+
+CREATE TABLE user_consents (
+    id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id             UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+    processing_consent  BOOLEAN NOT NULL DEFAULT FALSE,
+    analytics_consent   BOOLEAN NOT NULL DEFAULT FALSE,
+    consented_at        TIMESTAMPTZ,
+    withdrawn_at        TIMESTAMPTZ,
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_consents_user_id ON user_consents(user_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_consents TO econai;
 
 COMMIT;

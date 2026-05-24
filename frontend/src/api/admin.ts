@@ -5,7 +5,9 @@ import type {
   AdminGroup,
   CreateGroupRequest,
   AuditLogEntry,
+  GroupMember,
   PaginatedResponse,
+  AdminResetPasswordRequest,
 } from './types';
 
 // ===== User Management =====
@@ -13,7 +15,7 @@ import type {
 export async function listUsers(params?: {
   page?: number;
   page_size?: number;
-  status?: string;
+  is_active?: boolean;
 }): Promise<PaginatedResponse<AdminUser>> {
   const response = await client.get<PaginatedResponse<AdminUser>>(
     '/admin/users',
@@ -42,6 +44,13 @@ export async function disableUser(userId: string): Promise<void> {
   await client.delete(`/admin/users/${userId}`);
 }
 
+export async function resetUserPassword(
+  userId: string,
+  data: AdminResetPasswordRequest
+): Promise<void> {
+  await client.post(`/admin/users/${userId}/reset-password`, data);
+}
+
 // ===== Group Management =====
 
 export async function listGroups(params?: {
@@ -67,6 +76,27 @@ export async function addGroupMember(
   userId: string
 ): Promise<void> {
   await client.post(`/admin/groups/${groupId}/members`, { user_id: userId });
+}
+
+export async function listGroupMembers(
+  groupId: string
+): Promise<GroupMember[]> {
+  const response = await client.get<GroupMember[]>(
+    `/admin/groups/${groupId}/members`
+  );
+  return response.data;
+}
+
+export async function searchNonGroupMembers(
+  groupId: string,
+  q: string,
+  limit?: number
+): Promise<GroupMember[]> {
+  const response = await client.get<GroupMember[]>(
+    `/admin/groups/${groupId}/non-members`,
+    { params: { q, limit: limit ?? 20 } }
+  );
+  return response.data;
 }
 
 export async function removeGroupMember(

@@ -12,6 +12,7 @@ export interface UserInfo {
   display_name: string;
   role: 'analyst' | 'senior_researcher' | 'project_admin' | 'system_admin';
   groups: UserGroup[];
+  force_password_change?: boolean;
 }
 
 export interface UserGroup {
@@ -274,12 +275,13 @@ export interface OutputSection {
 export interface AdminUser {
   user_id: string;
   username: string;
-  email: string;
-  display_name: string;
+  email: string | null;
+  display_name: string | null;
   role: string;
-  status: 'active' | 'disabled';
-  groups: UserGroup[];
-  created_at: string;
+  auth_provider: string;
+  is_active: boolean;
+  force_password_change: boolean;
+  created_at: string | null;
 }
 
 export interface CreateUserRequest {
@@ -288,6 +290,8 @@ export interface CreateUserRequest {
   email: string;
   display_name: string;
   role: string;
+  group_id?: string;   // existing group, required for project_admin
+  group_name?: string;  // new group name, alternative to group_id
 }
 
 export interface AdminGroup {
@@ -301,6 +305,13 @@ export interface AdminGroup {
 export interface CreateGroupRequest {
   name: string;
   description: string;
+}
+
+export interface GroupMember {
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  role: string;
 }
 
 export interface AuditLogEntry {
@@ -324,4 +335,15 @@ export interface ApiError {
     message: string;
     details?: Record<string, unknown>;
   };
+}
+
+// ===== Password Management Types =====
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+}
+
+export interface AdminResetPasswordRequest {
+  new_password: string;
 }

@@ -22,6 +22,15 @@ export default function Login() {
     setError(null);
     try {
       await login(values.username, values.password);
+      // Check if user must change password (admin reset)
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const userData = JSON.parse(stored);
+        if (userData?.force_password_change) {
+          navigate('/force-password-change', { replace: true });
+          return;
+        }
+      }
       navigate('/projects');
     } catch (err: unknown) {
       const apiErr = err as { status?: number; message?: string };

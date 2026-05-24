@@ -1,6 +1,6 @@
 # EconAI 运维手册
 
-> 版本：v1.0 | 适用于 EconAI v1.0 完整部署
+> 版本：v1.1 | 适用于 EconAI v1.1 完整部署
 
 ---
 
@@ -937,6 +937,24 @@ RUN sed -i 's|path = "../shared"|path = "/shared"|g' pyproject.toml && \
 econai-shared = { path = "../../shared" }
 ```
 `uv pip install .` 会强制解析此路径。从 `/app/` 计算 `../../shared` 逃出基目录，uv 直接报错。先用 `sed` 改成容器内绝对路径 `/shared` 即可让 uv 正常解析。
+
+---
+
+## 14. 变更记录
+
+### v1.1 (2026-05-24) — 项目组成员管理优化
+
+**问题**：系统管理员在 `/admin/groups` 管理成员时，添加成员需要手动输入用户 UUID，不直观；且成员列表未展示。
+
+**改动**：
+
+| 组件 | 变更内容 |
+|------|----------|
+| `user-service` | 新增 `GET /api/admin/groups/{id}/members` 列出成员（含用户名/显示名称/角色）；新增 `GET /api/admin/groups/{id}/non-members?q=` 搜索非成员用户 |
+| 前端 `GroupManagement` | 成员管理弹窗重构：搜索式 `Select` 代替 UUID 输入框；表格展示当前成员列表；支持移除成员 |
+| 测试 `test_m8_groups.py` | 新增 `test_list_members`、`test_list_non_members`、`test_non_members_search` |
+
+**影响**：仅影响 `user-service` 和前端，无需数据库迁移或配置变更，重启服务即可生效。
 
 ---
 

@@ -6,15 +6,29 @@ import {
   Modal,
   Form,
   Input,
+  Select,
   Typography,
   Empty,
   message,
+  Popconfirm,
 } from 'antd';
-import { PlusOutlined, ReloadOutlined, UserAddOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  ReloadOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../../hooks/useRequest';
-import { listGroups, createGroup, addGroupMember } from '../../api/admin';
-import type { AdminGroup, CreateGroupRequest } from '../../api/types';
+import {
+  listGroups,
+  createGroup,
+  listGroupMembers,
+  searchNonGroupMembers,
+  addGroupMember,
+  removeGroupMember,
+} from '../../api/admin';
+import type { AdminGroup, GroupMember, CreateGroupRequest } from '../../api/types';
 
 const { Title } = Typography;
 
@@ -27,6 +41,7 @@ export default function GroupManagement() {
   const [createForm] = Form.useForm();
   const [memberForm] = Form.useForm();
 
+  // ---- Groups list ----
   const loadGroups = useCallback(async () => {
     return listGroups({ page, page_size: pageSize });
   }, [page, pageSize]);
@@ -40,21 +55,80 @@ export default function GroupManagement() {
       setCreateModalOpen(false);
       createForm.resetFields();
       refresh();
-    } catch {
-      message.error('创建失败');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '创建失败';
+      message.error(`创建失败：${msg}`);
     }
   };
+
+  // ---- Group members ----
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [userOptions, setUserOptions] = useState<{ value: string; label: string }[]>([]);
+
+  const loadMembers = useCallback(
+    async (group: AdminGroup) => {
+      setMembersLoading(true);
+      try {
+        const list = await listGroupMembers(group.group_id);
+        setMembers(list);
+      } catch {
+        setMembers([]);
+      } finally {
+        setMembersLoading(false);
+      }
+    },
+    [],
+  );
+
+  const handleSearchUser = useCallback(
+    async (query: string) => {
+      if (!selectedGroup || !query) {
+        setUserOptions([]);
+        return;
+      }
+      try {
+        const list = await searchNonGroupMembers(selectedGroup.group_id, query);
+        setUserOptions(
+          list.map((u) => ({
+            value: u.user_id,
+            label: u.display_name
+              ? `${u.display_name} (${u.username})`
+              : u.username,
+          })),
+        );
+      } catch {
+        setUserOptions([]);
+      }
+    },
+    [selectedGroup],
+  );
 
   const handleAddMember = async (values: { user_id: string }) => {
     if (!selectedGroup) return;
     try {
       await addGroupMember(selectedGroup.group_id, values.user_id);
       message.success('成员已添加');
-      setMemberModalOpen(false);
       memberForm.resetFields();
+      setUserOptions([]);
+      await loadMembers(selectedGroup);
+      refresh(); // refresh group list to update member_count
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '添加失败';
+      message.error(`添加失败：${msg}`);
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!selectedGroup) return;
+    try {
+      await removeGroupMember(selectedGroup.group_id, userId);
+      message.success('成员已移除');
+      await loadMembers(selectedGroup);
       refresh();
-    } catch {
-      message.error('添加失败');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '移除失败';
+      message.error(`移除失败：${msg}`);
     }
   };
 
@@ -95,11 +169,52 @@ export default function GroupManagement() {
           icon={<UserAddOutlined />}
           onClick={() => {
             setSelectedGroup(record);
+            setMembers([]);
             setMemberModalOpen(true);
+            loadMembers(record);
           }}
         >
           管理成员
         </Button>
+      ),
+    },
+  ];
+
+  const memberColumns: ColumnsType<GroupMember> = [
+    {
+      title: '用户名',
+      dataIndex: 'username',
+      key: 'username',
+      width: 140,
+    },
+    {
+      title: '显示名称',
+      dataIndex: 'display_name',
+      key: 'display_name',
+      ellipsis: true,
+    },
+    {
+      title: '角色',
+      dataIndex: 'role',
+      key: 'role',
+      width: 100,
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 80,
+      render: (_: unknown, record: GroupMember) => (
+        <Popconfirm
+          title="确认移除"
+          description={`确定要移除 ${record.display_name || record.username} 吗？`}
+          onConfirm={() => handleRemoveMember(record.user_id)}
+          okText="移除"
+          cancelText="取消"
+        >
+          <Button type="link" danger size="small" icon={<UserDeleteOutlined />}>
+            移除
+          </Button>
+        </Popconfirm>
       ),
     },
   ];
@@ -194,31 +309,56 @@ export default function GroupManagement() {
         onCancel={() => {
           setMemberModalOpen(false);
           setSelectedGroup(null);
+          setMembers([]);
+          setUserOptions([]);
           memberForm.resetFields();
         }}
         footer={null}
+        width={600}
       >
-        <Form form={memberForm} layout="inline" onFinish={handleAddMember}>
+        {/* Add member form */}
+        <Form
+          form={memberForm}
+          layout="inline"
+          onFinish={handleAddMember}
+          style={{ marginBottom: 16 }}
+        >
           <Form.Item
             name="user_id"
-            rules={[{ required: true, message: '请输入用户ID' }]}
+            rules={[{ required: true, message: '请选择用户' }]}
+            style={{ flex: 1 }}
           >
-            <Input placeholder="用户ID (UUID)" style={{ width: 260 }} />
+            <Select
+              showSearch
+              placeholder="输入用户名或显示名称搜索"
+              filterOption={false}
+              onSearch={handleSearchUser}
+              options={userOptions}
+              notFoundContent={
+                <Typography.Text type="secondary">输入关键字搜索</Typography.Text>
+              }
+              style={{ minWidth: 320 }}
+            />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" icon={<UserAddOutlined />}>
-              添加
+              添加成员
             </Button>
           </Form.Item>
         </Form>
-        <div style={{ marginTop: 16 }}>
-          <Typography.Text type="secondary">
-            当前成员数：{selectedGroup?.member_count || 0}
-          </Typography.Text>
-          <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginTop: 4 }}>
-            请输入要添加的用户 UUID 并在上方点击"添加"。成员列表将从 API 加载。
-          </Typography.Paragraph>
-        </div>
+
+        {/* Member list */}
+        <Table<GroupMember>
+          columns={memberColumns}
+          dataSource={members}
+          rowKey="user_id"
+          loading={membersLoading}
+          size="small"
+          locale={{
+            emptyText: <Empty description="暂无成员" />,
+          }}
+          pagination={false}
+        />
       </Modal>
     </div>
   );

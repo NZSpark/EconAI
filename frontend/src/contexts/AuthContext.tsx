@@ -5,7 +5,7 @@ import {
   useEffect,
   type ReactNode,
 } from 'react';
-import { login as loginApi, logout as logoutApi, getCurrentUser } from '../api/auth';
+import { login as loginApi, logout as logoutApi, getCurrentUser, changePassword as changePasswordApi } from '../api/auth';
 import type { UserInfo } from '../api/types';
 import { AuthContext } from './auth-context';
 import type { AuthContextValue } from './auth-context';
@@ -81,6 +81,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin =
     user?.role === 'system_admin' || user?.role === 'project_admin';
 
+  const hasForcePasswordChange = user?.force_password_change ?? false;
+
+  const changePassword = useCallback(
+    async (oldPassword: string, newPassword: string) => {
+      await changePasswordApi({ old_password: oldPassword, new_password: newPassword });
+      // Refresh user data to get updated force_password_change flag
+      try {
+        const userData = await getCurrentUser();
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      } catch {
+        // If /me fails, keep existing user data
+      }
+    },
+    []
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -89,8 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login,
       logout,
+      changePassword,
+      hasForcePasswordChange,
     }),
-    [user, isAdmin, isLoading, login, logout]
+    [user, isAdmin, isLoading, login, logout, changePassword, hasForcePasswordChange]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

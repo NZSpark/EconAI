@@ -69,11 +69,26 @@ async def create_project(
     db: AsyncSession = Depends(get_db),
 ) -> ProjectResponse:
     user_id = _get_user_id(request)
+    target_group_id = uuid.UUID(body.group_id)
+
+    # Verify the user belongs to the target group
+    group_ids = await _get_user_group_ids(db, user_id)
+    if target_group_id not in group_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": {
+                    "code": "USER_GROUP_OUT_OF_SCOPE",
+                    "message": "You can only create projects in groups you belong to",
+                }
+            },
+        )
+
     project = Project(
         id=uuid.uuid4(),
         name=body.name,
         description=body.description,
-        group_id=uuid.UUID(body.group_id),
+        group_id=target_group_id,
         created_by=user_id,
         status="active",
     )
@@ -158,6 +173,17 @@ async def update_project(
 ) -> ProjectResponse:
     user_id = _get_user_id(request)
     project = await _verify_project_access(db, uuid.UUID(project_id), user_id)
+
+    if project.status == "archived":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": {
+                    "code": "PROJECT_ARCHIVED",
+                    "message": "Archived projects cannot be modified",
+                }
+            },
+        )
 
     if body.name is not None:
         project.name = body.name

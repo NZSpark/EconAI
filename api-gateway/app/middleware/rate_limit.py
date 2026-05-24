@@ -78,6 +78,10 @@ class TokenBucketRateLimiter:
         return max(0, ttl)
 
 
+# Paths exempt from rate limiting (infrastructure endpoints)
+EXEMPT_PATHS: set[str] = {"/health", "/metrics"}
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Rate limiting middleware using Redis Token Bucket.
 
@@ -87,6 +91,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        # Skip rate limiting for infrastructure endpoints
+        if request.url.path in EXEMPT_PATHS:
+            return await call_next(request)
+
         if not settings.rate_limit_enabled:
             return await call_next(request)
 

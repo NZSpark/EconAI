@@ -9,9 +9,11 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.project_group import ProjectGroup, ProjectGroupMember
 from app.models.user import User
-from app.schemas.user import UserCreate, UserListResponse, UserResponse, UserUpdate
+from app.schemas.user import AdminResetPasswordRequest, UserCreate, UserListResponse, UserResponse, UserUpdate
 from app.services.auth_service import hash_password
+from shared.models import UserRole
 
 router = APIRouter(prefix="/api/admin/users", tags=["admin-users"])
 
@@ -49,6 +51,29 @@ def _get_caller_role(request: Request) -> str:
     return request.headers.get("X-User-Role") or getattr(request.state, "user_role", "")
 
 
+def _get_caller_id(request: Request) -> str:
+    """Extract the caller's user ID from the request."""
+    return request.headers.get("X-User-ID") or getattr(request.state, "user_id", "")
+
+
+async def _get_caller_group_ids(request: Request, db: AsyncSession) -> list[str]:
+    """Get group IDs the caller belongs to. Empty = system_admin (no filter)."""
+    role = _get_caller_role(request)
+    if role == "system_admin":
+        return []
+
+    user_id = _get_caller_id(request)
+    if not user_id:
+        return []
+
+    result = await db.execute(
+        select(ProjectGroupMember.group_id).where(
+            ProjectGroupMember.user_id == uuid.UUID(user_id)
+        )
+    )
+    return [str(row[0]) for row in result.all()]
+
+
 # Roles that require system_admin to assign (privilege escalation check)
 PRIVILEGED_ROLES = {"system_admin"}
 
@@ -65,6 +90,39 @@ def _check_role_escalation(caller_role: str, target_role: str) -> None:
                 }
             },
         )
+
+
+async def _resolve_group_id(
+    db: AsyncSession, body: UserCreate
+) -> uuid.UUID:
+    """Resolve group_id from body: existing group or inline-created group."""
+    if body.group_id:
+        # Verify the group exists
+        result = await db.execute(
+            select(ProjectGroup).where(ProjectGroup.id == uuid.UUID(body.group_id))
+        )
+        grp = result.scalar_one_or_none()
+        if grp is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": {
+                        "code": "GROUP_NOT_FOUND",
+                        "message": f"Group '{body.group_id}' not found",
+                    }
+                },
+            )
+        return uuid.UUID(body.group_id)
+
+    # Inline group creation
+    grp = ProjectGroup(
+        id=uuid.uuid4(),
+        name=body.group_name,
+        description=f"Auto-created for project_admin {body.username}",
+    )
+    db.add(grp)
+    await db.flush()
+    return grp.id
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -101,6 +159,47 @@ async def create_user(
     db.add(user)
     await db.flush()
 
+    # Bind project_admin to a group (existing or newly created)
+    if body.role == UserRole.project_admin:
+        target_group_id = await _resolve_group_id(db, body)
+        db.add(
+            ProjectGroupMember(
+                group_id=target_group_id,
+                user_id=user.id,
+                role="admin",  # group-level admin role
+            )
+        )
+        await db.flush()
+
+    # Auto-bind to caller's groups: when a project_admin creates any
+    # lower-role user (analyst, senior_researcher), add the new user to
+    # the project_admin's own groups so they appear in the scoped user list.
+    caller_role = _get_caller_role(request)
+    if caller_role == "project_admin" and body.role != UserRole.project_admin:
+        caller_id = _get_caller_id(request)
+        if caller_id:
+            caller_groups_result = await db.execute(
+                select(ProjectGroupMember.group_id, ProjectGroupMember.role).where(
+                    ProjectGroupMember.user_id == uuid.UUID(caller_id)
+                )
+            )
+            for group_id, _group_role in caller_groups_result.all():
+                existing = await db.execute(
+                    select(ProjectGroupMember).where(
+                        ProjectGroupMember.group_id == group_id,
+                        ProjectGroupMember.user_id == user.id,
+                    )
+                )
+                if existing.scalar_one_or_none() is None:
+                    db.add(
+                        ProjectGroupMember(
+                            group_id=group_id,
+                            user_id=user.id,
+                            role=body.role.value,
+                        )
+                    )
+            await db.flush()
+
     return UserResponse(
         user_id=str(user.id),
         username=user.username,
@@ -109,6 +208,7 @@ async def create_user(
         role=user.role,
         auth_provider=user.auth_provider,
         is_active=user.is_active,
+        force_password_change=user.force_password_change,
     )
 
 
@@ -121,10 +221,28 @@ async def list_users(
     is_active: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> UserListResponse:
+    """List users — system_admin sees all; project_admin sees only users in their groups."""
     _require_admin(request)
+
+    caller_role = _get_caller_role(request)
+    caller_group_ids = await _get_caller_group_ids(request, db)
 
     query = select(User)
     count_query = select(func.count(User.id))
+
+    # Group scoping: project_admin can only see users in their groups
+    if caller_role != "system_admin" and caller_group_ids:
+        # Subquery: user_ids in caller's groups
+        subq = select(ProjectGroupMember.user_id).where(
+            ProjectGroupMember.group_id.in_(
+                [uuid.UUID(gid) for gid in caller_group_ids]
+            )
+        )
+        query = query.where(User.id.in_(subq))
+        count_query = count_query.where(User.id.in_(subq))
+    elif caller_role != "system_admin" and not caller_group_ids:
+        # project_admin with no groups → can't see any users
+        return UserListResponse(items=[], total=0, page=page, page_size=page_size)
 
     if role:
         query = query.where(User.role == role)
@@ -147,6 +265,7 @@ async def list_users(
                 role=u.role,
                 auth_provider=u.auth_provider,
                 is_active=u.is_active,
+                force_password_change=u.force_password_change,
             )
             for u in users
         ],
@@ -170,6 +289,30 @@ async def update_user(
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
+    # Group scoping check: project_admin can only update users in their groups
+    caller_role = _get_caller_role(request)
+    if caller_role != "system_admin":
+        caller_group_ids = await _get_caller_group_ids(request, db)
+        if caller_group_ids:
+            member_check = await db.execute(
+                select(ProjectGroupMember).where(
+                    ProjectGroupMember.user_id == uuid.UUID(user_id),
+                    ProjectGroupMember.group_id.in_(
+                        [uuid.UUID(gid) for gid in caller_group_ids]
+                    ),
+                )
+            )
+            if not member_check.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "error": {
+                            "code": "USER_GROUP_OUT_OF_SCOPE",
+                            "message": "You do not have access to this user",
+                        }
+                    },
+                )
+
     if body.display_name is not None:
         user.display_name = body.display_name
     if body.role is not None:
@@ -188,6 +331,7 @@ async def update_user(
         role=user.role,
         auth_provider=user.auth_provider,
         is_active=user.is_active,
+        force_password_change=user.force_password_change,
     )
 
 
@@ -205,4 +349,60 @@ async def deactivate_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     user.is_active = False
+    await db.flush()
+
+
+@router.post("/{user_id}/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_password(
+    user_id: str,
+    body: AdminResetPasswordRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Admin resets a user's password. Forces password change on next login."""
+    _require_admin(request)
+
+    result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    # LDAP users cannot have password reset
+    if user.auth_provider != "local":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": {
+                    "code": "AUTH_LDAP_PASSWORD",
+                    "message": "Cannot reset password for LDAP users",
+                }
+            },
+        )
+
+    # Group scoping: project_admin can only reset users in their groups
+    caller_role = _get_caller_role(request)
+    if caller_role != "system_admin":
+        caller_group_ids = await _get_caller_group_ids(request, db)
+        if caller_group_ids:
+            member_check = await db.execute(
+                select(ProjectGroupMember).where(
+                    ProjectGroupMember.user_id == uuid.UUID(user_id),
+                    ProjectGroupMember.group_id.in_(
+                        [uuid.UUID(gid) for gid in caller_group_ids]
+                    ),
+                )
+            )
+            if not member_check.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "error": {
+                            "code": "USER_GROUP_OUT_OF_SCOPE",
+                            "message": "You do not have access to this user",
+                        }
+                    },
+                )
+
+    user.hashed_password = hash_password(body.new_password)
+    user.force_password_change = True
     await db.flush()

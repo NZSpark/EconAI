@@ -1,4 +1,4 @@
-"""Auth router: login, logout, me, refresh."""
+"""Auth router: login, logout, me, change-password, refresh."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from app.database import get_db
 from app.models.project_group import ProjectGroup, ProjectGroupMember
 from app.models.user import User
 from app.schemas.auth import (
+    ChangePasswordRequest,
     GroupInfo,
     LoginRequest,
     LoginResponse,
@@ -27,6 +28,8 @@ from app.services.auth_service import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    hash_password,
+    verify_password,
 )
 from app.services.ldap_service import ldap_authenticate, map_ldap_groups
 
@@ -116,6 +119,7 @@ async def login(
         display_name=user.display_name,
         role=user.role,
         groups=groups,
+        force_password_change=getattr(user, "force_password_change", False),
     )
 
     return LoginResponse(
@@ -169,12 +173,87 @@ async def me(request: Request, db: AsyncSession = Depends(get_db)) -> MeResponse
         role=user.role,
         auth_provider=user.auth_provider,
         is_active=user.is_active,
+        force_password_change=getattr(user, "force_password_change", False),
         groups=groups,
     )
 
 
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    body: ChangePasswordRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Self-service password change. Required when force_password_change is set."""
+    user_id = request.headers.get("X-User-ID") or getattr(
+        request.state, "user_id", None
+    )
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": {
+                    "code": "AUTH_TOKEN_MISSING",
+                    "message": "Authentication required",
+                }
+            },
+        )
+
+    from uuid import UUID
+
+    from sqlalchemy import select
+
+    result = await db.execute(select(User).where(User.id == UUID(user_id)))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    # LDAP users cannot change password locally
+    if user.auth_provider != "local" or user.hashed_password is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": {
+                    "code": "AUTH_LDAP_PASSWORD",
+                    "message": "Password management is handled by your LDAP provider",
+                }
+            },
+        )
+
+    # Verify current password
+    if not verify_password(body.old_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": {
+                    "code": "AUTH_INVALID_PASSWORD",
+                    "message": "Current password is incorrect",
+                }
+            },
+        )
+
+    # Ensure new password is different
+    if verify_password(body.new_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": {
+                    "code": "AUTH_PASSWORD_SAME",
+                    "message": "New password must be different from current password",
+                }
+            },
+        )
+
+    user.hashed_password = hash_password(body.new_password)
+    user.force_password_change = False
+    await db.flush()
+
+
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(body: RefreshRequest) -> TokenResponse:
+async def refresh(
+    body: RefreshRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
     try:
         payload = decode_token(body.refresh_token)
     except Exception as err:
@@ -199,14 +278,38 @@ async def refresh(body: RefreshRequest) -> TokenResponse:
             },
         )
 
-    user_id = payload["sub"]
+    # Look up user from database to get current role and group memberships.
+    # We cannot trust refresh-token payload: it only carries "sub" and "type",
+    # so reading username/role/group_ids from it would silently downgrade the
+    # user (e.g. project_admin → analyst) after every refresh.
+    user_id_str = payload["sub"]
+    user_id = uuid.UUID(user_id_str)
+
+    from sqlalchemy import select as sel
+
+    result = await db.execute(sel(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": {
+                    "code": "AUTH_TOKEN_INVALID",
+                    "message": "User not found or deactivated",
+                }
+            },
+        )
+
+    group_ids = await _get_group_ids(db, user_id)
+
     access_token = create_access_token(
-        user_id,
-        payload.get("username", ""),
-        payload.get("role", "analyst"),
-        payload.get("group_ids", []),
+        user_id_str,
+        user.username,
+        user.role,
+        group_ids,
     )
-    new_refresh_token = create_refresh_token(user_id)
+    new_refresh_token = create_refresh_token(user_id_str)
 
     return TokenResponse(
         access_token=access_token,

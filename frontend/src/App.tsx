@@ -14,6 +14,7 @@ import TaskOutput from './pages/TaskOutput';
 import UserManagement from './pages/Admin/UserManagement';
 import GroupManagement from './pages/Admin/GroupManagement';
 import AuditLogs from './pages/Admin/AuditLogs';
+import Profile from './pages/Profile';
 import NotFound from './pages/errors/NotFound';
 import Forbidden from './pages/errors/Forbidden';
 import ServerError from './pages/errors/ServerError';
@@ -37,6 +38,16 @@ export default function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
+
+              {/* Force password change (no layout, no navigation) */}
+              <Route
+                path="/force-password-change"
+                element={
+                  <PrivateRoute>
+                    <Profile force />
+                  </PrivateRoute>
+                }
+              />
 
               {/* Error pages (no layout) */}
               <Route path="/403" element={<Forbidden />} />
@@ -63,6 +74,9 @@ export default function App() {
                   path="/projects/:id/tasks/:taskId"
                   element={<TaskOutput />}
                 />
+
+                {/* Profile */}
+                <Route path="/profile" element={<Profile />} />
 
                 {/* Admin routes */}
                 <Route
