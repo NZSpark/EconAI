@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   Table,
   Button,
@@ -81,25 +81,31 @@ export default function GroupManagement() {
     [],
   );
 
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleSearchUser = useCallback(
     async (query: string) => {
       if (!selectedGroup || !query) {
         setUserOptions([]);
         return;
       }
-      try {
-        const list = await searchNonGroupMembers(selectedGroup.group_id, query);
-        setUserOptions(
-          list.map((u) => ({
-            value: u.user_id,
-            label: u.display_name
-              ? `${u.display_name} (${u.username})`
-              : u.username,
-          })),
-        );
-      } catch {
-        setUserOptions([]);
-      }
+      // Debounce: 300ms delay before API call
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = setTimeout(async () => {
+        try {
+          const list = await searchNonGroupMembers(selectedGroup.group_id, query);
+          setUserOptions(
+            list.map((u) => ({
+              value: u.user_id,
+              label: u.display_name
+                ? `${u.display_name} (${u.username})`
+                : u.username,
+            })),
+          );
+        } catch {
+          setUserOptions([]);
+        }
+      }, 300);
     },
     [selectedGroup],
   );

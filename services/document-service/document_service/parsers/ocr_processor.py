@@ -142,27 +142,12 @@ class OCRProcessor(BaseParser):
     def _run_tesseract(self, image_bytes: bytes, width: int, height: int) -> str:
         """Run Tesseract OCR on image bytes.
 
-        Returns extracted text. Falls back gracefully if Tesseract isn't available.
+        Delegates to the shared ocr_image_bytes helper in image_extractor
+        for consistent OCR behavior across all parsers.
         """
-        try:
-            import io as io_module
+        from document_service.parsers.image_extractor import ocr_image_bytes
 
-            import pytesseract
-            from PIL import Image
-
-            img = Image.open(io_module.BytesIO(image_bytes))
-            text: str = pytesseract.image_to_string(
-                img,
-                lang=self._language,
-                config="--psm 6",  # Assume uniform block of text
-            )
-            return text.strip()
-        except ImportError:
-            logger.warning("pytesseract not available; returning empty OCR result")
-            return "[OCR not available: pytesseract not installed]"
-        except Exception as e:
-            logger.warning("Tesseract OCR error: %s", e)
-            return f"[OCR Error: {e}]"
+        return ocr_image_bytes(image_bytes, self._language)
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:
         return {"title": filename}

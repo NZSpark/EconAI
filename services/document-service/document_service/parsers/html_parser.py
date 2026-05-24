@@ -1,6 +1,7 @@
 """HTML/MHTML parser using BeautifulSoup (M2-16).
 
-Extracts body text (removes navigation, ads, scripts) and original links.
+Extracts body text (removes navigation, ads, scripts), original links,
+and data-URI embedded images with OCR recognition.
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from typing import Any
 
 from document_service.models import PageContent, ParsedContent, SectionInfo
 from document_service.parsers.base import BaseParser
+from document_service.parsers.image_extractor import extract_images_from_html
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,21 @@ class HTMLParser(BaseParser):
         if title:
             full_text = f"# {title}\n\n{clean_text}"
 
+        # ---- Extract and OCR data-URI images ----
+        ocr_images = extract_images_from_html(file_data)
+        if ocr_images:
+            image_texts = []
+            for img in ocr_images:
+                ocr_text = img.get("ocr_text", "")
+                if ocr_text and "[OCR" not in ocr_text:
+                    image_texts.append(
+                        f"[Inline Image {img.get('image_index', 0)} OCR ({img.get('format', 'png')})]:\n{ocr_text}"
+                    )
+            if image_texts:
+                full_text += "\n\n--- Inline Images (OCR) ---\n\n" + "\n\n".join(image_texts)
+            logger.info("HTML: OCR'd %d data-URI images", len(ocr_images))
+        # ---- End image extraction ----
+
         return ParsedContent(
             full_text=full_text,
             pages=[PageContent(page_number=1, text=full_text, has_text_layer=True)],
@@ -104,6 +121,7 @@ class HTMLParser(BaseParser):
                 },
             },
             needs_ocr=False,
+            ocr_images=ocr_images,
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:

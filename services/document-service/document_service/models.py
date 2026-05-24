@@ -84,6 +84,11 @@ class ParsedContent(BaseModel):
     sections: list[SectionInfo] = Field(default_factory=list)
     metadata_hints: dict[str, Any] = Field(default_factory=dict)
     needs_ocr: bool = False
+    ocr_images: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="OCR results for embedded/extracted images. "
+        "Each dict: page, image_index, ocr_text, format, width, height.",
+    )
 
 
 class PageContent(BaseModel):

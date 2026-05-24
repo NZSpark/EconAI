@@ -1,6 +1,6 @@
 # EconAI 运维手册
 
-> 版本：v1.1 | 适用于 EconAI v1.1 完整部署
+> 版本：v1.2 | 适用于 EconAI v1.2 完整部署
 
 ---
 
@@ -12,7 +12,7 @@ EconAI 由以下服务组成，部署在单台或多台服务器上：
 |------|--------|------|------|
 | Nginx | `econai-nginx` | 80, 443 | 反向代理 + TLS 终结 |
 | API Gateway | `econai-api-gateway` | 8000 | JWT 认证/RBAC/限流/审计 |
-| Document Service | `econai-document-service` | 8001 | 文档上传/解析/分块 |
+| Document Service | `econai-document-service` | 8001 | 文档上传/解析/分块/OCR |
 | KB Service | `econai-kb-service` | 8002 | 向量索引/混合检索 |
 | Orchestration Service | `econai-orchestration-service` | 8003 | Agent 引擎/任务编排 |
 | LLM Router | `econai-llm-router` | 8004 | LLM 路由/适配器 |
@@ -955,6 +955,33 @@ econai-shared = { path = "../../shared" }
 | 测试 `test_m8_groups.py` | 新增 `test_list_members`、`test_list_non_members`、`test_non_members_search` |
 
 **影响**：仅影响 `user-service` 和前端，无需数据库迁移或配置变更，重启服务即可生效。
+
+### v1.2 (2026-05-25) — 多格式文档上传与 OCR 图片识别增强
+
+**问题**：系统仅支持 `.txt`, `.md`, `.csv` 等少量常用格式的上传和解析，无法处理 Microsoft Office 全系列文档及图片中嵌入文字的识别。
+
+**改动**：
+
+| 组件 | 变更内容 |
+|------|----------|
+| `frontend` | KB 集成测试扩展至 19 种文件扩展名：PDF、Word (.docx/.doc)、Excel (.xlsx/.xls/.csv)、PowerPoint (.pptx/.ppt)、图片 (.png/.jpg/.jpeg/.tiff/.bmp)、邮件 (.eml)、网页 (.html/.mhtml/.mht)、文本 (.txt/.md) |
+| `document-service/image_extractor.py` | **新增**共享图片提取 + OCR 核心模块，提供 `ocr_image_bytes`、`extract_images_from_pdf`、`extract_images_from_docx`、`extract_images_from_pptx`、`extract_images_from_html` 五个通用函数 |
+| `document-service/models.py` | `ParsedContent` 新增 `ocr_images` 字段，记录每次 OCR 的审计追踪（页码、图片索引、OCR 文本、格式、尺寸） |
+| `document-service/pdf_parser.py` | `parse()` 中集成 `extract_images_from_pdf`，OCR 结果自动追加到对应页面内容 |
+| `document-service/word_parser.py` | `parse()` 中集成 `extract_images_from_docx`，OCR 结果追加到文档全文中 |
+| `document-service/ppt_parser.py` | `parse()` 中集成 `extract_images_from_pptx`，OCR 结果追加到对应幻灯片 |
+| `document-service/html_parser.py` | `parse()` 中集成 `extract_images_from_html`，OCR data-URI 内嵌图片 |
+| `document-service/ocr_processor.py` | `_run_tesseract()` 重构为委托 `image_extractor.ocr_image_bytes()`，消除代码重复 |
+| `document-service/pyproject.toml` | 新增依赖 `pytesseract>=0.3` |
+| `document-service/tests/test_image_extraction.py` | **新增** 24 个测试用例覆盖 OCR 基础功能、PDF/DOCX/PPTX/HTML 图片提取、解析器 ocr_images 字段、内容增强验证 |
+
+**新增配置项**：
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `OCR_LANGUAGE` | `chi_sim+eng` | Tesseract OCR 语言包（已有，本次增强使用） |
+
+**影响**：需在 document-service 容器中安装 `tesseract-ocr` 及对应语言包（`tesseract-ocr-chi-sim`、`tesseract-ocr`）。Dockerfile 中已添加相应 `apt-get` 安装步骤。升级后需重建 document-service 镜像：`docker compose build --no-cache document-service && docker compose up -d document-service`。
 
 ---
 

@@ -21,9 +21,9 @@ export function isUUID(value: string): boolean {
 const client = axios.create({
   baseURL: '/api',
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // 不设默认 Content-Type，让 Axios 根据 body 类型自动判断：
+  // - 普通对象 → application/json
+  // - FormData → multipart/form-data (带 boundary)
 });
 
 // Request interceptor: attach auth token and X-Request-ID

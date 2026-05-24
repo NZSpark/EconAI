@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -18,7 +18,8 @@ import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../hooks/useRequest';
 import { listProjects, createProject, archiveProject } from '../api/projects';
-import type { Project, CreateProjectRequest } from '../api/types';
+import { listGroups } from '../api/admin';
+import type { Project, CreateProjectRequest, AdminGroup } from '../api/types';
 
 const { Title } = Typography;
 
@@ -40,6 +41,16 @@ export default function ProjectList() {
   const [searchText, setSearchText] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [form] = Form.useForm();
+  const [groups, setGroups] = useState<AdminGroup[]>([]);
+
+  useEffect(() => {
+    listGroups({ page: 1, page_size: 200 })
+      .then((res) => {
+        if (Array.isArray(res)) setGroups(res);
+        else if (res?.items) setGroups(res.items);
+      })
+      .catch(() => {});
+  }, []);
 
   const { data, loading, error, run: refresh } = useRequest(
     useCallback(async () => {
@@ -268,7 +279,16 @@ export default function ProjectList() {
             label="所属项目组"
             rules={[{ required: true, message: '请选择项目组' }]}
           >
-            <Input placeholder="项目组ID" />
+            <Select
+              showSearch
+              placeholder="搜索并选择项目组"
+              optionFilterProp="label"
+              options={groups.map((g) => ({
+                label: g.name,
+                value: g.group_id,
+              }))}
+              notFoundContent="暂无项目组，请联系管理员创建"
+            />
           </Form.Item>
         </Form>
       </Modal>

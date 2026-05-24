@@ -1,6 +1,7 @@
 """PDF parser using PyMuPDF (M2-10).
 
-Extracts full text, page numbers, tables, and image positions.
+Extracts full text, page numbers, tables, embedded images (with OCR), and
+image positions.
 """
 
 from __future__ import annotations
@@ -10,18 +11,23 @@ from typing import Any
 
 from document_service.models import PageContent, ParsedContent, SectionInfo
 from document_service.parsers.base import BaseParser
+from document_service.parsers.image_extractor import extract_images_from_pdf
 
 logger = logging.getLogger(__name__)
 
 
 class PDFParser(BaseParser):
-    """Parse PDF files using PyMuPDF (fitz)."""
+    """Parse PDF files using PyMuPDF (fitz).
+
+    Extracts: text (per-page), tables, section headers from TOC,
+    and embedded images with OCR recognition.
+    """
 
     def supported_format(self) -> str:
         return "pdf"
 
     def parse(self, file_data: bytes, filename: str) -> ParsedContent:
-        """Extract text from PDF, per-page, with table detection."""
+        """Extract text from PDF, per-page, with table and image detection."""
         try:
             import fitz  # PyMuPDF
         except ImportError as e:
@@ -76,6 +82,33 @@ class PDFParser(BaseParser):
 
         full_text = "\n\n".join(full_text_parts)
 
+        # ---- Extract and OCR embedded images ----
+        ocr_images = extract_images_from_pdf(file_data)
+
+        # Append OCR text from images to the page they belong to
+        image_text_by_page: dict[int, list[str]] = {}
+        for img in ocr_images:
+            page_num = img.get("page", 1)
+            ocr_text = img.get("ocr_text", "")
+            if ocr_text:
+                image_text_by_page.setdefault(page_num, []).append(
+                    f"[Image {img.get('image_index', 0)} OCR]: {ocr_text}"
+                )
+
+        # Merge image OCR text into corresponding pages
+        for page_idx, page_content in enumerate(pages):
+            pn = page_content.page_number
+            if pn in image_text_by_page:
+                extra_text = "\n\n".join(image_text_by_page[pn])
+                page_content.text = (page_content.text + "\n\n" + extra_text).strip()
+                # Update the full_text_parts entry too
+                if page_idx < len(full_text_parts):
+                    full_text_parts[page_idx] = page_content.text
+
+        if image_text_by_page:
+            full_text = "\n\n".join(full_text_parts)
+        # ---- End image extraction ----
+
         # Map sections to character offsets
         for section in sections:
             section.start_char = 0  # We'll set this in chunker if needed
@@ -87,6 +120,7 @@ class PDFParser(BaseParser):
             sections=sections or _detect_sections_from_text(full_text),
             metadata_hints=self.extract_metadata_hints(file_data, filename),
             needs_ocr=not has_text_layer,
+            ocr_images=ocr_images,
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:

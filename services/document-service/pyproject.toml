@@ -23,6 +23,7 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "tiktoken>=0.7",
     "pillow>=10.0",
+    "pytesseract>=0.3",
     "lxml>=5.0",
     "econai-shared",
 ]

@@ -1,4 +1,4 @@
-import { useParams, useLocation, Outlet } from 'react-router-dom';
+import { useParams, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { Tabs, Typography, Spin, Empty, Alert, Descriptions, Tag, Card } from 'antd';
 import { useRequest } from '../hooks/useRequest';
 import { getProject } from '../api/projects';
@@ -7,6 +7,7 @@ const { Title } = Typography;
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { data: project, loading, error } = useRequest(
     async () => {
@@ -16,29 +17,13 @@ export default function ProjectDetail() {
   );
 
   // Determine active tab from URL path
-  let activeTab = 'info';
-  if (location.pathname.includes('/knowledge-base')) {
-    activeTab = 'knowledge-base';
-  } else if (location.pathname.includes('/tasks')) {
+  let activeTab = 'knowledge-base';
+  if (location.pathname.includes('/tasks')) {
     activeTab = 'tasks';
   }
 
   const handleTabChange = (key: string) => {
-    if (key === 'info') {
-      window.history.replaceState(null, '', `/projects/${id}`);
-    } else if (key === 'knowledge-base') {
-      window.history.replaceState(null, '', `/projects/${id}/knowledge-base`);
-    } else if (key === 'tasks') {
-      window.history.replaceState(null, '', `/projects/${id}/tasks`);
-    }
-    // Force a re-render by replacing path
-    // For SPA routing, we'll handle this via the parent routing
-    window.location.hash = '';
-    if (key === 'info') {
-      window.location.href = `/projects/${id}`;
-    } else {
-      window.location.href = `/projects/${id}/${key}`;
-    }
+    navigate(`/projects/${id}/${key}`, { replace: true });
   };
 
   const statusColorMap: Record<string, string> = {

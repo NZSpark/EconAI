@@ -39,7 +39,7 @@ export async function uploadDocument(
     `/projects/${projectId}/documents`,
     formData,
     {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      // 不手动设置 Content-Type，让 Axios/browser 自动添加带 boundary 的头
       timeout: 120000,
     }
   );

@@ -1,6 +1,6 @@
 # EconAI 详细设计文档
 
-> 版本：v1.0 | 日期：2026-05-17 | 基于概要设计文档 v1.0
+> 版本：v1.2 | 日期：2026-05-25 | 基于概要设计文档 v1.0
 
 ---
 
@@ -281,10 +281,11 @@ POST /api/projects/{project_id}/documents/{document_id}/reindex
 1. 文件存入 MinIO      → storage_path
 2. 格式识别            → format (通过 magic bytes + 扩展名)
 3. 内容提取            → full_text + structured_data
-4. 元数据提取          → metadata JSONB
-5. 多粒度分块          → paragraph chunks + section chunks
-6. 写入 PostgreSQL     → documents 表 + document_chunks 表
-7. 发送索引事件        → Redis pub/sub (通知 KB Service)
+4. 图片提取与 OCR       → 提取文档中嵌入的图片（PDF/Word/PPT/HTML），通过 Tesseract 识别文字
+5. 元数据提取          → metadata JSONB
+6. 多粒度分块          → paragraph chunks + section chunks
+7. 写入 PostgreSQL     → documents 表 + document_chunks 表
+8. 发送索引事件        → Redis pub/sub (通知 KB Service)
 ```
 
 ### 3.4 格式处理器选择逻辑
@@ -294,28 +295,44 @@ POST /api/projects/{project_id}/documents/{document_id}/reindex
 
 if magic_bytes 表明是 PDF:
     if 文本层存在 (通过 PyMuPDF 检测):
-        → PyMuPDF 提取 (保留页码和布局)
+        → PyMuPDF 提取文本 (保留页码和布局)
+        → 提取嵌入图片 → Tesseract OCR → 追加到对应页面
     else:
-        → Tesseract OCR → 同 PDF 文本提取流程
+        → Tesseract OCR 整页识别 → 同 PDF 文本提取流程
 
 if 扩展名 in [.docx, .doc]:
     → python-docx 提取文本 + 段落样式 + 表格
+    → 提取嵌入图片（关系部件） → Tesseract OCR → 追加到全文
 
 if 扩展名 in [.xlsx, .xls, .csv]:
     → openpyxl / pandas 提取结构化表格
 
 if 扩展名 in [.pptx, .ppt]:
     → python-pptx 提取逐页文本
+    → 提取幻灯片中嵌入的图片 → Tesseract OCR → 追加到对应幻灯片
 
 if 扩展名 == .eml:
     → email 标准库提取正文 + 元数据（发件人/日期/主题）
 
 if 扩展名 in [.html, .mhtml, .mht]:
     → BeautifulSoup 提取正文（去掉导航/广告/脚本）
+    → 提取 data-URI 内嵌图片（base64） → Tesseract OCR → 追加到全文
 
 if 扩展名 in [.md, .txt]:
     → 直接读取文本
 ```
+
+**图片提取与 OCR 共享模块** (`document_service/parsers/image_extractor.py`)：
+
+| 函数 | 提取来源 | 说明 |
+|------|---------|------|
+| `ocr_image_bytes(image_bytes, language)` | 通用图像字节 | 调用 Tesseract OCR（默认 `chi_sim+eng`），优雅降级（pytesseract 不可用时返回 `[OCR not available]`） |
+| `extract_images_from_pdf(file_data)` | PDF 页面嵌入图片 | 使用 PyMuPDF `get_images()` + `extract_image()` 逐页提取并 OCR |
+| `extract_images_from_docx(file_data)` | DOCX 关系部件图片 | 遍历 `part.rels` 找到图片关系部件，提取并 OCR |
+| `extract_images_from_pptx(file_data)` | PPTX 幻灯片形状图片 | 遍历所有幻灯片中 `MSO_SHAPE_TYPE.PICTURE` 类型的形状，提取并 OCR |
+| `extract_images_from_html(file_data)` | HTML data-URI 图片 | 正则匹配 `<img src="data:image/...">` 标签，解码 base64 后 OCR |
+
+所有提取函数返回统一结构：`[{page, image_index, ocr_text, format, width, height}, ...]`。
 
 ### 3.5 多粒度分块算法
 
@@ -385,7 +402,7 @@ pending ──→ parsing ──→ ready
 | `CHUNK_SECTION_MAX_TOKENS` | 3000 | 章节级最大 token 数 |
 | `CHUNK_PARAGRAPH_OVERLAP` | 50 | 段落级重叠 token 数 |
 | `CHUNK_SECTION_OVERLAP` | 100 | 章节级重叠 token 数 |
-| `OCR_LANGUAGE` | `chi_sim+eng` | Tesseract 语言包 |
+| `OCR_LANGUAGE` | `chi_sim+eng` | Tesseract 语言包（用于所有 parsers 中的图片 OCR 识别） |
 | `MAX_FILE_SIZE_MB` | 100 | 最大上传文件大小 |
 | `CELERY_DOCUMENT_QUEUE` | `document` | 文档处理任务队列名 |
 
@@ -1822,7 +1839,7 @@ DOMAIN:
 
 | 模块 | 关键测试点 |
 |------|-----------|
-| 文档解析 | 各格式解析正确性、分块边界、OCR 准确率、异常格式处理 |
+| 文档解析 | 各格式解析正确性、分块边界、OCR 准确率（含嵌入图片 OCR）、异常格式处理、图片提取正确性 |
 | 知识库 | 索引完整性、混合检索召回率、RRF 融合正确性、权限隔离 |
 | 任务编排 | Agent 状态机、工具调用序列、Plan/Finish 判定、迭代上限 |
 | LLM 路由 | 敏感度判定规则、适配器转换正确性、降级策略 |
@@ -1833,4 +1850,4 @@ DOMAIN:
 
 ---
 
-*文档版本：v1.0 | 日期：2026-05-17 | 基于概要设计文档 v1.0*
+*文档版本：v1.2 | 日期：2026-05-25 | 基于概要设计文档 v1.0*

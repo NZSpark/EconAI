@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import { useRequest } from '../hooks/useRequest';
 import { usePolling } from '../hooks/usePolling';
-import { getTaskDetail, getTaskStatus, getTaskOutput as fetchTaskOutput, getExportUrl } from '../api/tasks';
+import { getTaskDetail, getTaskStatus, getTaskOutput as fetchTaskOutput, getExportUrl, retryTask } from '../api/tasks';
 import TaskProgress from '../components/TaskProgress';
 import MarkdownPreview from '../components/MarkdownPreview';
 import CitationBadge from '../components/CitationBadge';
@@ -158,8 +158,16 @@ export default function TaskOutput() {
 
   const handleRetry = useCallback(async () => {
     if (!taskId) return;
-    navigate(0); // Simple reload
-  }, [taskId, navigate]);
+    try {
+      await retryTask(taskId);
+      message.success('已重新提交任务');
+      // Reset state to re-poll
+      setOutputLoaded(false);
+      setTask((prev) => prev ? { ...prev, status: 'pending' as const, error_message: null } : null);
+    } catch {
+      message.error('重试失败');
+    }
+  }, [taskId]);
 
   if (taskLoading) {
     return (

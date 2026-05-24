@@ -1,6 +1,6 @@
 """PowerPoint parser using python-pptx (M2-14).
 
-Extracts slide-by-slide text and notes.
+Extracts slide-by-slide text, notes, and embedded images with OCR recognition.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from typing import Any
 
 from document_service.models import PageContent, ParsedContent, SectionInfo
 from document_service.parsers.base import BaseParser
+from document_service.parsers.image_extractor import extract_images_from_pptx
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,33 @@ class PPTParser(BaseParser):
 
         full_text = "\n\n".join(all_text_parts)
 
+        # ---- Extract and OCR embedded images per slide ----
+        ocr_images = extract_images_from_pptx(file_data)
+        image_text_by_slide: dict[int, list[str]] = {}
+        for img in ocr_images:
+            slide_num = img.get("page", 1)
+            ocr_text = img.get("ocr_text", "")
+            if ocr_text:
+                image_text_by_slide.setdefault(slide_num, []).append(
+                    f"[Image {img.get('image_index', 0)} OCR]: {ocr_text}"
+                )
+
+        # Merge image OCR into corresponding slide content
+        for page_content in pages:
+            pn = page_content.page_number
+            if pn in image_text_by_slide:
+                extra = "\n\n".join(image_text_by_slide[pn])
+                page_content.text = (page_content.text + "\n\n" + extra).strip()
+
+        if image_text_by_slide:
+            # Rebuild full_text with enriched slide content
+            enriched_parts = []
+            for page_content in pages:
+                enriched_parts.append(f"--- Slide {page_content.page_number} ---\n{page_content.text}")
+            full_text = "\n\n".join(enriched_parts)
+            logger.info("PPTX: OCR'd %d images across slides", len(ocr_images))
+        # ---- End image extraction ----
+
         return ParsedContent(
             full_text=full_text,
             pages=pages,
@@ -76,6 +104,7 @@ class PPTParser(BaseParser):
             sections=sections,
             metadata_hints=self.extract_metadata_hints(file_data, filename),
             needs_ocr=False,
+            ocr_images=ocr_images,
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:

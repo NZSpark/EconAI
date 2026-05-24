@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:mock": "vitest run --config vitest.config.mock.ts",
+    "test:integrated": "vitest run --config vitest.config.integrated.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",

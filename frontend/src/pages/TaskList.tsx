@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -25,7 +25,8 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../hooks/useRequest';
 import { listTasks, createTask, cancelTask, retryTask } from '../api/tasks';
-import type { TaskListItem, CreateTaskRequest, TaskType, OutputFormat, LLMPreference } from '../api/types';
+import { listDocuments } from '../api/documents';
+import type { TaskListItem, CreateTaskRequest, TaskType, OutputFormat, LLMPreference, DocumentItem } from '../api/types';
 
 const { Title, Text } = Typography;
 
@@ -71,6 +72,17 @@ export default function TaskList() {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
 
+  // Document list for kb_sources selector
+  const [availableDocs, setAvailableDocs] = useState<DocumentItem[]>([]);
+
+  useEffect(() => {
+    if (createModalOpen && projectId) {
+      listDocuments(projectId, { page: 1, page_size: 200, status: 'ready' })
+        .then((res) => setAvailableDocs(res.items || []))
+        .catch(() => setAvailableDocs([]));
+    }
+  }, [createModalOpen, projectId]);
+
   const loadTasks = useCallback(async () => {
     if (!projectId) throw new Error('No project ID');
     return listTasks(projectId, {
@@ -89,6 +101,7 @@ export default function TaskList() {
     description: string;
     output_format: OutputFormat[];
     analysis_params: string;
+    kb_document_ids: string[];
   }) => {
     if (!projectId) return;
     setSubmitting(true);
@@ -107,7 +120,7 @@ export default function TaskList() {
         title: values.title,
         description: values.description,
         kb_sources: {
-          documents: [],
+          documents: values.kb_document_ids || [],
           include_institutional: false,
         },
         output_formats: values.output_format || ['md'],
@@ -394,6 +407,27 @@ export default function TaskList() {
                 { label: 'Excel (.xlsx)', value: 'xlsx' },
                 { label: 'PowerPoint (.pptx)', value: 'pptx' },
               ]}
+            />
+          </Form.Item>
+          <Form.Item
+            name="kb_document_ids"
+            label="知识源文档"
+            tooltip="选择知识库中已就绪的文档作为分析依据；留空则使用全部文档"
+          >
+            <Select
+              mode="multiple"
+              placeholder="选择文档（留空使用全部）"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              loading={createModalOpen && availableDocs.length === 0}
+              options={availableDocs
+                .filter((d) => d.parse_status === 'ready')
+                .map((d) => ({
+                  label: `${d.original_name} (${d.page_count} 页)`,
+                  value: d.document_id,
+                }))}
+              notFoundContent="暂无就绪的文档，请先上传并等待解析完成"
             />
           </Form.Item>
           <Form.Item

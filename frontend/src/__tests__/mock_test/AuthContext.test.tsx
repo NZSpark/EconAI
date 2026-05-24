@@ -1,15 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../contexts/AuthContext';
-import { useAuth } from '../hooks/useAuth';
-import * as authApi from '../api/auth';
-import type { LoginResponse } from '../api/types';
+import { AuthProvider } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+import type { LoginResponse } from '../../api/types';
 
 // Mock the auth API
-vi.mock('../api/auth', () => ({
-  login: vi.fn(),
-  logout: vi.fn(),
+const { mockLogin, mockLogout, mockGetCurrentUser } = vi.hoisted(() => ({
+  mockLogin: vi.fn(),
+  mockLogout: vi.fn(),
+  mockGetCurrentUser: vi.fn(),
+}));
+
+vi.mock('../../api/auth', () => ({
+  login: mockLogin,
+  logout: mockLogout,
+  getCurrentUser: mockGetCurrentUser,
 }));
 
 // Mock localStorage
@@ -36,6 +42,14 @@ describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.clear();
+    // AuthProvider calls getCurrentUser on mount if token exists
+    mockGetCurrentUser.mockResolvedValue({
+      user_id: 'test-uuid',
+      username: 'testuser',
+      display_name: 'Test User',
+      role: 'system_admin' as const,
+      groups: [],
+    });
   });
 
   function TestConsumer({
@@ -88,7 +102,7 @@ describe('AuthContext', () => {
       },
     };
 
-    vi.mocked(authApi.login).mockResolvedValueOnce(mockResponse);
+    mockLogin.mockResolvedValueOnce(mockResponse);
 
     let loginFn: ((u: string, p: string) => Promise<void>) | null = null;
 
@@ -110,7 +124,7 @@ describe('AuthContext', () => {
     });
 
     // Verify API call (AuthContext passes username + password to login)
-    expect(authApi.login).toHaveBeenCalledWith({
+    expect(mockLogin).toHaveBeenCalledWith({
       username: 'testuser',
       password: 'password123',
     });
@@ -127,7 +141,7 @@ describe('AuthContext', () => {
   });
 
   it('should logout and clear user state', async () => {
-    vi.mocked(authApi.logout).mockResolvedValueOnce(undefined);
+    mockLogout.mockResolvedValueOnce(undefined);
 
     // Pre-populate localStorage to simulate logged-in state
     localStorageMock.setItem('access_token', 'token');
@@ -154,7 +168,7 @@ describe('AuthContext', () => {
     });
 
     // Verify logout API was called
-    expect(authApi.logout).toHaveBeenCalled();
+    expect(mockLogout).toHaveBeenCalled();
   });
 
   it('should handle login API error', async () => {
@@ -162,7 +176,7 @@ describe('AuthContext', () => {
       status: 401,
       code: 'AUTH_INVALID_CREDENTIALS',
     });
-    vi.mocked(authApi.login).mockRejectedValueOnce(loginError);
+    mockLogin.mockRejectedValueOnce(loginError);
 
     let loginFn: ((u: string, p: string) => Promise<void>) | null = null;
 

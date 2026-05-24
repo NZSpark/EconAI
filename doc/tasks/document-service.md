@@ -29,6 +29,12 @@
 - [x] M2-16 实现 HTML/MHTML 解析器（BeautifulSoup）：提取正文（去除导航/广告/脚本）+ 原始链接
 - [x] M2-17 实现 Tesseract OCR 处理器：图片 PDF/图片文件 → 文本（chi_sim+eng），保留页码映射
 - [x] M2-18 实现解析器路由器：根据格式自动选择解析器，返回统一的结构化文本对象
+- [x] M2-18a 实现共享图片提取+OCR 核心模块（image_extractor.py）：从 PDF/DOCX/PPTX/HTML 中提取嵌入图片并执行 OCR 识别
+- [x] M2-18b 增强 PDF 解析器：提取嵌入图片并通过 OCR 识别文字，追加到对应页面内容
+- [x] M2-18c 增强 Word 解析器：提取 docx 中嵌入的图片并通过 OCR 识别，追加到全文
+- [x] M2-18d 增强 PPT 解析器：提取幻灯片中嵌入的图片并通过 OCR 识别，追加到对应幻灯片
+- [x] M2-18e 增强 HTML 解析器：提取 data-URI 内嵌图片（base64 编码）并通过 OCR 识别
+- [x] M2-18f ParsedContent 模型新增 ocr_images 字段：记录每次 OCR 的审计追踪（页码/图片索引/OCR 文本/格式/尺寸）
 
 ### 元数据提取
 - [x] M2-19 实现元数据提取器：标题（文件名/文档属性/首行推断）、作者、日期、来源、页数
@@ -68,3 +74,4 @@
 - [x] M2-41 编写分块边界测试（段落级/章节级 token 范围、overlap 正确性）
 - [x] M2-42 编写文档状态机转换测试
 - [x] M2-43 编写上传→解析→索引事件 集成测试
+- [x] M2-44 编写图片提取+OCR 单元测试（ocr_image_bytes、PDF/DOCX/PPTX/HTML 图片提取、ocr_images 字段、内容增强验证，共 24 个测试用例）

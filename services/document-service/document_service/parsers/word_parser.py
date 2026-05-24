@@ -1,6 +1,7 @@
 """Word (.docx) parser using python-docx (M2-11).
 
-Extracts full text, paragraph styles (heading/body), and tables.
+Extracts full text, paragraph styles (heading/body), tables,
+and embedded images with OCR recognition.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from typing import Any
 
 from document_service.models import PageContent, ParsedContent, SectionInfo
 from document_service.parsers.base import BaseParser
+from document_service.parsers.image_extractor import extract_images_from_docx
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,21 @@ class WordParser(BaseParser):
 
         full_text = "\n\n".join(paragraphs)
 
+        # ---- Extract and OCR embedded images ----
+        ocr_images = extract_images_from_docx(file_data)
+        if ocr_images:
+            image_texts = []
+            for img in ocr_images:
+                ocr_text = img.get("ocr_text", "")
+                if ocr_text:
+                    image_texts.append(
+                        f"[Image {img.get('image_index', 0)} OCR ({img.get('format', 'png')})]:\n{ocr_text}"
+                    )
+            if image_texts:
+                full_text += "\n\n--- Embedded Images (OCR) ---\n\n" + "\n\n".join(image_texts)
+            logger.info("DOCX: OCR'd %d embedded images for %s", len(ocr_images), filename)
+        # ---- End image extraction ----
+
         return ParsedContent(
             full_text=full_text,
             pages=[PageContent(page_number=1, text=full_text, has_text_layer=True)],
@@ -68,6 +85,7 @@ class WordParser(BaseParser):
             sections=sections,
             metadata_hints=self.extract_metadata_hints(file_data, filename),
             needs_ocr=False,
+            ocr_images=ocr_images,
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:
