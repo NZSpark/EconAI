@@ -34,7 +34,7 @@ import { searchProjectKB } from '../api/search';
 import DocumentUpload from '../components/DocumentUpload';
 import type { DocumentItem, SearchResultChunk } from '../api/types';
 import { parseStatusColorMap, parseStatusLabelMap, formatColorMap } from '../constants/labels';
-import { formatFileSize } from '../utils/format';
+import { formatFileSize, formatDate } from '../utils/format';
 
 const { Title, Text } = Typography;
 
@@ -50,6 +50,7 @@ export default function KnowledgeBase() {
   const [contentModalOpen, setContentModalOpen] = useState(false);
   const [contentData, setContentData] = useState<DocumentContent | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [reindexingDocs, setReindexingDocs] = useState<Set<string>>(new Set());
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,10 +71,14 @@ export default function KnowledgeBase() {
 
   const { data, loading, error, run: refresh } = useRequest(loadDocs);
 
-  const handleUpload = async (file: File, isInternal: boolean) => {
+  const handleUpload = async (
+    file: File,
+    isInternal: boolean,
+    onProgress?: (percent: number) => void
+  ) => {
     if (!projectId) return;
-    await uploadDocument(projectId, file, isInternal);
-    refresh();
+    await uploadDocument(projectId, file, isInternal, undefined, onProgress);
+    await refresh();
   };
 
   const handleDelete = async (docId: string) => {
@@ -89,13 +94,39 @@ export default function KnowledgeBase() {
 
   const handleReindex = async (docId: string) => {
     if (!projectId) return;
+    setReindexingDocs((prev) => new Set(prev).add(docId));
     try {
       await reindexDocument(projectId, docId);
       message.success('已触发重新索引');
       refresh();
+      // 轮询直到文档状态回到 ready
+      await pollUntilReady(docId);
     } catch {
       message.error('重新索引失败');
+    } finally {
+      setReindexingDocs((prev) => {
+        const next = new Set(prev);
+        next.delete(docId);
+        return next;
+      });
     }
+  };
+
+  // 轮询文档状态，直到 ready 或 error 后自动刷新列表
+  const pollUntilReady = async (docId: string) => {
+    if (!projectId) return;
+    for (let i = 0; i < 30; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      try {
+        const doc = await getDocument(projectId, docId);
+        if (doc.parse_status === 'ready' || doc.parse_status === 'error') {
+          break;
+        }
+      } catch {
+        break;
+      }
+    }
+    refresh();
   };
 
   const handleViewDetail = async (doc: DocumentItem) => {
@@ -181,7 +212,7 @@ export default function KnowledgeBase() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 160,
-      render: (text: string) => new Date(text).toLocaleString('zh-CN'),
+      render: (text: string) => formatDate(text),
     },
     {
       title: '操作',
@@ -197,7 +228,7 @@ export default function KnowledgeBase() {
           >
             详情
           </Button>
-          {record.parse_status === 'ready' && (
+          {(record.parse_status === 'ready' || record.parse_status === 'parsing') && (
             <>
               <Button
                 type="link"
@@ -212,6 +243,8 @@ export default function KnowledgeBase() {
                 type="link"
                 size="small"
                 icon={<RedoOutlined />}
+                loading={reindexingDocs.has(record.document_id)}
+                disabled={reindexingDocs.has(record.document_id) || record.parse_status === 'parsing'}
                 onClick={() => handleReindex(record.document_id)}
               >
                 重索引
@@ -375,11 +408,12 @@ export default function KnowledgeBase() {
         width={480}
       >
         <DocumentUpload
+          key={String(uploadDrawerOpen)}
           projectId={projectId || ''}
-          onUpload={async (file) => {
-            await handleUpload(file, false);
-            setUploadDrawerOpen(false);
+          onUpload={async (file, isInternal, onProgress) => {
+            await handleUpload(file, isInternal, onProgress);
           }}
+          onDone={() => setUploadDrawerOpen(false)}
         />
       </Drawer>
 
@@ -488,7 +522,7 @@ export default function KnowledgeBase() {
               </Descriptions.Item>
             )}
             <Descriptions.Item label="上传时间">
-              {new Date(selectedDoc.created_at).toLocaleString('zh-CN')}
+              {formatDate(selectedDoc.created_at)}
             </Descriptions.Item>
           </Descriptions>
         )}

@@ -26,6 +26,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../hooks/useRequest';
 import { listTasks, createTask, cancelTask, retryTask } from '../api/tasks';
 import { listDocuments } from '../api/documents';
+import { formatDate } from '../utils/format';
 import type { TaskListItem, CreateTaskRequest, TaskType, OutputFormat, LLMPreference, DocumentItem } from '../api/types';
 import { taskTypeColorMap, taskTypeLabelMap, taskStatusColorMap, taskStatusLabelMap } from '../constants/labels';
 
@@ -188,7 +189,7 @@ export default function TaskList() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 160,
-      render: (text: string) => new Date(text).toLocaleString('zh-CN'),
+      render: (text: string) => formatDate(text),
     },
     {
       title: '操作',

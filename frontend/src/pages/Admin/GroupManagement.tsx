@@ -28,6 +28,7 @@ import {
   addGroupMember,
   removeGroupMember,
 } from '../../api/admin';
+import { formatDate } from '../../utils/format';
 import type { AdminGroup, GroupMember, CreateGroupRequest } from '../../api/types';
 
 const { Title } = Typography;
@@ -162,7 +163,7 @@ export default function GroupManagement() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 160,
-      render: (text: string) => new Date(text).toLocaleString('zh-CN'),
+      render: (text: string) => formatDate(text),
     },
     {
       title: '操作',

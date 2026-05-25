@@ -14,6 +14,7 @@ import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../../hooks/useRequest';
 import { listAuditLogs } from '../../api/admin';
+import { formatDate } from '../../utils/format';
 import type { AuditLogEntry } from '../../api/types';
 import { auditActionColorMap } from '../../constants/labels';
 
@@ -45,7 +46,7 @@ export default function AuditLogs() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 170,
-      render: (text: string) => new Date(text).toLocaleString('zh-CN'),
+      render: (text: string) => formatDate(text),
     },
     {
       title: '用户',

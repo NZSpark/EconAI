@@ -18,6 +18,7 @@ import { PlusOutlined, ReloadOutlined, EditOutlined, KeyOutlined } from '@ant-de
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../../hooks/useRequest';
 import { listUsers, createUser, updateUser, disableUser, resetUserPassword, listGroups } from '../../api/admin';
+import { formatDate } from '../../utils/format';
 import type { AdminUser, AdminGroup, CreateUserRequest } from '../../api/types';
 import { useAuth } from '../../hooks/useAuth';
 import { roleColorMap, roleLabelMap } from '../../constants/labels';
@@ -211,7 +212,7 @@ export default function UserManagement() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 160,
-      render: (text: string) => new Date(text).toLocaleString('zh-CN'),
+      render: (text: string) => formatDate(text),
     },
     {
       title: '操作',

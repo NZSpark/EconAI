@@ -16,7 +16,7 @@ export async function listDocuments(
 ): Promise<PaginatedResponse<DocumentItem>> {
   const response = await client.get<PaginatedResponse<DocumentItem>>(
     `/projects/${projectId}/documents`,
-    { params }
+    { params, timeout: 60000 }
   );
   return response.data;
 }
@@ -25,7 +25,8 @@ export async function uploadDocument(
   projectId: string,
   file: File,
   isInternal?: boolean,
-  metadata?: string
+  metadata?: string,
+  onProgress?: (percent: number) => void
 ): Promise<UploadDocumentResponse> {
   const formData = new FormData();
   formData.append('file', file);
@@ -41,6 +42,14 @@ export async function uploadDocument(
     {
       // 不手动设置 Content-Type，让 Axios/browser 自动添加带 boundary 的头
       timeout: 120000,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(percent);
+        }
+      },
     }
   );
   return response.data;
@@ -85,7 +94,8 @@ export async function getDocumentContent(
   documentId: string
 ): Promise<DocumentContent> {
   const response = await client.get<DocumentContent>(
-    `/projects/${projectId}/documents/${documentId}/content`
+    `/projects/${projectId}/documents/${documentId}/content`,
+    { timeout: 60000 }
   );
   return response.data;
 }

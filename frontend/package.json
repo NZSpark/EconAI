@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:mock": "vitest run --config vitest.config.ts",
-    "test:integrated": "vitest run --config vitest.config.integrated.ts"
+    "check-backend": "node scripts/check-backend-health.cjs",
+    "test:integrated": "node scripts/check-backend-health.cjs && vitest run --config vitest.config.integrated.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",

@@ -2,6 +2,7 @@ import { useParams, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { Tabs, Typography, Spin, Empty, Alert, Descriptions, Tag, Card } from 'antd';
 import { useRequest } from '../hooks/useRequest';
 import { getProject } from '../api/projects';
+import { formatDate } from '../utils/format';
 const { Title } = Typography;
 
 export default function ProjectDetail() {
@@ -76,7 +77,7 @@ export default function ProjectDetail() {
           <Descriptions.Item label="项目组">{project.group_name}</Descriptions.Item>
           <Descriptions.Item label="文档数量">{project.document_count}</Descriptions.Item>
           <Descriptions.Item label="创建时间">
-            {new Date(project.created_at).toLocaleString('zh-CN')}
+            {formatDate(project.created_at)}
           </Descriptions.Item>
         </Descriptions>
       </Card>

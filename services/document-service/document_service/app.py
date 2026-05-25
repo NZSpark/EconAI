@@ -11,6 +11,7 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -220,11 +221,12 @@ async def upload_document(
     }
     _documents[doc_id] = doc_record
 
-    # Trigger async processing (run synchronously for MVP)
-    try:
-        # In production this would be: process_document.delay(doc_id, project_id, filename, storage_path, ...)
-        # For MVP/test, we execute synchronously
-        _execute_processing_pipeline(
+    # Trigger async processing in a background thread
+    # This prevents the request thread from being blocked, which would cause
+    # health check timeouts and container restarts for large files.
+    asyncio.create_task(
+        asyncio.to_thread(
+            _execute_processing_pipeline,
             document_id=doc_id,
             project_id=project_id,
             filename=filename,
@@ -234,8 +236,7 @@ async def upload_document(
             file_bytes=file_bytes,
             extension=ext,
         )
-    except Exception as e:
-        logger.error("Processing pipeline failed for %s: %s", doc_id, e)
+    )
 
     return DocumentUploadResponse(
         document_id=doc_id,
@@ -245,6 +246,60 @@ async def upload_document(
         parse_status="pending",
         created_at=now,
     )
+
+
+def _reindex_worker(
+    *,
+    document_id: str,
+    project_id: str,
+    filename: str,
+    storage_path: str,
+    is_internal: bool,
+    custom_metadata: dict[str, Any],
+    extension: str,
+) -> None:
+    """Background worker for reindex: download from MinIO then process.
+
+    This runs in a separate thread via asyncio.to_thread() so the
+    HTTP request can return immediately, keeping health checks responsive.
+    """
+    logger.info("Reindex worker started for %s", document_id)
+    try:
+        file_bytes = None
+        if storage_path:
+            try:
+                from document_service.minio_client import download_file as minio_download
+                file_bytes = minio_download(storage_path)
+            except Exception as e:
+                logger.warning("Could not download from MinIO for reindex: %s", e)
+
+        if file_bytes is None:
+            _documents[document_id].update({
+                "parse_status": "error",
+                "parse_error": "Original file not found in MinIO for reindex",
+                "updated_at": _now(),
+            })
+            logger.error("Reindex failed for %s: original file not found", document_id)
+            return
+
+        _execute_processing_pipeline(
+            document_id=document_id,
+            project_id=project_id,
+            filename=filename,
+            storage_path=storage_path,
+            is_internal=is_internal,
+            custom_metadata=custom_metadata,
+            file_bytes=file_bytes,
+            extension=extension,
+        )
+        logger.info("Reindex worker complete for %s", document_id)
+    except Exception as e:
+        _documents[document_id].update({
+            "parse_status": "error",
+            "parse_error": str(e),
+            "updated_at": _now(),
+        })
+        logger.error("Reindex worker failed for %s: %s", document_id, e)
 
 
 def _execute_processing_pipeline(
@@ -498,50 +553,25 @@ async def reindex_document(project_id: str, document_id: str) -> ReindexResponse
     doc["parse_status"] = "parsing"
     doc["updated_at"] = _now()
 
-    # Re-download and reprocess
+    # Dispatch reindex to background thread to avoid blocking the request
+    # and causing health check timeouts / container restarts.
     storage_path = doc.get("storage_path", "")
-    try:
-        file_bytes = None
-        if storage_path:
-            try:
-                from document_service.minio_client import download_file as minio_download
-                file_bytes = minio_download(storage_path)
-            except Exception as e:
-                logger.warning("Could not download from MinIO for reindex: %s", e)
+    ext = os.path.splitext(doc["original_name"])[1].lower()
+    custom_metadata = doc.get("metadata", {})
+    is_internal = doc.get("is_internal", False)
 
-        if file_bytes is None:
-            # Can't reprocess without file
-            doc["parse_status"] = "error"
-            doc["parse_error"] = "Original file not found in MinIO for reindex"
-            doc["updated_at"] = _now()
-            raise HTTPException(
-                status_code=500,
-                detail={"error": {"code": "DOC_REINDEX_NO_FILE", "message": "Original file not found for reindex."}},
-            )
-
-        ext = os.path.splitext(doc["original_name"])[1].lower()
-
-        _execute_processing_pipeline(
+    asyncio.create_task(
+        asyncio.to_thread(
+            _reindex_worker,
             document_id=document_id,
             project_id=project_id,
             filename=doc["original_name"],
             storage_path=storage_path,
-            is_internal=doc.get("is_internal", False),
-            custom_metadata=doc.get("metadata", {}),
-            file_bytes=file_bytes,
+            is_internal=is_internal,
+            custom_metadata=custom_metadata,
             extension=ext,
         )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        doc["parse_status"] = "error"
-        doc["parse_error"] = str(e)
-        doc["updated_at"] = _now()
-        raise HTTPException(
-            status_code=500,
-            detail={"error": {"code": "DOC_REINDEX_FAILED", "message": f"Reindex failed: {e}"}},
-        ) from e
+    )
 
     return ReindexResponse(
         document_id=document_id,

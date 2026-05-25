@@ -25,29 +25,26 @@ export function useRequest<T>(
     error: null,
   });
 
-  const mountedRef = useRef(true);
   const requestFnRef = useRef(requestFn);
   requestFnRef.current = requestFn;
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  // Incrementing counter to discard stale responses
+  const runIdRef = useRef(0);
 
   const run = useCallback(
     async (...args: unknown[]): Promise<T | null> => {
+      const runId = ++runIdRef.current;
       setState((prev) => ({ ...prev, loading: true, error: null }));
       try {
         const data = await requestFnRef.current(...args);
-        if (mountedRef.current) {
+        // Only apply the result if this is still the latest invocation
+        if (runId === runIdRef.current) {
           setState({ data, loading: false, error: null });
           options?.onSuccess?.(data);
         }
         return data;
       } catch (error) {
-        if (mountedRef.current) {
+        if (runId === runIdRef.current) {
           setState((prev) => ({ ...prev, loading: false, error: error as Error }));
           options?.onError?.(error as Error);
         }

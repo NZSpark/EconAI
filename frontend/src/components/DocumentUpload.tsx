@@ -28,14 +28,20 @@ const MAX_FILE_SIZE_MB = 100;
 
 interface DocumentUploadProps {
   projectId: string;
-  onUpload: (file: File, isInternal: boolean) => Promise<void>;
+  onUpload: (
+    file: File,
+    isInternal: boolean,
+    onProgress?: (percent: number) => void
+  ) => Promise<void>;
+  onDone?: () => void;
 }
 
 export default function DocumentUpload({
   onUpload,
+  onDone,
 }: DocumentUploadProps) {
   const handleUpload: UploadProps['customRequest'] = async (options) => {
-    const { file, onSuccess, onError } = options;
+    const { file, onSuccess, onError, onProgress } = options;
     const uploadFile = file as File;
 
     // Validate file size
@@ -57,12 +63,18 @@ export default function DocumentUpload({
     }
 
     try {
-      await onUpload(uploadFile, false);
+      await onUpload(uploadFile, false, (percent) => {
+        onProgress?.({ percent });
+      });
+      onProgress?.({ percent: 100 });
       onSuccess?.(uploadFile);
       message.success(`${uploadFile.name} 上传成功`);
+      onDone?.();
     } catch (error) {
-      message.error(`${uploadFile.name} 上传失败`);
-      onError?.(error as Error);
+      const err = error as Error & { code?: string; status?: number };
+      const reason = err.message || '未知错误';
+      message.error(`${uploadFile.name} 上传失败: ${reason}`);
+      onError?.(err);
     }
   };
 

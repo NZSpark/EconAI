@@ -9,6 +9,9 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        // 文件上传需要更大的超时和 body 限制
+        timeout: 120000,
+        proxyTimeout: 120000,
       },
     },
   },
