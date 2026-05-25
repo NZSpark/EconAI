@@ -96,7 +96,7 @@ export default function Profile({ force = false }: Props) {
           </Descriptions.Item>
         </Descriptions>
 
-        <Divider orientation="left" plain>
+        <Divider orientation={"left" as any} plain>
           修改密码
         </Divider>
 

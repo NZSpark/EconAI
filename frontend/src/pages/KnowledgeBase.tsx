@@ -9,6 +9,7 @@ import {
   Space,
   Tag,
   Drawer,
+  Modal,
   Popconfirm,
   Empty,
   message,
@@ -23,52 +24,19 @@ import {
   DeleteOutlined,
   EyeOutlined,
   RedoOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../hooks/useRequest';
-import { listDocuments, uploadDocument, deleteDocument, reindexDocument, getDocument } from '../api/documents';
+import { listDocuments, uploadDocument, deleteDocument, reindexDocument, getDocument, getDocumentContent } from '../api/documents';
+import type { DocumentContent } from '../api/documents';
 import { searchProjectKB } from '../api/search';
 import DocumentUpload from '../components/DocumentUpload';
 import type { DocumentItem, SearchResultChunk } from '../api/types';
+import { parseStatusColorMap, parseStatusLabelMap, formatColorMap } from '../constants/labels';
+import { formatFileSize } from '../utils/format';
 
 const { Title, Text } = Typography;
-
-const parseStatusColorMap: Record<string, string> = {
-  pending: 'default',
-  parsing: 'processing',
-  ready: 'green',
-  error: 'red',
-  deleted: 'default',
-};
-
-const parseStatusLabelMap: Record<string, string> = {
-  pending: '等待中',
-  parsing: '解析中',
-  ready: '就绪',
-  error: '解析失败',
-  deleted: '已删除',
-};
-
-const formatColorMap: Record<string, string> = {
-  pdf: 'red',
-  docx: 'blue',
-  doc: 'blue',
-  xlsx: 'green',
-  xls: 'green',
-  csv: 'green',
-  pptx: 'orange',
-  ppt: 'orange',
-  md: 'purple',
-  txt: 'default',
-  html: 'cyan',
-  eml: 'geekblue',
-};
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
 
 export default function KnowledgeBase() {
   const { id: projectId } = useParams<{ id: string }>();
@@ -79,6 +47,9 @@ export default function KnowledgeBase() {
   const [uploadDrawerOpen, setUploadDrawerOpen] = useState(false);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
+  const [contentModalOpen, setContentModalOpen] = useState(false);
+  const [contentData, setContentData] = useState<DocumentContent | null>(null);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -135,6 +106,20 @@ export default function KnowledgeBase() {
       setDetailDrawerOpen(true);
     } catch {
       message.error('获取文档详情失败');
+    }
+  };
+
+  const handleViewContent = async (doc: DocumentItem) => {
+    if (!projectId) return;
+    setLoadingContent(true);
+    try {
+      const content = await getDocumentContent(projectId, doc.document_id);
+      setContentData(content);
+      setContentModalOpen(true);
+    } catch {
+      message.error('获取文档内容失败');
+    } finally {
+      setLoadingContent(false);
     }
   };
 
@@ -213,14 +198,25 @@ export default function KnowledgeBase() {
             详情
           </Button>
           {record.parse_status === 'ready' && (
-            <Button
-              type="link"
-              size="small"
-              icon={<RedoOutlined />}
-              onClick={() => handleReindex(record.document_id)}
-            >
-              重索引
-            </Button>
+            <>
+              <Button
+                type="link"
+                size="small"
+                icon={<FileTextOutlined />}
+                loading={loadingContent}
+                onClick={() => handleViewContent(record)}
+              >
+                内容
+              </Button>
+              <Button
+                type="link"
+                size="small"
+                icon={<RedoOutlined />}
+                onClick={() => handleReindex(record.document_id)}
+              >
+                重索引
+              </Button>
+            </>
           )}
           <Popconfirm
             title="确认删除"
@@ -386,6 +382,51 @@ export default function KnowledgeBase() {
           }}
         />
       </Drawer>
+
+      {/* Document Content Modal */}
+      <Modal
+        title={contentData ? `文档内容 - ${contentData.original_name}` : '文档内容'}
+        open={contentModalOpen}
+        onCancel={() => {
+          setContentModalOpen(false);
+          setContentData(null);
+        }}
+        width={800}
+        footer={null}
+        destroyOnClose
+      >
+        {contentData && (
+          <div>
+            <Space style={{ marginBottom: 12 }}>
+              <Tag>{contentData.format.toUpperCase()}</Tag>
+              {contentData.page_count ? <Tag>共 {contentData.page_count} 页</Tag> : null}
+              {contentData.chunk_count ? <Tag>{contentData.chunk_count} 个分块</Tag> : null}
+            </Space>
+            {contentData.content_type === 'image' ? (
+              <Empty description="图片文件（不支持文本预览）" />
+            ) : contentData.text ? (
+              <pre
+                style={{
+                  maxHeight: '60vh',
+                  overflow: 'auto',
+                  background: '#fafafa',
+                  padding: 16,
+                  borderRadius: 8,
+                  fontSize: 14,
+                  lineHeight: 1.8,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  border: '1px solid #f0f0f0',
+                }}
+              >
+                {contentData.text}
+              </pre>
+            ) : (
+              <Empty description="文档暂无解析内容" />
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* Document Detail Drawer */}
       <Drawer

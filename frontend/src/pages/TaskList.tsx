@@ -27,38 +27,9 @@ import { useRequest } from '../hooks/useRequest';
 import { listTasks, createTask, cancelTask, retryTask } from '../api/tasks';
 import { listDocuments } from '../api/documents';
 import type { TaskListItem, CreateTaskRequest, TaskType, OutputFormat, LLMPreference, DocumentItem } from '../api/types';
+import { taskTypeColorMap, taskTypeLabelMap, taskStatusColorMap, taskStatusLabelMap } from '../constants/labels';
 
 const { Title, Text } = Typography;
-
-const taskTypeColorMap: Record<string, string> = {
-  literature_review: 'blue',
-  policy_draft: 'purple',
-  policy_comparison: 'orange',
-  tech_interpretation: 'cyan',
-};
-
-const taskTypeLabelMap: Record<string, string> = {
-  literature_review: '文献综述',
-  policy_draft: '政策草案',
-  policy_comparison: '政策比较',
-  tech_interpretation: '技术解读',
-};
-
-const taskStatusColorMap: Record<string, string> = {
-  pending: 'default',
-  running: 'processing',
-  completed: 'green',
-  failed: 'red',
-  cancelled: 'default',
-};
-
-const taskStatusLabelMap: Record<string, string> = {
-  pending: '等待中',
-  running: '执行中',
-  completed: '已完成',
-  failed: '失败',
-  cancelled: '已取消',
-};
 
 export default function TaskList() {
   const { id: projectId } = useParams<{ id: string }>();

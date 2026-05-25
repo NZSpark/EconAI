@@ -15,18 +15,9 @@ import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../../hooks/useRequest';
 import { listAuditLogs } from '../../api/admin';
 import type { AuditLogEntry } from '../../api/types';
+import { auditActionColorMap } from '../../constants/labels';
 
 const { Title } = Typography;
-
-const actionColorMap: Record<string, string> = {
-  create_task: 'blue',
-  upload_document: 'green',
-  delete_document: 'red',
-  login: 'purple',
-  logout: 'default',
-  create_project: 'cyan',
-  archive_project: 'orange',
-};
 
 export default function AuditLogs() {
   const [page, setPage] = useState(1);
@@ -68,7 +59,7 @@ export default function AuditLogs() {
       key: 'action',
       width: 140,
       render: (action: string) => (
-        <Tag color={actionColorMap[action] || 'default'}>{action}</Tag>
+        <Tag color={auditActionColorMap[action] || 'default'}>{action}</Tag>
       ),
     },
     {

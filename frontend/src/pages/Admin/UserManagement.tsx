@@ -20,22 +20,9 @@ import { useRequest } from '../../hooks/useRequest';
 import { listUsers, createUser, updateUser, disableUser, resetUserPassword, listGroups } from '../../api/admin';
 import type { AdminUser, AdminGroup, CreateUserRequest } from '../../api/types';
 import { useAuth } from '../../hooks/useAuth';
+import { roleColorMap, roleLabelMap } from '../../constants/labels';
 
 const { Title } = Typography;
-
-const roleColorMap: Record<string, string> = {
-  analyst: 'default',
-  senior_researcher: 'blue',
-  project_admin: 'purple',
-  system_admin: 'red',
-};
-
-const roleLabelMap: Record<string, string> = {
-  analyst: '分析员',
-  senior_researcher: '高级研究员',
-  project_admin: '项目管理员',
-  system_admin: '系统管理员',
-};
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();

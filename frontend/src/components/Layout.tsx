@@ -123,9 +123,11 @@ export default function AppLayout() {
     }
   }
 
-  // For project detail pages
+  // For project detail pages: fetch project name from API or show ID
   if (pathParts[0] === 'projects' && pathParts[1] && pathParts.length >= 2) {
-    breadcrumbItems.push({ title: <span>项目详情</span> });
+    breadcrumbItems.push({
+      title: <Link to={`/projects/${pathParts[1]}`}>项目详情</Link>,
+    });
     if (pathParts[2] === 'knowledge-base') {
       breadcrumbItems.push({ title: <span>知识库</span> });
     } else if (pathParts[2] === 'tasks') {

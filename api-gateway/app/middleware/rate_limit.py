@@ -12,7 +12,7 @@ from starlette.responses import JSONResponse, Response
 from app.config import settings
 
 
-def _get_endpoint_group(path: str) -> str:
+def _get_endpoint_group(path: str, method: str = "GET") -> str:
     """Classify an endpoint into a rate limit group.
 
     Returns one of: 'upload', 'task_create', 'general'.
@@ -21,7 +21,8 @@ def _get_endpoint_group(path: str) -> str:
         # POST /api/projects/{id}/documents — upload
         if "search" not in path:
             return "upload"
-    if "/tasks" in path and path.split("/")[-1] == "tasks":
+    # Only POST to /tasks is "task_create" (creation); GET (list) goes to "general"
+    if method == "POST" and "/tasks" in path and path.split("/")[-1] == "tasks":
         return "task_create"
     return "general"
 
@@ -105,7 +106,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         limiter = TokenBucketRateLimiter(redis)
-        endpoint_group = _get_endpoint_group(request.url.path)
+        endpoint_group = _get_endpoint_group(request.url.path, request.method)
 
         # Get user ID from request.state if available
         user_id = None

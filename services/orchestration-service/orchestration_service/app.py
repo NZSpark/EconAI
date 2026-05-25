@@ -473,15 +473,16 @@ async def _run_agent(task_id: str) -> None:
     if not t:
         return
 
-    # M4-11: Validate state transition
-    try:
-        assert_valid_transition(t["status"], "running")
-    except ValueError:
-        logger.warning("Task %s: Cannot transition %s → running", task_id, t["status"])
-        return
-
-    t["status"] = "running"
-    t["started_at"] = datetime.now(UTC)
+    # M4-11: Validate state transition (allow no-op when already running, e.g., from retry)
+    current_status = t["status"]
+    if current_status != "running":
+        try:
+            assert_valid_transition(current_status, "running")
+        except ValueError:
+            logger.warning("Task %s: Cannot transition %s → running", task_id, current_status)
+            return
+        t["status"] = "running"
+        t["started_at"] = datetime.now(UTC)
 
     try:
         # Build AgentState

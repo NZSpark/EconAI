@@ -24,10 +24,10 @@ class OrchestrationSettings(AppSettings):
     task_timeout_minutes: int = 30
 
     # Dependent service URLs
-    llm_router_url: str = "http://localhost:8004"
-    kb_service_url: str = "http://localhost:8002"
-    citation_service_url: str = "http://localhost:8005"
-    output_service_url: str = "http://localhost:8006"
+    llm_router_url: str = "http://llm-router:8004"
+    kb_service_url: str = "http://kb-service:8002"
+    citation_service_url: str = "http://citation-service:8005"
+    output_service_url: str = "http://output-service:8006"
 
     # Prompt templates (canonical location: repo root templates/prompts/)
     prompt_templates_dir: str = "templates/prompts"

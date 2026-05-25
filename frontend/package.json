@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:mock": "vitest run --config vitest.config.mock.ts",
+    "test:mock": "vitest run --config vitest.config.ts",
     "test:integrated": "vitest run --config vitest.config.integrated.ts"
   },
   "dependencies": {

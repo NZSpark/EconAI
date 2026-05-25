@@ -46,11 +46,19 @@ def validate_mime_type(mime_type: str | None) -> None:
 
     Raises FileValidationError if the MIME type is not allowed.
     If mime_type is None, skip MIME check (extension check already passed).
+    Allows 'application/octet-stream' as a generic fallback (common in browsers for
+    Office documents and other binary formats where the browser doesn't know the MIME).
     """
     if mime_type is None:
         return
     # Strip charset suffix (e.g., "text/plain; charset=utf-8")
     base_mime = mime_type.split(";")[0].strip().lower()
+
+    # application/octet-stream is a generic fallback — accept it when the
+    # extension is valid (extension check runs before this in validate_file)
+    if base_mime == "application/octet-stream":
+        return
+
     if base_mime not in ALLOWED_MIME_TYPES:
         raise FileValidationError(
             "DOC_MIME_UNSUPPORTED",
@@ -103,11 +111,15 @@ def validate_magic_bytes(magic: bytes, extension: str) -> None:
                 return  # Valid ZIP-based office format
             return  # Valid known format
 
-    # If no magic match, check if extension is still valid (e.g., plain text files)
-    # Text-based files (.txt, .md, .csv, .html, .eml) don't have distinctive magic bytes
-    text_extensions = {".txt", ".md", ".csv", ".html", ".eml", ".mhtml", ".mht"}
-    if extension in text_extensions:
-        return  # Text files have no fixed magic bytes, let extension pass
+    # If no magic match, check if extension is still valid by itself.
+    # Some file types don't have distinctive magic bytes or have variable headers
+    # that make simple signature matching unreliable (text files, images, etc.)
+    extension_bypass = {
+        ".txt", ".md", ".csv", ".html", ".eml", ".mhtml", ".mht",
+        ".png", ".jpg", ".jpeg", ".tiff", ".bmp",
+    }
+    if extension in extension_bypass:
+        return  # Valid extension, no further magic byte check needed
 
     raise FileValidationError(
         "DOC_MAGIC_MISMATCH",

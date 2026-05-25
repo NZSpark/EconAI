@@ -102,7 +102,9 @@ async def create_project(
         group_id=str(project.group_id),
         owner_id=str(project.created_by),
         status=project.status,
+        created_at=project.created_at.isoformat() if project.created_at else None,
     )
+
 
 
 @router.get("", response_model=ProjectListResponse)
@@ -111,6 +113,7 @@ async def list_projects(
     page: int = 1,
     page_size: int = 50,
     status_filter: str | None = None,
+    search: str | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> ProjectListResponse:
     user_id = _get_user_id(request)
@@ -123,7 +126,13 @@ async def list_projects(
         query = query.where(Project.status == status_filter)
         count_query = count_query.where(Project.status == status_filter)
 
+    if search:
+        search_filter = Project.name.ilike(f"%{search}%")
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
+
     total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(Project.created_at.desc())
     query = query.offset((page - 1) * page_size).limit(page_size)
     projects = (await db.execute(query)).scalars().all()
 
@@ -136,6 +145,7 @@ async def list_projects(
                 group_id=str(p.group_id),
                 owner_id=str(p.created_by),
                 status=p.status,
+                created_at=p.created_at.isoformat() if p.created_at else None,
             )
             for p in projects
         ],
@@ -161,7 +171,9 @@ async def get_project(
         group_id=str(project.group_id),
         owner_id=str(project.created_by),
         status=project.status,
+        created_at=project.created_at.isoformat() if project.created_at else None,
     )
+
 
 
 @router.put("/{project_id}", response_model=ProjectResponse)
@@ -198,7 +210,9 @@ async def update_project(
         group_id=str(project.group_id),
         owner_id=str(project.created_by),
         status=project.status,
+        created_at=project.created_at.isoformat() if project.created_at else None,
     )
+
 
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)

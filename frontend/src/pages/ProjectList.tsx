@@ -20,18 +20,10 @@ import { useRequest } from '../hooks/useRequest';
 import { listProjects, createProject, archiveProject } from '../api/projects';
 import { listGroups } from '../api/admin';
 import type { Project, CreateProjectRequest, AdminGroup } from '../api/types';
+import { projectStatusColorMap, projectStatusLabelMap } from '../constants/labels';
+import { formatDate } from '../utils/format';
 
 const { Title } = Typography;
-
-const statusColorMap: Record<string, string> = {
-  active: 'green',
-  archived: 'default',
-};
-
-const statusLabelMap: Record<string, string> = {
-  active: '活跃',
-  archived: '已归档',
-};
 
 export default function ProjectList() {
   const navigate = useNavigate();
@@ -111,8 +103,8 @@ export default function ProjectList() {
       key: 'status',
       width: 100,
       render: (status: string) => (
-        <Tag color={statusColorMap[status] || 'default'}>
-          {statusLabelMap[status] || status}
+        <Tag color={projectStatusColorMap[status] || 'default'}>
+          {projectStatusLabelMap[status] || status}
         </Tag>
       ),
     },
@@ -128,7 +120,7 @@ export default function ProjectList() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 170,
-      render: (text: string) => new Date(text).toLocaleString('zh-CN'),
+      render: (text: string) => formatDate(text),
     },
     {
       title: '操作',

@@ -46,6 +46,10 @@ class ServiceProxy:
         """
         target_url = f"{service_url.rstrip('/')}{path}"
 
+        # Forward query parameters
+        if request.url.query:
+            target_url = f"{target_url}?{request.url.query}"
+
         # Prepare headers — forward most but strip hop-by-hop
         headers = dict(request.headers)
         headers.pop("host", None)

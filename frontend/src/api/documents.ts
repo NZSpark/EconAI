@@ -69,3 +69,23 @@ export async function reindexDocument(
 ): Promise<void> {
   await client.post(`/projects/${projectId}/documents/${documentId}/reindex`);
 }
+
+export interface DocumentContent {
+  document_id: string;
+  original_name: string;
+  format: string;
+  content_type: 'text' | 'image';
+  text: string;
+  page_count?: number;
+  chunk_count?: number;
+}
+
+export async function getDocumentContent(
+  projectId: string,
+  documentId: string
+): Promise<DocumentContent> {
+  const response = await client.get<DocumentContent>(
+    `/projects/${projectId}/documents/${documentId}/content`
+  );
+  return response.data;
+}

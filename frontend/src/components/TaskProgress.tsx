@@ -13,6 +13,9 @@ export default function TaskProgress({ progress, status }: TaskProgressProps) {
     if (status === 'pending') {
       return <Text type="secondary">等待开始...</Text>;
     }
+    if (status === 'running') {
+      return <Text type="secondary">正在初始化...</Text>;
+    }
     if (status === 'completed') {
       return <Text type="success">任务已完成</Text>;
     }

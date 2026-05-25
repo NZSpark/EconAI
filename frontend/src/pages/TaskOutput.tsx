@@ -27,24 +27,9 @@ import TaskProgress from '../components/TaskProgress';
 import MarkdownPreview from '../components/MarkdownPreview';
 import CitationBadge from '../components/CitationBadge';
 import type { TaskDetail, Citation, OutputFormat } from '../api/types';
+import { taskStatusColorMap, taskStatusLabelMap } from '../constants/labels';
 
 const { Title, Text } = Typography;
-
-const taskStatusColorMap: Record<string, string> = {
-  pending: 'default',
-  running: 'processing',
-  completed: 'green',
-  failed: 'red',
-  cancelled: 'default',
-};
-
-const taskStatusLabelMap: Record<string, string> = {
-  pending: '等待中',
-  running: '执行中',
-  completed: '已完成',
-  failed: '失败',
-  cancelled: '已取消',
-};
 
 export default function TaskOutput() {
   const { id: projectId, taskId } = useParams<{ id: string; taskId: string }>();

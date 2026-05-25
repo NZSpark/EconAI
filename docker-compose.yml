@@ -312,12 +312,12 @@ services:
       - TASK_TIMEOUT_MINUTES=${TASK_TIMEOUT_MINUTES:-30}
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
-      - KB_SERVICE_URL=http://kb-service:8002
-      - LLM_ROUTER_URL=http://llm-router:8004
-      - CITATION_SERVICE_URL=http://citation-service:8005
-      - OUTPUT_SERVICE_URL=http://output-service:8006
+      - ORCH_KB_SERVICE_URL=http://kb-service:8002
+      - ORCH_LLM_ROUTER_URL=http://llm-router:8004
+      - ORCH_CITATION_SERVICE_URL=http://citation-service:8005
+      - ORCH_OUTPUT_SERVICE_URL=http://output-service:8006
       - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
-      - PROMPT_TEMPLATES_DIR=${PROMPT_TEMPLATES_DIR:-templates/prompts}
+      - ORCH_PROMPT_TEMPLATES_DIR=${PROMPT_TEMPLATES_DIR:-templates/prompts}
     ports:
       - "${ORCHESTRATION_SERVICE_PORT:-8003}:8003"
     depends_on:
@@ -531,10 +531,10 @@ services:
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
       - CELERY_TASK_TIME_LIMIT=${CELERY_TASK_TIME_LIMIT:-1800}
       - CELERY_TASK_SOFT_TIME_LIMIT=${CELERY_TASK_SOFT_TIME_LIMIT:-1500}
-      - KB_SERVICE_URL=http://kb-service:8002
-      - LLM_ROUTER_URL=http://llm-router:8004
-      - CITATION_SERVICE_URL=http://citation-service:8005
-      - OUTPUT_SERVICE_URL=http://output-service:8006
+      - ORCH_KB_SERVICE_URL=http://kb-service:8002
+      - ORCH_LLM_ROUTER_URL=http://llm-router:8004
+      - ORCH_CITATION_SERVICE_URL=http://citation-service:8005
+      - ORCH_OUTPUT_SERVICE_URL=http://output-service:8006
       - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
       - PROMPT_TEMPLATES_DIR=${PROMPT_TEMPLATES_DIR:-templates/prompts}
       - POSTGRES_HOST=${POSTGRES_HOST:-postgres}

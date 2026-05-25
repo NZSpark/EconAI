@@ -551,6 +551,89 @@ async def reindex_document(project_id: str, document_id: str) -> ReindexResponse
 
 
 # ---------------------------------------------------------------------------
+# Document content retrieval
+# ---------------------------------------------------------------------------
+
+
+@app.get(
+    "/api/projects/{project_id}/documents/{document_id}/content",
+    response_model=dict,
+    responses={404: {"description": "Document not found"}, 409: {"description": "Document not parsed yet"}},
+)
+async def get_document_content(project_id: str, document_id: str) -> dict:
+    """Get the full text content of a parsed document.
+
+    Assembles all chunks into a single text output, organized by page/section.
+    For image files without text chunks, returns an image indicator.
+    """
+    doc = _documents.get(document_id)
+    if doc is None or doc["project_id"] != project_id:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
+        )
+
+    if doc["parse_status"] != "ready":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": {
+                    "code": "DOC_NOT_READY",
+                    "message": f"Document is '{doc['parse_status']}', not ready for content viewing.",
+                }
+            },
+        )
+
+    chunks = _chunks.get(document_id, [])
+    if not chunks:
+        # Image files may have no text chunks
+        image_formats = {"png", "jpg", "jpeg", "tiff", "bmp", "gif", "webp"}
+        if doc.get("format", "").lower() in image_formats:
+            return {
+                "document_id": document_id,
+                "original_name": doc["original_name"],
+                "format": doc["format"],
+                "content_type": "image",
+                "text": "",
+            }
+        return {
+            "document_id": document_id,
+            "original_name": doc["original_name"],
+            "format": doc["format"],
+            "content_type": "text",
+            "text": "",
+        }
+
+    # Sort chunks by chunk_index and assemble text
+    sorted_chunks = sorted(chunks, key=lambda c: c.get("chunk_index", 0))
+    lines: list[str] = []
+    current_section = None
+
+    for c in sorted_chunks:
+        section = c.get("section_title", "")
+        if section and section != current_section:
+            current_section = section
+            lines.append(f"\n## {section}\n")
+
+        page_start = c.get("page_start", 0)
+        page_end = c.get("page_end", 0)
+        if page_start or page_end:
+            lines.append(f"[p{page_start}-{page_end}] {c.get('chunk_text', '')}")
+        else:
+            lines.append(c.get("chunk_text", ""))
+
+    return {
+        "document_id": document_id,
+        "original_name": doc["original_name"],
+        "format": doc["format"],
+        "content_type": "text",
+        "text": "\n".join(lines),
+        "page_count": doc.get("page_count", 0),
+        "chunk_count": len(sorted_chunks),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Exception handlers
 # ---------------------------------------------------------------------------
 
