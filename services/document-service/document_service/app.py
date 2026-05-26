@@ -23,6 +23,7 @@ from fastapi import FastAPI, Form, HTTPException, Query, UploadFile
 from fastapi.responses import JSONResponse
 
 from document_service.config import config
+import document_service.db as db
 from document_service.errors import (
     DocFormatUnsupportedError,
     DocumentNotFoundError,
@@ -59,11 +60,26 @@ app = FastAPI(
 setup_metrics(app)
 
 # ---------------------------------------------------------------------------
-# In-memory document store (MVP, no PostgreSQL dependency for development/test)
+# Session helper: returns a DB session when available, else None (in-memory)
 # ---------------------------------------------------------------------------
 
-_documents: dict[str, dict[str, Any]] = {}
-_chunks: dict[str, list[dict[str, Any]]] = {}
+from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+@asynccontextmanager
+async def _get_session():
+    """Yield an AsyncSession if DB is available, otherwise None."""
+    if db.db_available and db.async_session_factory is not None:
+        async with db.async_session_factory() as session:
+            yield session
+    else:
+        yield None
+
+
+# ---------------------------------------------------------------------------
+# Persistent document store (PostgreSQL via async SQLAlchemy)
+# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Mock Redis client for pub/sub (MVP; replace with real Redis in production)
@@ -98,6 +114,17 @@ def _now() -> datetime:
 
 def _generate_id() -> str:
     return str(uuid.uuid4())
+
+
+# ---------------------------------------------------------------------------
+# Startup: initialize database connection
+# ---------------------------------------------------------------------------
+
+
+@app.on_event("startup")
+async def _startup_db() -> None:
+    """Reflect DB schema at startup so all workers can use it."""
+    await db.init_db()
 
 
 # ---------------------------------------------------------------------------
@@ -202,31 +229,25 @@ async def upload_document(
             detail={"error": {"code": "DOC_MINIO_ERROR", "message": f"Failed to store file: {e}"}},
         ) from e
 
-    # Create document record (in-memory for MVP)
-    doc_record = {
-        "id": doc_id,
-        "project_id": project_id,
-        "filename": storage_path,
-        "original_name": filename,
-        "format": fmt.value,
-        "size_bytes": len(file_bytes),
-        "storage_path": storage_path,
-        "parse_status": "pending",
-        "page_count": 0,
-        "metadata": custom_meta,
-        "is_internal": is_internal,
-        "parse_error": None,
-        "created_at": now,
-        "updated_at": now,
-    }
-    _documents[doc_id] = doc_record
+    # Create document record (DB or in-memory fallback)
+    title = custom_meta.get("title") if custom_meta else None
+    async with _get_session() as session:
+        await db.insert_document(
+            session,
+            doc_id=doc_id,
+            project_id=project_id,
+            filename=storage_path,
+            original_name=filename,
+            fmt=fmt.value,
+            size_bytes=len(file_bytes),
+            storage_path=storage_path,
+            is_internal=is_internal,
+            title=title,
+        )
 
-    # Trigger async processing in a background thread
-    # This prevents the request thread from being blocked, which would cause
-    # health check timeouts and container restarts for large files.
+    # Trigger async processing in background (runs DB updates in its own session)
     asyncio.create_task(
-        asyncio.to_thread(
-            _execute_processing_pipeline,
+        _execute_processing_pipeline_async(
             document_id=doc_id,
             project_id=project_id,
             filename=filename,
@@ -248,7 +269,7 @@ async def upload_document(
     )
 
 
-def _reindex_worker(
+async def _reindex_worker(
     *,
     document_id: str,
     project_id: str,
@@ -260,49 +281,48 @@ def _reindex_worker(
 ) -> None:
     """Background worker for reindex: download from MinIO then process.
 
-    This runs in a separate thread via asyncio.to_thread() so the
-    HTTP request can return immediately, keeping health checks responsive.
+    Runs as an async background task with its own DB session.
     """
     logger.info("Reindex worker started for %s", document_id)
-    try:
-        file_bytes = None
-        if storage_path:
-            try:
-                from document_service.minio_client import download_file as minio_download
-                file_bytes = minio_download(storage_path)
-            except Exception as e:
-                logger.warning("Could not download from MinIO for reindex: %s", e)
+    async with _get_session() as session:
+        try:
+            file_bytes = None
+            if storage_path:
+                try:
+                    from document_service.minio_client import download_file as minio_download
+                    loop = asyncio.get_running_loop()
+                    file_bytes = await loop.run_in_executor(None, minio_download, storage_path)
+                except Exception as e:
+                    logger.warning("Could not download from MinIO for reindex: %s", e)
 
-        if file_bytes is None:
-            _documents[document_id].update({
-                "parse_status": "error",
-                "parse_error": "Original file not found in MinIO for reindex",
-                "updated_at": _now(),
-            })
-            logger.error("Reindex failed for %s: original file not found", document_id)
-            return
+            if file_bytes is None:
+                await db.update_document_status(
+                    session, document_id, "error",
+                    parse_error="Original file not found in MinIO for reindex",
+                )
+                logger.error("Reindex failed for %s: original file not found", document_id)
+                return
 
-        _execute_processing_pipeline(
-            document_id=document_id,
-            project_id=project_id,
-            filename=filename,
-            storage_path=storage_path,
-            is_internal=is_internal,
-            custom_metadata=custom_metadata,
-            file_bytes=file_bytes,
-            extension=extension,
-        )
-        logger.info("Reindex worker complete for %s", document_id)
-    except Exception as e:
-        _documents[document_id].update({
-            "parse_status": "error",
-            "parse_error": str(e),
-            "updated_at": _now(),
-        })
-        logger.error("Reindex worker failed for %s: %s", document_id, e)
+            await _execute_processing_pipeline_async(
+                document_id=document_id,
+                project_id=project_id,
+                filename=filename,
+                storage_path=storage_path,
+                is_internal=is_internal,
+                custom_metadata=custom_metadata,
+                file_bytes=file_bytes,
+                extension=extension,
+            )
+            logger.info("Reindex worker complete for %s", document_id)
+        except Exception as e:
+            await db.update_document_status(
+                session, document_id, "error",
+                parse_error=str(e),
+            )
+            logger.error("Reindex worker failed for %s: %s", document_id, e)
 
 
-def _execute_processing_pipeline(
+async def _execute_processing_pipeline_async(
     *,
     document_id: str,
     project_id: str,
@@ -313,49 +333,64 @@ def _execute_processing_pipeline(
     file_bytes: bytes,
     extension: str,
 ) -> None:
-    """Execute the processing pipeline synchronously (MVP/development mode)."""
+    """Execute the processing pipeline with async DB access.
 
-    # Update status to parsing
-    _documents[document_id]["parse_status"] = "parsing"
-    _documents[document_id]["updated_at"] = _now()
+    CPU-bound parsing/chunking runs in the default executor pool;
+    all DB operations use the async session directly.
+    """
+    logger.info("Processing pipeline started for %s", document_id)
+
+    # Update status to parsing (own session)
+    async with _get_session() as session:
+        await db.update_document_status(session, document_id, "parsing")
 
     try:
-        # Parse document
-        content = parse_document(file_bytes, filename, extension)
+        # Parse document (CPU-bound → executor)
+        loop = asyncio.get_running_loop()
+        content = await loop.run_in_executor(None, parse_document, file_bytes, filename, extension)
 
-        # Extract metadata
-        doc_metadata = extract_metadata(content, file_bytes, filename, custom_metadata)
+        # Extract metadata (CPU-bound → executor)
+        doc_metadata = await loop.run_in_executor(
+            None, extract_metadata, content, file_bytes, filename, custom_metadata
+        )
 
-        # Generate chunks
+        # Generate chunks (CPU-bound → executor)
         from document_service.chunker.chunk_metadata import generate_chunks
-        chunk_records = generate_chunks(content, document_id, project_id)
+        chunk_records = await loop.run_in_executor(
+            None, generate_chunks, content, document_id, project_id
+        )
 
-        # Store chunks in memory
-        _chunks[document_id] = [
-            {
-                "id": c.chunk_id,
-                "document_id": c.document_id,
-                "project_id": c.project_id,
-                "chunk_text": c.chunk_text,
-                "chunk_index": c.chunk_index,
-                "token_count": c.token_count,
-                "chunk_type": c.chunk_type,
-                "page_start": c.page_start,
-                "page_end": c.page_end,
-                "section_title": c.section_title,
-                "paragraph_index": c.paragraph_index,
-                "created_at": c.created_at.isoformat() if hasattr(c.created_at, "isoformat") else str(c.created_at),
-            }
-            for c in chunk_records
-        ]
+        # Store chunks and update document in DB
+        async with _get_session() as session:
+            chunk_dicts = [
+                {
+                    "id": c.chunk_id,
+                    "document_id": c.document_id,
+                    "project_id": c.project_id,
+                    "chunk_text": c.chunk_text,
+                    "chunk_index": c.chunk_index,
+                    "token_count": c.token_count,
+                    "chunk_type": c.chunk_type,
+                    "page_start": c.page_start,
+                    "page_end": c.page_end,
+                    "section_title": c.section_title,
+                    "paragraph_index": c.paragraph_index,
+                    "created_at": c.created_at.isoformat() if hasattr(c.created_at, "isoformat") else str(c.created_at),
+                }
+                for c in chunk_records
+            ]
+            # Delete old chunks first (in case of reindex), then insert new ones
+            await db.delete_chunks(session, document_id)
+            await db.insert_chunks(session, chunk_dicts)
 
-        # Update document record
-        _documents[document_id].update({
-            "parse_status": "ready",
-            "page_count": doc_metadata.page_count,
-            "metadata": doc_metadata.model_dump(),
-            "updated_at": _now(),
-        })
+            await db.update_document_status(
+                session,
+                document_id,
+                "ready",
+                page_count=doc_metadata.page_count,
+                title=doc_metadata.model_dump().get("title"),
+                author=doc_metadata.model_dump().get("authors"),
+            )
 
         # Publish index event
         from document_service.models import IndexEvent
@@ -367,13 +402,18 @@ def _execute_processing_pipeline(
         )
         _mock_redis.publish("kb:index:request", event.model_dump_json())
 
+        logger.info("Processing pipeline complete for %s", document_id)
+
     except Exception as e:
-        _documents[document_id].update({
-            "parse_status": "error",
-            "parse_error": str(e),
-            "updated_at": _now(),
-        })
+        async with _get_session() as session:
+            await db.update_document_status(
+                session, document_id, "error",
+                parse_error=str(e),
+            )
         logger.error("Processing failed for %s: %s", document_id, e)
+
+
+# Legacy sync wrapper removed; callers now use async version directly.
 
 
 # ---------------------------------------------------------------------------
@@ -390,53 +430,40 @@ async def list_documents(
     format: str | None = Query(default=None),
 ) -> DocumentListResponse:
     """List documents for a project with pagination and optional filters."""
-    # Filter by project
-    items = [
-        doc for doc in _documents.values()
-        if doc["project_id"] == project_id
-    ]
+    async with _get_session() as session:
+        items, total = await db.list_project_documents(
+            session,
+            project_id,
+            status=status,
+            doc_format=format,
+            page=page,
+            page_size=page_size,
+        )
 
-    # Apply filters
-    if status:
-        items = [doc for doc in items if doc["parse_status"] == status]
-    if format:
-        items = [doc for doc in items if doc["format"] == format]
-
-    # Sort by created_at desc
-    items.sort(key=lambda d: d["created_at"], reverse=True)
-
-    total = len(items)
-
-    # Paginate
-    start = (page - 1) * page_size
-    end = start + page_size
-    page_items = items[start:end]
-
-    # Build response
-    result_items = []
-    for doc in page_items:
-        chunk_count = len(_chunks.get(doc["id"], []))
-        result_items.append(DocumentListItem(
+    result_items = [
+        DocumentListItem(
             document_id=doc["id"],
             original_name=doc["original_name"],
             format=doc["format"],
             size_bytes=doc["size_bytes"],
             page_count=doc.get("page_count", 0),
             parse_status=doc["parse_status"],
-            metadata=doc.get("metadata", {}) if isinstance(doc.get("metadata"), dict) else {},
+            metadata=doc.get("metadata", {}),
             is_internal=doc.get("is_internal", False),
-            chunk_count=chunk_count,
+            chunk_count=doc.get("chunk_count", 0),
             created_at=doc["created_at"],
-        ))
+        )
+        for doc in items
+    ]
 
-    pages = (total + page_size - 1) // page_size if total > 0 else 1
+    pages_count = (total + page_size - 1) // page_size if total > 0 else 1
 
     return DocumentListResponse(
         items=result_items,
         total=total,
         page=page,
         page_size=page_size,
-        pages=pages,
+        pages=pages_count,
     )
 
 
@@ -450,16 +477,15 @@ async def list_documents(
     response_model=DocumentDetailResponse,
     responses={404: {"description": "Document not found"}},
 )
-async def get_document(project_id: str, document_id: str) -> DocumentDetailResponse:
+async def get_document_endpoint(project_id: str, document_id: str) -> DocumentDetailResponse:
     """Get full document detail including parse status and storage path."""
-    doc = _documents.get(document_id)
-    if doc is None or doc["project_id"] != project_id:
+    async with _get_session() as session:
+        doc = await db.get_document(session, document_id)
+    if doc is None or str(doc.get("project_id", "")) != project_id:
         raise HTTPException(
             status_code=404,
             detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
         )
-
-    chunk_count = len(_chunks.get(document_id, []))
 
     return DocumentDetailResponse(
         document_id=doc["id"],
@@ -469,11 +495,11 @@ async def get_document(project_id: str, document_id: str) -> DocumentDetailRespo
         size_bytes=doc["size_bytes"],
         page_count=doc.get("page_count", 0),
         parse_status=doc["parse_status"],
-        metadata=doc.get("metadata", {}) if isinstance(doc.get("metadata"), dict) else {},
+        metadata=doc.get("metadata", {}),
         is_internal=doc.get("is_internal", False),
-        storage_path=doc.get("storage_path", ""),
+        storage_path=doc.get("storage_path", "") or "",
         parse_error=doc.get("parse_error"),
-        chunk_count=chunk_count,
+        chunk_count=doc.get("chunk_count", 0),
         created_at=doc["created_at"],
         updated_at=doc.get("updated_at"),
     )
@@ -491,25 +517,24 @@ async def get_document(project_id: str, document_id: str) -> DocumentDetailRespo
 )
 async def delete_document(project_id: str, document_id: str) -> None:
     """Delete a document and cascade: MinIO file + chunks + vectors."""
-    doc = _documents.get(document_id)
-    if doc is None or doc["project_id"] != project_id:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
-        )
+    async with _get_session() as session:
+        doc = await db.get_document(session, document_id)
+        if doc is None or str(doc.get("project_id", "")) != project_id:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
+            )
 
     storage_path = doc.get("storage_path", "")
     if storage_path:
         try:
-            minio_delete_file(storage_path)
+            minio_delete_file(str(storage_path))
         except Exception as e:
             logger.warning("Failed to delete MinIO object: %s", e)
 
-    # Remove chunks
-    _chunks.pop(document_id, None)
-
-    # Remove document
-    del _documents[document_id]
+    # Remove document + chunks from DB (cascade)
+    async with _get_session() as session:
+        await db.delete_document_db(session, document_id)
 
     logger.info("Document %s deleted (cascade)", document_id)
 
@@ -530,52 +555,50 @@ async def reindex_document(project_id: str, document_id: str) -> ReindexResponse
     Useful after chunk parameter adjustments.
     Only valid for documents in 'ready' or 'error' status.
     """
-    doc = _documents.get(document_id)
-    if doc is None or doc["project_id"] != project_id:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
-        )
+    async with _get_session() as session:
+        doc = await db.get_document(session, document_id)
+        if doc is None or str(doc.get("project_id", "")) != project_id:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
+            )
 
-    current_status = doc["parse_status"]
-    if current_status in ("pending", "parsing"):
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "error": {
-                    "code": "DOC_STILL_PROCESSING",
-                    "message": f"Document is currently '{current_status}'. Cannot reindex.",
-                }
-            },
-        )
+        current_status = doc["parse_status"]
+        if current_status in ("pending", "parsing"):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error": {
+                        "code": "DOC_STILL_PROCESSING",
+                        "message": f"Document is currently '{current_status}'. Cannot reindex.",
+                    }
+                },
+            )
 
-    # Reset to parsing
-    doc["parse_status"] = "parsing"
-    doc["updated_at"] = _now()
+        # Reset to parsing
+        await db.update_document_status(session, document_id, "parsing")
 
-    # Dispatch reindex to background thread to avoid blocking the request
-    # and causing health check timeouts / container restarts.
-    storage_path = doc.get("storage_path", "")
-    ext = os.path.splitext(doc["original_name"])[1].lower()
+    # Dispatch reindex to background
+    storage_path = doc.get("storage_path", "") or ""
+    ext = os.path.splitext(doc.get("original_name", ""))[1].lower()
     custom_metadata = doc.get("metadata", {})
     is_internal = doc.get("is_internal", False)
 
     asyncio.create_task(
-        asyncio.to_thread(
-            _reindex_worker,
+        _reindex_worker(
             document_id=document_id,
             project_id=project_id,
-            filename=doc["original_name"],
-            storage_path=storage_path,
-            is_internal=is_internal,
-            custom_metadata=custom_metadata,
+            filename=doc.get("original_name", ""),
+            storage_path=str(storage_path),
+            is_internal=bool(is_internal),
+            custom_metadata=custom_metadata if isinstance(custom_metadata, dict) else {},
             extension=ext,
         )
     )
 
     return ReindexResponse(
         document_id=document_id,
-        parse_status=doc["parse_status"],
+        parse_status="parsing",
         message="Reindex triggered successfully.",
     )
 
@@ -596,25 +619,26 @@ async def get_document_content(project_id: str, document_id: str) -> dict:
     Assembles all chunks into a single text output, organized by page/section.
     For image files without text chunks, returns an image indicator.
     """
-    doc = _documents.get(document_id)
-    if doc is None or doc["project_id"] != project_id:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
-        )
+    async with _get_session() as session:
+        doc = await db.get_document(session, document_id)
+        if doc is None or str(doc.get("project_id", "")) != project_id:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
+            )
 
-    if doc["parse_status"] != "ready":
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "error": {
-                    "code": "DOC_NOT_READY",
-                    "message": f"Document is '{doc['parse_status']}', not ready for content viewing.",
-                }
-            },
-        )
+        if doc["parse_status"] != "ready":
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error": {
+                        "code": "DOC_NOT_READY",
+                        "message": f"Document is '{doc['parse_status']}', not ready for content viewing.",
+                    }
+                },
+            )
 
-    chunks = _chunks.get(document_id, [])
+        chunks = await db.get_chunks(session, document_id)
     if not chunks:
         # Image files may have no text chunks
         image_formats = {"png", "jpg", "jpeg", "tiff", "bmp", "gif", "webp"}
@@ -706,11 +730,11 @@ async def parse_error_handler(request: Any, exc: ParseError) -> JSONResponse:
 
 
 def _reset_state() -> None:
-    """Clear all in-memory state (for testing)."""
-    _documents.clear()
-    _chunks.clear()
+    """Clear all state (for testing). Resets mock Redis, MinIO client, and in-memory store."""
     _mock_redis.published.clear()
     reset_minio_client()
+    # Clear in-memory store (only affects in-memory fallback, not real DB)
+    db.reset_in_memory_store()
 
 
 def _get_mock_redis() -> MockRedis:

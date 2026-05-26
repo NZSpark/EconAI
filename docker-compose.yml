@@ -224,6 +224,7 @@ services:
     environment:
       - DOCUMENT_SERVICE_HOST=${DOCUMENT_SERVICE_HOST:-0.0.0.0}
       - DOCUMENT_SERVICE_PORT=${DOCUMENT_SERVICE_PORT:-8001}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-econai}:${POSTGRES_PASSWORD:-econai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-econai}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-econai_access_key}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-econai_secret_key_change_me}
@@ -494,15 +495,11 @@ services:
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
       - CELERY_TASK_TIME_LIMIT=${CELERY_TASK_TIME_LIMIT:-1800}
       - CELERY_TASK_SOFT_TIME_LIMIT=${CELERY_TASK_SOFT_TIME_LIMIT:-1500}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-econai}:${POSTGRES_PASSWORD:-econai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-econai}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-econai_access_key}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-econai_secret_key_change_me}
       - MINIO_BUCKET=${MINIO_DOCUMENT_BUCKET:-econai-documents}
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_DB=${POSTGRES_DB:-econai}
-      - POSTGRES_USER=${POSTGRES_USER:-econai}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-econai_secret_change_me}
     depends_on:
       postgres:
         condition: service_healthy
@@ -510,6 +507,12 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A document_service.celery_app:celery_app status -t 5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   celery-worker-orchestration:
     <<: *microservice
@@ -547,6 +550,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A orchestration_service.worker:app status -t 5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   celery-beat:
     <<: *microservice
@@ -575,6 +584,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A orchestration_service.worker:app status -t 5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ===========================================================================
   # Reverse Proxy
