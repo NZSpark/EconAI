@@ -15,6 +15,7 @@ export function useRequest<T>(
   requestFn: (...args: unknown[]) => Promise<T>,
   options?: {
     immediate?: boolean;
+    refreshDeps?: unknown[];
     onSuccess?: (data: T) => void;
     onError?: (error: Error) => void;
   }
@@ -65,6 +66,19 @@ export function useRequest<T>(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-refresh when dependencies change (e.g. page/pageSize via pagination)
+  const skipFirstRef = useRef(true);
+  useEffect(() => {
+    if (options?.refreshDeps) {
+      if (skipFirstRef.current) {
+        skipFirstRef.current = false;
+        return;
+      }
+      run();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, options?.refreshDeps ?? []);
 
   return {
     ...state,

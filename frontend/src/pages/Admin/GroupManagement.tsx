@@ -47,7 +47,7 @@ export default function GroupManagement() {
     return listGroups({ page, page_size: pageSize });
   }, [page, pageSize]);
 
-  const { data, loading, error, run: refresh } = useRequest(loadGroups);
+  const { data, loading, error, run: refresh } = useRequest(loadGroups, { refreshDeps: [page, pageSize] });
 
   const handleCreate = async (values: CreateGroupRequest) => {
     try {

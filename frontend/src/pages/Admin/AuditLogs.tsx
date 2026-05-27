@@ -38,7 +38,7 @@ export default function AuditLogs() {
     return listAuditLogs(params as never);
   }, [page, pageSize, userIdFilter, actionFilter, dateRange]);
 
-  const { data, loading, error, run: refresh } = useRequest(loadLogs);
+  const { data, loading, error, run: refresh } = useRequest(loadLogs, { refreshDeps: [page, pageSize] });
 
   const columns: ColumnsType<AuditLogEntry> = [
     {

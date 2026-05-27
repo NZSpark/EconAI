@@ -52,7 +52,8 @@ export default function ProjectList() {
         status: statusFilter,
         search: searchText || undefined,
       });
-    }, [page, pageSize, statusFilter, searchText])
+    }, [page, pageSize, statusFilter, searchText]),
+    { refreshDeps: [page, pageSize] }
   );
 
   const handleCreate = async (values: CreateProjectRequest) => {

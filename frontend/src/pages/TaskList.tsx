@@ -65,7 +65,7 @@ export default function TaskList() {
     });
   }, [projectId, page, pageSize, statusFilter, typeFilter]);
 
-  const { data, loading, error, run: refresh } = useRequest(loadTasks);
+  const { data, loading, error, run: refresh } = useRequest(loadTasks, { refreshDeps: [page, pageSize] });
 
   const handleCreate = async (values: {
     type: TaskType;

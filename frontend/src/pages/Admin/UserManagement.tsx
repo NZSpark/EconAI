@@ -67,7 +67,7 @@ export default function UserManagement() {
     return listUsers({ page, page_size: pageSize });
   }, [page, pageSize]);
 
-  const { data, loading, error, run: refresh } = useRequest(loadUsers);
+  const { data, loading, error, run: refresh } = useRequest(loadUsers, { refreshDeps: [page, pageSize] });
 
   const handleCreateEdit = async (values: any) => {
     try {

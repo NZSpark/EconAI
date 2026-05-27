@@ -69,7 +69,7 @@ export default function KnowledgeBase() {
     });
   }, [projectId, page, pageSize, statusFilter]);
 
-  const { data, loading, error, run: refresh } = useRequest(loadDocs);
+  const { data, loading, error, run: refresh } = useRequest(loadDocs, { refreshDeps: [page, pageSize] });
 
   const handleUpload = async (
     file: File,
