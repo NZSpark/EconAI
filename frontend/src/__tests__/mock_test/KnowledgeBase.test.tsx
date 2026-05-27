@@ -340,7 +340,7 @@ describe('KnowledgeBase Page — Document List', () => {
   });
 
   it('should display search results', async () => {
-    mockSearchKB.mockResolvedValueOnce({
+    mockSearchKB.mockResolvedValue({
       results: [
         {
           chunk_id: 'chunk-1',
@@ -372,6 +372,107 @@ describe('KnowledgeBase Page — Document List', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/贸易壁垒是限制自由贸易的重要因素/)).toBeInTheDocument();
+    });
+  });
+
+  // ---- Search failure (regression: KB_LLM_ROUTER_URL missing) ----
+
+  it('should show error message when search fails', async () => {
+    mockSearchKB.mockRejectedValueOnce(new Error('Internal Server Error'));
+
+    renderKB();
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('输入搜索关键词...')).toBeInTheDocument();
+    });
+
+    await userEvent.type(screen.getByPlaceholderText('输入搜索关键词...'), '经济');
+    await userEvent.click(screen.getByRole('button', { name: 'search' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('搜索失败')).toBeInTheDocument();
+    });
+  });
+
+  it('should not trigger search with empty query', async () => {
+    mockSearchKB.mockResolvedValueOnce({
+      results: [],
+      total_hits: 0,
+      search_time_ms: 0,
+    });
+
+    renderKB();
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('输入搜索关键词...')).toBeInTheDocument();
+    });
+
+    // Click search with empty input — handleSearch returns early
+    const searchBtn = screen.getByRole('button', { name: 'search' });
+    await userEvent.click(searchBtn);
+
+    // searchProjectKB should NOT have been called
+    expect(mockSearchKB).not.toHaveBeenCalled();
+  });
+
+  it('should display empty results message when search returns no hits', async () => {
+    mockSearchKB.mockResolvedValue({
+      results: [],
+      total_hits: 0,
+      search_time_ms: 12,
+    });
+
+    renderKB();
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('输入搜索关键词...')).toBeInTheDocument();
+    });
+
+    await userEvent.type(screen.getByPlaceholderText('输入搜索关键词...'), 'nonexistent');
+    await userEvent.click(screen.getByRole('button', { name: 'search' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('未找到相关结果')).toBeInTheDocument();
+    });
+  });
+
+  it('should show search stats after successful search', async () => {
+    mockSearchKB.mockResolvedValue({
+      results: [
+        {
+          chunk_id: 'chunk-1',
+          document_id: 'doc-1',
+          document_title: 'Test Doc',
+          content: 'Some content about economics',
+          chunk_type: 'paragraph',
+          score: 0.85,
+          metadata: {
+            page_start: 1,
+            page_end: 1,
+            section_title: '',
+            paragraph_index: 0,
+          },
+        },
+      ],
+      total_hits: 1,
+      search_time_ms: 42,
+    });
+
+    renderKB();
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('输入搜索关键词...')).toBeInTheDocument();
+    });
+
+    // Use fireEvent.change to set the value without triggering onSearch repeatedly
+    const input = screen.getByPlaceholderText('输入搜索关键词...');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'economics');
+    await userEvent.click(screen.getByRole('button', { name: 'search' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/找到 1 条结果/)).toBeInTheDocument();
+      expect(screen.getByText(/耗时 42ms/)).toBeInTheDocument();
     });
   });
 });

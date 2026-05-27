@@ -268,6 +268,9 @@ services:
     environment:
       - KB_SERVICE_HOST=${KB_SERVICE_HOST:-0.0.0.0}
       - KB_SERVICE_PORT=${KB_SERVICE_PORT:-8002}
+      - KB_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-econai}:${POSTGRES_PASSWORD:-econai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-econai}
+      - KB_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}
+      - KB_LLM_ROUTER_URL=http://llm-router:8004
       - VECTOR_DB_TYPE=${VECTOR_DB_TYPE:-milvus}
       - VECTOR_DB_HOST=${VECTOR_DB_HOST:-milvus}
       - VECTOR_DB_PORT=${VECTOR_DB_PORT:-19530}
@@ -288,6 +291,8 @@ services:
       redis:
         condition: service_healthy
       milvus:
+        condition: service_healthy
+      llm-router:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
