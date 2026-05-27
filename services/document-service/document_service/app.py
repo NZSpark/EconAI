@@ -389,7 +389,7 @@ async def _execute_processing_pipeline_async(
                 "ready",
                 page_count=doc_metadata.page_count,
                 title=doc_metadata.model_dump().get("title"),
-                author=doc_metadata.model_dump().get("authors"),
+                author=", ".join(doc_metadata.authors) or None,
             )
 
         # Publish index event
