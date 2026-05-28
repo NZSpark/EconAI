@@ -40,8 +40,8 @@ class TestJWT:
             assert payload["sub"] == "user-1"
             assert payload["username"] == "alice"
             assert payload["role"] == "analyst"
-            assert payload["group_ids"] == ["g-1"]
             assert payload["type"] == "access"
+            # group_ids intentionally NOT in JWT to avoid 431 header-too-large errors
 
     def test_create_refresh_token(self) -> None:
         with patch("app.services.auth_service.settings") as mock_settings:

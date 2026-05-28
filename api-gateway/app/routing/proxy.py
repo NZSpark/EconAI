@@ -62,7 +62,9 @@ class ServiceProxy:
             headers["X-User-ID"] = user.get("user_id", "")
             headers["X-Username"] = user.get("username", "")
             headers["X-User-Role"] = user.get("role", "")
-            headers["X-User-Group-IDs"] = ",".join(user.get("group_ids", []))
+            # NOTE: X-User-Group-IDs intentionally omitted to avoid header
+            # size bloat (431 errors). Backend services query group membership
+            # from the database directly.
 
         if hasattr(request.state, "request_id"):
             headers["X-Request-ID"] = request.state.request_id

@@ -17,14 +17,15 @@ def create_access_token(
 ) -> str:
     """Create a JWT access token (compatible with M8 format).
 
-    Payload: sub, username, role, group_ids, exp, iat, jti, type=access
+    Payload: sub, username, role, exp, iat, jti, type=access
+    NOTE: group_ids NOT included to keep the token compact and avoid
+    431 (Request Header Fields Too Large) errors.
     """
     now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": str(user_id),
         "username": username,
         "role": role,
-        "group_ids": group_ids,
         "exp": now + timedelta(seconds=settings.jwt_access_expire_seconds),
         "iat": now,
         "jti": str(uuid.uuid4()),

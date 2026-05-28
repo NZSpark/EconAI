@@ -34,7 +34,9 @@ def create_access_token(
         "sub": str(user_id),
         "username": username,
         "role": role,
-        "group_ids": group_ids,
+        # NOTE: group_ids NOT included in JWT payload to keep the token
+        # small and avoid 431 (Request Header Fields Too Large) errors.
+        # Backend services query group membership from the database.
         "exp": now + timedelta(seconds=settings.jwt_access_expire_seconds),
         "iat": now,
         "jti": str(uuid.uuid4()),

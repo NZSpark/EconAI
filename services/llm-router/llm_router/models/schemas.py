@@ -120,6 +120,19 @@ class UsageAggregation(BaseModel):
     by_routing: dict[str, Usage] = Field(default_factory=dict)
 
 
+class EmbedRequest(BaseModel):
+    """Embedding request."""
+
+    texts: list[str]
+    model: str = ""
+
+
+class EmbedResponse(BaseModel):
+    """Embedding response."""
+
+    embeddings: list[list[float]]
+
+
 # ErrorResponse, ErrorDetail, Message — imported from shared.models
 
 __all__ = [
@@ -134,6 +147,8 @@ __all__ = [
     "ModelsResponse",
     "UsageLogEntry",
     "UsageAggregation",
+    "EmbedRequest",
+    "EmbedResponse",
     # Re-exports
     "ErrorDetail",
     "ErrorResponse",

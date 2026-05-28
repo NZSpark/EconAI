@@ -120,7 +120,6 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             "user_id": payload.get("sub", ""),
             "username": payload.get("username", ""),
             "role": payload.get("role", "analyst"),
-            "group_ids": payload.get("group_ids", []),
         }
 
         response = await call_next(request)

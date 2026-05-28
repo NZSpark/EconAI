@@ -4,6 +4,7 @@ Port 8004. Provides:
   - GET  /health                       Health check
   - GET  /internal/llm/models          List available models
   - POST /internal/llm/chat            Unified chat completion with routing
+  - POST /internal/llm/embed           Embedding generation via local LLM
   - GET  /internal/llm/usage/stats     Token usage statistics (optional filter by user_id/task_id/model)
 """
 
@@ -36,6 +37,8 @@ from llm_router.models.registry import ModelRegistry
 from llm_router.models.schemas import (
     ChatRequest,
     ChatResponse,
+    EmbedRequest,
+    EmbedResponse,
     ErrorResponse,
     ModelsResponse,
     RoutingInfo,
@@ -194,6 +197,26 @@ async def chat_completion(request: ChatRequest) -> ChatResponse:
         )
 
     return response
+
+
+# ── Embedding ────────────────────────────────────────────────────────────
+
+
+@app.post("/internal/llm/embed", response_model=EmbedResponse)
+async def embed(request: EmbedRequest) -> EmbedResponse:
+    """Generate embeddings for texts via local LLM.
+
+    Embedding does not route through Claude (Anthropic doesn't offer
+    an embedding API), so it always uses the local adapter.
+    """
+    model_id = request.model or _registry.default_local
+    try:
+        embeddings = await _local_adapter.embed(request.texts, model_id)
+    except Exception as exc:
+        logger.error("Embedding failed: %s", exc)
+        raise HTTPException(status_code=502, detail=f"Embedding failed: {exc}")
+
+    return EmbedResponse(embeddings=embeddings)
 
 
 # ── Usage statistics ─────────────────────────────────────────────────────

@@ -264,7 +264,9 @@ class RBACMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         role = user.get("role", "analyst")
-        group_ids = user.get("group_ids", [])
+        # group_ids no longer carried in JWT to avoid 431 header-too-large errors.
+        # Backend services perform group scoping at the business layer via DB queries.
+        group_ids = user.get("group_ids", []) or []
 
         # For audit endpoints: downgrade operation based on role
         effective_op = operation

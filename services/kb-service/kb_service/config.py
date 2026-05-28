@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic_settings import SettingsConfigDict
 from shared.config import AppSettings
 
 
@@ -40,7 +41,13 @@ class KBSettings(AppSettings):
     search_timeout_ms: int = 5000
     reranker_enabled: bool = False
 
-    model_config = {"env_prefix": "KB_", "case_sensitive": False}
+    model_config = SettingsConfigDict(
+        env_prefix="KB_",
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="allow",
+    )
 
 
 @lru_cache

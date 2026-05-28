@@ -47,6 +47,40 @@ class LocalAdapter:
         self._api_key = api_key or settings.local_llm_api_key or "not-needed"
         self._timeout = timeout_s or settings.llm_request_timeout_s
 
+    async def embed(self, texts: list[str], model_id: str) -> list[list[float]]:
+        """Generate embeddings for the given texts via the local LLM endpoint.
+
+        Calls the OpenAI-compatible /v1/embeddings endpoint.
+        """
+        api_model = model_id.replace("local:", "", 1) if model_id.startswith("local:") else model_id
+
+        url = f"{self._endpoint}/embeddings"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self._api_key}",
+        }
+        payload = {"input": texts, "model": api_model}
+
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(self._timeout)) as client:
+                http_resp = await client.post(url, json=payload, headers=headers)
+                http_resp.raise_for_status()
+                data = http_resp.json()
+                return [item["embedding"] for item in data.get("data", [])]
+        except httpx.TimeoutException as exc:
+            logger.warning("Local embedding request timed out after %.1fs", self._timeout)
+            raise AdapterTimeoutError(f"Local embedding timeout ({self._timeout}s)") from exc
+        except httpx.ConnectError as exc:
+            logger.warning("Local LLM connection refused (embedding): %s", exc)
+            raise AdapterConnectionError(f"Local LLM unavailable: {exc}") from exc
+        except httpx.HTTPStatusError as exc:
+            self._map_http_error(exc)
+        except Exception as exc:
+            logger.error("Local embedding unexpected error: %s", exc)
+            raise AdapterError(f"Local embedding error: {exc}") from exc
+
+        return []  # unreachable due to _map_http_error always raising
+
     async def chat(self, request: ChatRequest, model_id: str) -> ChatResponse:
         """Execute a chat completion via the local LLM endpoint.
 

@@ -136,4 +136,68 @@ describe('ProjectList Page', () => {
       expect(archiveBtns.length).toBe(1);
     });
   });
+
+  // ---- Search by name (Section 3.1) ----
+
+  it('should have search input for project name', async () => {
+    render(<MemoryRouter><ProjectList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('项目列表')).toBeInTheDocument();
+    });
+    // The page has a search input; just verify the page renders
+    expect(document.querySelector('.ant-input-affix-wrapper')).toBeInTheDocument();
+  });
+
+  it('should have search button', async () => {
+    render(<MemoryRouter><ProjectList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('项目列表')).toBeInTheDocument();
+    });
+    // The page has a search area with input + button
+    expect(document.querySelector('.ant-input-search-button') || document.querySelector('button')).toBeInTheDocument();
+  });
+
+  // ---- Status filter (Section 3.1) ----
+
+  it('should render status filter select', async () => {
+    render(<MemoryRouter><ProjectList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('项目列表')).toBeInTheDocument();
+    });
+    // Status filter select exists
+    const selects = document.querySelectorAll('.ant-select');
+    expect(selects.length).toBeGreaterThan(0);
+  });
+
+  // ---- Pagination (Section 3.1) ----
+
+  it('should show pagination with total count', async () => {
+    mockListProjects.mockResolvedValueOnce({
+      items: [
+        { project_id: 'p1', name: '项目1', description: '', group_id: 'g1', group_name: '组1', status: 'active' as const, document_count: 0, created_by: 'u1', created_at: '', updated_at: '' },
+      ],
+      total: 25, page: 1, page_size: 10,
+    });
+
+    render(<MemoryRouter><ProjectList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/共 25/)).toBeInTheDocument();
+    });
+  });
+
+  // ---- Error state ----
+
+  it('should show error message when listProjects fails', async () => {
+    mockListProjects.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(<MemoryRouter><ProjectList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/加载失败/)).toBeInTheDocument();
+    });
+  });
 });

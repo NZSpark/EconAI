@@ -158,4 +158,97 @@ describe('TaskList - Task Creation Flow', () => {
       });
     });
   });
+
+  // ---- Status filter (Section 5.2) ----
+
+  it('should render status filter select', async () => {
+    render(<MemoryRouter><TaskList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('任务列表')).toBeInTheDocument();
+    });
+    // Status filter should be present (AntD Select)
+    const selects = document.querySelectorAll('.ant-select');
+    expect(selects.length).toBeGreaterThan(0);
+  });
+
+  // ---- Pagination (Section 5.2) ----
+
+  it('should show pagination total', async () => {
+    mockListTasks.mockResolvedValueOnce({
+      items: [
+        {
+          task_id: 'task-1', type: 'literature_review', title: '测试',
+          status: 'completed', progress: null, created_by: 'user-1', created_at: '2026-05-19T10:00:00Z',
+        },
+      ],
+      total: 15, page: 1, page_size: 10,
+    });
+
+    render(<MemoryRouter><TaskList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/共 15/)).toBeInTheDocument();
+    });
+  });
+
+  // ---- Error state ----
+
+  it('should show error message when listTasks fails', async () => {
+    mockListTasks.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(<MemoryRouter><TaskList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/加载失败/)).toBeInTheDocument();
+    });
+  });
+
+  // ---- All 4 task types displayed correctly ----
+
+  it('should display correct Chinese labels for all task types', async () => {
+    mockListTasks.mockResolvedValueOnce({
+      items: [
+        { task_id: 't1', type: 'literature_review', title: '综述', status: 'completed', progress: null, created_by: 'u1', created_at: '' },
+        { task_id: 't2', type: 'policy_draft', title: '草案', status: 'completed', progress: null, created_by: 'u1', created_at: '' },
+        { task_id: 't3', type: 'policy_comparison', title: '比较', status: 'completed', progress: null, created_by: 'u1', created_at: '' },
+        { task_id: 't4', type: 'tech_interpretation', title: '解读', status: 'completed', progress: null, created_by: 'u1', created_at: '' },
+      ],
+      total: 4, page: 1, page_size: 10,
+    });
+
+    render(<MemoryRouter><TaskList /></MemoryRouter>);
+
+    await waitFor(() => {
+      expect(screen.getByText('文献综述')).toBeInTheDocument();
+    });
+    expect(screen.getByText('政策草案')).toBeInTheDocument();
+    expect(screen.getByText('政策比较')).toBeInTheDocument();
+    expect(screen.getByText('技术解读')).toBeInTheDocument();
+  });
+
+  // ---- Task status labels ----
+
+  it('should display correct Chinese status labels', async () => {
+    mockListTasks.mockResolvedValueOnce({
+      items: [
+        { task_id: 't1', type: 'literature_review', title: '等待任务', status: 'pending', progress: null, created_by: 'u1', created_at: '' },
+        { task_id: 't3', type: 'literature_review', title: '完成任务', status: 'completed', progress: null, created_by: 'u1', created_at: '' },
+        { task_id: 't4', type: 'literature_review', title: '失败任务', status: 'failed', progress: null, created_by: 'u1', created_at: '' },
+        { task_id: 't5', type: 'literature_review', title: '取消任务', status: 'cancelled', progress: null, created_by: 'u1', created_at: '' },
+      ],
+      total: 4, page: 1, page_size: 10,
+    });
+
+    render(<MemoryRouter><TaskList /></MemoryRouter>);
+
+    await waitFor(() => {
+      // "等待中" appears in both table column and filter dropdown
+      expect(screen.getAllByText('等待中').length).toBeGreaterThanOrEqual(1);
+    });
+    // completed shows 100% progress bar; failed shows "执行失败"; cancelled shows "已取消"
+    // These may also appear in filter dropdown, so use getAllByText
+    expect(screen.getAllByText('已取消').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('执行失败').length).toBeGreaterThanOrEqual(1);
+  });
 });

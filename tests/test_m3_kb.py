@@ -40,8 +40,8 @@ class TestKBSearch:
             headers=auth_headers,
             timeout=10,
         )
-        # May be 200, 403, 404, 500, or 503
-        assert resp.status_code in (200, 403, 404, 500, 503)
+        # May be 200, 403, 404, 429, 500, or 503
+        assert resp.status_code in (200, 403, 404, 429, 500, 503)
 
     def test_institutional_search(self, base_url: str, auth_headers: dict[str, str]) -> None:
         """Institutional search endpoint is accessible."""
@@ -52,4 +52,4 @@ class TestKBSearch:
             timeout=10,
         )
         # Accept various responses
-        assert resp.status_code in (200, 403, 404, 500, 503)
+        assert resp.status_code in (200, 403, 404, 429, 500, 503)

@@ -33,9 +33,7 @@ class MilvusVectorStore(VectorStore):
         try:
             from pymilvus import (
                 Collection,
-                CollectionSchema,
                 DataType,
-                FieldSchema,
                 MilvusClient,
                 connections,
             )
@@ -44,22 +42,32 @@ class MilvusVectorStore(VectorStore):
             self._client = MilvusClient(uri=f"http://{self._host}:{self._port}")
 
             if not self._client.has_collection(self._collection_name):
-                schema = CollectionSchema(
-                    fields=[
-                        FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=64),
-                        FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=self._dim),
-                        FieldSchema(name="document_id", dtype=DataType.VARCHAR, max_length=64),
-                        FieldSchema(name="project_id", dtype=DataType.VARCHAR, max_length=64),
-                        FieldSchema(name="chunk_type", dtype=DataType.VARCHAR, max_length=16),
-                    ],
+                schema = self._client.create_schema(
+                    auto_id=False,
+                    enable_dynamic_field=False,
                 )
+                schema.add_field(field_name="id", datatype=DataType.VARCHAR, is_primary=True, max_length=64)
+                schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=self._dim)
+                schema.add_field(field_name="document_id", datatype=DataType.VARCHAR, max_length=64)
+                schema.add_field(field_name="project_id", datatype=DataType.VARCHAR, max_length=64)
+                schema.add_field(field_name="chunk_type", datatype=DataType.VARCHAR, max_length=16)
+
+                index_params = self._client.prepare_index_params()
+                index_params.add_index(
+                    field_name="vector",
+                    index_type="IVF_FLAT",
+                    metric_type="IP",
+                    params={"nlist": 128},
+                )
+
                 self._client.create_collection(
                     collection_name=self._collection_name,
                     schema=schema,
-                    index_params={"metric_type": "IP", "index_type": "IVF_FLAT", "params": {"nlist": 128}},
+                    index_params=index_params,
                 )
 
             self._collection = Collection(self._collection_name)
+            self._collection.load()
             self._connected = True
             logger.info("Connected to Milvus: %s:%d, collection=%s", self._host, self._port, self._collection_name)
         except ImportError:
