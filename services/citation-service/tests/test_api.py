@@ -214,9 +214,10 @@ class TestListCitationsEndpoint:
         response = await client.get("/api/tasks/task-001/output/citations")
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 1
-        assert data[0]["ref_id"] == "test:1"
-        assert data[0]["confidence"] == "direct"
+        assert len(data["citations"]) == 1
+        assert data["citations"][0]["ref_id"] == "test:1"
+        assert data["citations"][0]["confidence"] == "direct"
+        assert "summary" in data
 
     async def test_list_citations_with_confidence_filter(self, client: AsyncClient) -> None:
         vc1 = VerifiedCitation(
@@ -238,14 +239,15 @@ class TestListCitationsEndpoint:
         )
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 1
-        assert data[0]["confidence"] == "direct"
+        assert len(data["citations"]) == 1
+        assert data["citations"][0]["confidence"] == "direct"
 
     async def test_list_citations_empty_task(self, client: AsyncClient) -> None:
         response = await client.get("/api/tasks/nonexistent/output/citations")
         assert response.status_code == 200
         data = response.json()
-        assert data == []
+        assert data["citations"] == []
+        assert data["summary"]["total"] == 0
 
 
 class TestCitationDetailEndpoint:

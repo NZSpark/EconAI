@@ -149,20 +149,54 @@ def _update_document_in_db(
 ) -> None:
     """Update document record and insert chunks into DB.
 
-    This is a synchronous helper that runs inside an async context.
-    In production, this would use SQLAlchemy's async session.
-    For now, we log the operations (tests mock the DB).
+    Uses the real document-service db module for actual PostgreSQL operations.
+    Falls back to logging if the DB module is unavailable.
     """
     import asyncio
 
     async def _do_db_update() -> None:
-        # In production, this would:
-        # 1. UPDATE documents SET parse_status=?, page_count=?, metadata=? WHERE id=?
-        # 2. INSERT INTO document_chunks (...) VALUES (...)
-        # For MVP/testing, we log the operations
-        logger.info("DB update: document %s status=%s, page_count=%d, chunks=%d",
-                     document_id, status, page_count,
-                     len(chunk_records) if chunk_records else 0)
+        try:
+            import document_service.db as db
+
+            # Use real DB operations
+            async with db.async_session_factory() as session:
+                # 1. Update document status
+                await db.update_document_status(
+                    session,
+                    document_id,
+                    status=status,
+                    parse_error=parse_error,
+                    page_count=page_count,
+                )
+
+                # 2. Insert chunks
+                if chunk_records:
+                    chunk_dicts = [
+                        {
+                            "id": c.chunk_id,
+                            "document_id": c.document_id,
+                            "project_id": c.project_id,
+                            "chunk_type": c.chunk_type,
+                            "chunk_index": c.chunk_index,
+                            "chunk_text": c.chunk_text,
+                            "token_count": c.token_count,
+                            "page_start": c.page_start,
+                            "page_end": c.page_end,
+                        }
+                        for c in chunk_records
+                    ]
+                    await db.insert_chunks(session, chunk_dicts)
+
+                logger.info(
+                    "DB update: document %s status=%s, page_count=%d, chunks=%d",
+                    document_id,
+                    status,
+                    page_count,
+                    len(chunk_records) if chunk_records else 0,
+                )
+        except Exception as exc:
+            logger.error("DB update failed for document %s: %s", document_id, exc)
+            raise
 
     try:
         loop = asyncio.get_event_loop()

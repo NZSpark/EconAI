@@ -1,5 +1,7 @@
 """Tests for citation verifier and confidence logic (M6-27, M6-28)."""
 
+import pytest
+
 from citation_service.parser import CitationParser
 from citation_service.verifier import (
     CitationVerifier,
@@ -174,7 +176,7 @@ class TestConfidenceClassification:
 class TestVerifierEndToEnd:
     """M6-12: CitationVerifier full verification flow."""
 
-    def test_verify_direct_match(self) -> None:
+    async def test_verify_direct_match(self) -> None:
         parser = CitationParser()
         verifier = CitationVerifier(similarity_threshold=0.3)
 
@@ -190,7 +192,7 @@ class TestVerifierEndToEnd:
         ]
 
         result = parser.parse(text)
-        verify_result = verifier.verify(result, chunks)
+        verify_result = await verifier.verify(result, chunks)
 
         assert len(verify_result.citations) == 1
         vc = verify_result.citations[0]
@@ -198,7 +200,7 @@ class TestVerifierEndToEnd:
         assert vc.confidence == "direct"
         assert len(vc.matched_chunks) == 1
 
-    def test_verify_fuzzy_match(self) -> None:
+    async def test_verify_fuzzy_match(self) -> None:
         parser = CitationParser()
         verifier = CitationVerifier(similarity_threshold=0.3)
 
@@ -214,13 +216,13 @@ class TestVerifierEndToEnd:
         ]
 
         result = parser.parse(text)
-        verify_result = verifier.verify(result, chunks)
+        verify_result = await verifier.verify(result, chunks)
 
         assert len(verify_result.citations) == 1
         vc = verify_result.citations[0]
         assert vc.confidence == "fuzzy"
 
-    def test_verify_uncertain_match(self) -> None:
+    async def test_verify_uncertain_match(self) -> None:
         parser = CitationParser()
         verifier = CitationVerifier(similarity_threshold=0.95)  # very high threshold
 
@@ -236,26 +238,26 @@ class TestVerifierEndToEnd:
         ]
 
         result = parser.parse(text)
-        verify_result = verifier.verify(result, chunks)
+        verify_result = await verifier.verify(result, chunks)
 
         assert len(verify_result.citations) == 1
         vc = verify_result.citations[0]
         assert vc.confidence == "uncertain"
 
-    def test_verify_uncertain_marker(self) -> None:
+    async def test_verify_uncertain_marker(self) -> None:
         parser = CitationParser()
         verifier = CitationVerifier()
 
         text = "Something might be true [ref:uncertain]."
         result = parser.parse(text)
-        verify_result = verifier.verify(result, [])
+        verify_result = await verifier.verify(result, [])
 
         assert len(verify_result.citations) == 1
         vc = verify_result.citations[0]
         assert vc.ref_id == "uncertain"
         assert vc.confidence == "uncertain"
 
-    def test_verify_multiple_citations(self) -> None:
+    async def test_verify_multiple_citations(self) -> None:
         parser = CitationParser()
         verifier = CitationVerifier(similarity_threshold=0.3)
 
@@ -281,7 +283,7 @@ class TestVerifierEndToEnd:
         ]
 
         result = parser.parse(text)
-        verify_result = verifier.verify(result, chunks)
+        verify_result = await verifier.verify(result, chunks)
 
         assert len(verify_result.citations) == 2
         assert verify_result.citations[0].confidence == "direct"
@@ -291,18 +293,18 @@ class TestVerifierEndToEnd:
         assert verify_result.summary.fuzzy == 0
         assert verify_result.summary.uncertain == 0
 
-    def test_verify_no_context_chunks(self) -> None:
+    async def test_verify_no_context_chunks(self) -> None:
         parser = CitationParser()
         verifier = CitationVerifier()
 
         text = "Some claim [ref:missing_doc:1-5]."
         result = parser.parse(text)
-        verify_result = verifier.verify(result, [])
+        verify_result = await verifier.verify(result, [])
 
         assert len(verify_result.citations) == 1
         assert verify_result.citations[0].confidence == "uncertain"
 
-    def test_verify_summary_counts(self) -> None:
+    async def test_verify_summary_counts(self) -> None:
         parser = CitationParser()
         # Use a moderate threshold so the very-similar-text test passes.
         verifier = CitationVerifier(similarity_threshold=0.6)
@@ -322,7 +324,7 @@ class TestVerifierEndToEnd:
         ]
 
         result = parser.parse(text)
-        verify_result = verifier.verify(result, chunks)
+        verify_result = await verifier.verify(result, chunks)
 
         summary = verify_result.summary
         assert summary.total == 2

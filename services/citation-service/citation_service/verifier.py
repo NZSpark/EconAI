@@ -304,10 +304,15 @@ class CitationVerifier:
       5. Generate summary (M6-13)
     """
 
-    def __init__(self, similarity_threshold: float = 0.85):
+    def __init__(
+        self,
+        similarity_threshold: float = 0.85,
+        embed_fn: Any | None = None,
+    ):
         self._threshold = similarity_threshold
+        self._embed_fn = embed_fn
 
-    def verify(
+    async def verify(
         self,
         parsed_result: CitationParserResult,
         context_chunks: list[ContextChunk],
@@ -326,7 +331,7 @@ class CitationVerifier:
 
         for sent_citation in parsed_result.sentences:
             for ref in sent_citation.citations:
-                verified_cit = self._verify_single(
+                verified_cit = await self._verify_single(
                     ref,
                     sent_citation.sentence,
                     sent_citation.sentence_index,
@@ -348,7 +353,7 @@ class CitationVerifier:
             index.setdefault(chunk.document_id, []).append(chunk)
         return index
 
-    def _verify_single(
+    async def _verify_single(
         self,
         ref: CitationRef,
         sentence: str,
@@ -379,8 +384,10 @@ class CitationVerifier:
                     # M6-08: Exact page range matching
                     has_exact_match = page_range_matches(ref_pages, chunk_pages)
 
-                # M6-10: Compute semantic similarity
-                similarity = compute_text_similarity(sentence, chunk.content)
+                # M6-10: Compute semantic similarity (use embeddings when available)
+                similarity = await compute_text_similarity_with_embeddings(
+                    sentence, chunk.content, embed_fn=self._embed_fn
+                )
 
                 # M6-11: Determine confidence
                 confidence = determine_confidence(

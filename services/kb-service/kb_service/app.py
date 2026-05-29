@@ -134,16 +134,33 @@ def _check_project_access(project_id: str) -> None:
 
 def _build_result(
     chunk: dict[str, Any],
+    query: str = "",
     document_titles: dict[str, str] | None = None,
 ) -> ChunkResult:
-    """Format a search hit into a ChunkResult."""
+    """Format a search hit into a ChunkResult.
+
+    When *query* is provided, matched_terms and highlighted_content are
+    generated via the tokenizer so the frontend can render keyword
+    highlights without re-tokenizing.
+    """
+    from kb_service.tokenizer import apply_highlight, extract_matched_terms, find_highlight_spans
+
     doc_id = chunk.get("document_id", "")
     titles = document_titles or {}
+    content = chunk.get("content", "")
+
+    matched_terms: list[str] = []
+    highlighted_content = ""
+    if query:
+        matched_terms = extract_matched_terms(query)
+        spans = find_highlight_spans(content, query)
+        highlighted_content = apply_highlight(content, spans)
+
     return ChunkResult(
         chunk_id=chunk.get("chunk_id", ""),
         document_id=doc_id,
         document_title=titles.get(doc_id, ""),
-        content=chunk.get("content", ""),
+        content=content,
         chunk_type=chunk.get("chunk_type", "paragraph"),
         score=round(chunk.get("score", 0.0), 4),
         metadata={
@@ -151,6 +168,8 @@ def _build_result(
             "page_end": chunk.get("metadata", {}).get("page_end", 0),
             "section_title": chunk.get("metadata", {}).get("section_title", ""),
         },
+        matched_terms=matched_terms,
+        highlighted_content=highlighted_content,
     )
 
 
@@ -172,7 +191,7 @@ async def search_project(project_id: str, body: SearchRequest) -> SearchResponse
     )
 
     return SearchResponse(
-        results=[_build_result(r) for r in results],
+        results=[_build_result(r, query=body.query) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
     )
@@ -191,7 +210,7 @@ async def search_institutional(body: SearchRequest) -> SearchResponse:
     )
 
     return SearchResponse(
-        results=[_build_result(r) for r in results],
+        results=[_build_result(r, query=body.query) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
     )
@@ -221,7 +240,7 @@ async def internal_search(body: InternalSearchRequest) -> SearchResponse:
     )
 
     return SearchResponse(
-        results=[_build_result(r) for r in results],
+        results=[_build_result(r, query=body.query) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
     )

@@ -9,13 +9,20 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import os
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
+import httpx
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 from shared.models import ErrorResponse
+from sqlalchemy import MetaData, Table, and_, select, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.sql import insert
 
 from citation_service.config import config as cfg
 from citation_service.formatter import (
@@ -30,6 +37,8 @@ from citation_service.verifier import (
 )
 from shared.metrics import setup_metrics
 
+logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------------
 # FastAPI application
 # ---------------------------------------------------------------------------
@@ -43,19 +52,115 @@ app = FastAPI(
 setup_metrics(app)
 
 # ---------------------------------------------------------------------------
+# Embedding client — calls LLM Router for real embedding vectors
+# ---------------------------------------------------------------------------
+
+_LLM_ROUTER_URL = os.getenv("CITATION_LLM_ROUTER_URL", os.getenv("LLM_ROUTER_URL", "http://llm-router:8004"))
+_EMBEDDING_MODEL = os.getenv("CITATION_EMBEDDING_MODEL", "text2vec-large-chinese")
+
+
+async def _embed_batch(texts: list[str]) -> list[list[float]]:
+    """Generate embeddings via LLM Router's /internal/llm/embed endpoint."""
+    if not texts:
+        return []
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                f"{_LLM_ROUTER_URL}/internal/llm/embed",
+                json={"texts": texts, "model": _EMBEDDING_MODEL},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("embeddings", [])
+    except Exception as exc:
+        logger.warning("Embedding API call failed, falling back to bag-of-words: %s", exc)
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Database persistence for citations
+# ---------------------------------------------------------------------------
+
+_db_engine = None
+_db_session_factory = None
+_db_available = False
+_db_metadata = MetaData()
+_citations_tbl: Table | None = None
+
+
+async def _init_db() -> None:
+    """Initialize PostgreSQL connection for citation persistence."""
+    global _db_engine, _db_session_factory, _db_available, _citations_tbl
+
+    db_url = os.getenv("CITATION_DATABASE_URL", cfg.DATABASE_URL)
+    try:
+        _db_engine = create_async_engine(
+            db_url,
+            echo=False,
+            pool_size=5,
+            max_overflow=3,
+            pool_pre_ping=True,
+            pool_recycle=3600,
+        )
+        async with _db_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+            await conn.commit()
+
+        _db_session_factory = async_sessionmaker(_db_engine, class_=AsyncSession, expire_on_commit=False)
+
+        # Reflect citations table
+        async with _db_engine.begin() as conn:
+            await conn.run_sync(lambda sync_conn: _db_metadata.reflect(bind=sync_conn, only=["citations"]))
+        _citations_tbl = _db_metadata.tables.get("citations")
+        _db_available = True
+        logger.info("Citation persistence ENABLED (PostgreSQL)")
+    except Exception as exc:
+        _db_available = False
+        logger.warning("PostgreSQL not available for citation persistence (%s); using in-memory fallback", exc)
+
+
+# In-memory fallback for citation storage
+_citation_store: dict[str, list[dict[str, Any]]] = {}
+
+
+async def _persist_citations(task_id: str, records: list[dict[str, Any]]) -> None:
+    """Persist citation records to PostgreSQL or in-memory fallback."""
+    _citation_store[task_id] = records  # Always keep in-memory for fast lookup
+
+    if _db_available and _citations_tbl is not None and _db_session_factory is not None:
+        try:
+            async with _db_session_factory() as session:
+                rows = [
+                    {
+                        "id": r["id"],
+                        "task_id": task_id,
+                        "ref_id": r["ref_id"],
+                        "sentence": r["sentence"],
+                        "sentence_index": r.get("sentence_index", 0),
+                        "confidence": r["confidence"],
+                        "matched_chunks": r.get("matched_chunks"),
+                        "verified_at": datetime.fromisoformat(r["verified_at"]) if r.get("verified_at") else datetime.now(UTC),
+                        "verified_by": r.get("verified_by", cfg.SERVICE_NAME),
+                    }
+                    for r in records
+                ]
+                await session.execute(insert(_citations_tbl), rows)
+                await session.commit()
+                logger.info("Persisted %d citations for task %s to DB", len(records), task_id)
+        except Exception as exc:
+            logger.error("Failed to persist citations to DB: %s", exc)
+
+
+# ---------------------------------------------------------------------------
 # Service instances
 # ---------------------------------------------------------------------------
 
 parser = CitationParser()
-verifier = CitationVerifier(similarity_threshold=cfg.CITATION_SIMILARITY_THRESHOLD)
+verifier = CitationVerifier(
+    similarity_threshold=cfg.CITATION_SIMILARITY_THRESHOLD,
+    embed_fn=_embed_batch,
+)
 formatter = CitationFormatter()
-
-# ---------------------------------------------------------------------------
-# In-memory storage for citations (MVP, no DB dependency for tests)
-# ---------------------------------------------------------------------------
-
-# task_id -> list[dict] mapping for query endpoints
-_citation_store: dict[str, list[dict[str, Any]]] = {}
 
 
 # Pydantic models for request/response
@@ -96,6 +201,7 @@ class MatchedChunkResponse(BaseModel):
 class VerifiedCitationResponse(BaseModel):
     """Verified citation in API response."""
 
+    id: str
     ref_id: str
     sentence: str
     sentence_index: int
@@ -128,6 +234,13 @@ class CitationDetailSource(BaseModel):
     excerpt: str | None = None
 
 
+class CitationListResponse(BaseModel):
+    """M6-16: Citation list with summary (per User Manual §6.3)."""
+
+    citations: list[VerifiedCitationResponse]
+    summary: VerificationSummaryResponse
+
+
 class CitationDetailResponse(BaseModel):
     """M6-17/M6-18: Single citation detail response."""
 
@@ -147,9 +260,10 @@ class CitationDetailResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _to_verified_response(vc: VerifiedCitation) -> VerifiedCitationResponse:
+def _to_verified_response(vc: VerifiedCitation, citation_id: str = "") -> VerifiedCitationResponse:
     """Convert internal VerifiedCitation to API response model."""
     return VerifiedCitationResponse(
+        id=citation_id,
         ref_id=vc.ref_id,
         sentence=vc.sentence,
         sentence_index=vc.sentence_index,
@@ -255,7 +369,7 @@ async def verify_citations(request: VerifyRequest) -> VerifyResponse:
     ]
 
     # Step 3: Verify
-    verify_result = verifier.verify(parser_result, context_chunks)
+    verify_result = await verifier.verify(parser_result, context_chunks)
 
     # Step 4: Convert to response
     citations = [_to_verified_response(vc) for vc in verify_result.citations]
@@ -276,33 +390,49 @@ async def verify_citations(request: VerifyRequest) -> VerifyResponse:
 
 @app.get(
     "/api/tasks/{task_id}/output/citations",
-    response_model=list[VerifiedCitationResponse],
+    response_model=CitationListResponse,
 )
 async def list_citations(
     task_id: str,
     confidence: Annotated[str | None, Query(description="Filter by confidence level")] = None,
-) -> list[VerifiedCitationResponse]:
+) -> CitationListResponse:
     """List verified citations for a task output.
 
     Optionally filter by confidence level (direct/fuzzy/uncertain).
+    Returns citations array + summary with per-confidence counts (per User Manual §6.3).
     """
     records = _citation_store.get(task_id, [])
 
     if confidence:
         records = [r for r in records if r["confidence"] == confidence]
 
-    return [
-        VerifiedCitationResponse(
-            ref_id=r["ref_id"],
-            sentence=r["sentence"],
-            sentence_index=r["sentence_index"],
-            confidence=r["confidence"],
-            matched_chunks=[
-                MatchedChunkResponse(**mc) for mc in r.get("matched_chunks", [])
-            ],
-        )
-        for r in records
-    ]
+    # Build summary from the (possibly filtered) records
+    total = len(records)
+    direct = sum(1 for r in records if r["confidence"] == "direct")
+    fuzzy = sum(1 for r in records if r["confidence"] == "fuzzy")
+    uncertain = sum(1 for r in records if r["confidence"] == "uncertain")
+
+    return CitationListResponse(
+        citations=[
+            VerifiedCitationResponse(
+                id=r["id"],
+                ref_id=r["ref_id"],
+                sentence=r["sentence"],
+                sentence_index=r["sentence_index"],
+                confidence=r["confidence"],
+                matched_chunks=[
+                    MatchedChunkResponse(**mc) for mc in r.get("matched_chunks", [])
+                ],
+            )
+            for r in records
+        ],
+        summary=VerificationSummaryResponse(
+            total=total,
+            direct=direct,
+            fuzzy=fuzzy,
+            uncertain=uncertain,
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -376,11 +506,16 @@ async def get_citation_detail(
 
 
 def _store_verification_result(task_id: str, result: VerificationResult) -> list[dict[str, Any]]:
-    """Store a verification result in the in-memory cache and return records.
+    """Store a verification result in-memory and in PostgreSQL, then return records.
 
     This is an internal function used by upstream services to persist results
     after verify for later query endpoints.
     """
     records = _verification_result_to_citations(result)
     _citation_store[task_id] = records
+
+    # Persist to DB asynchronously (fire-and-forget)
+    if _db_available:
+        asyncio.create_task(_persist_citations(task_id, records))
+
     return records

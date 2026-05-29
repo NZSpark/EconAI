@@ -4,22 +4,14 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 from typing import Any
 
 import asyncpg
 
 from kb_service.config import settings
+from kb_service.tokenizer import contains_cjk, tokenize
 
 logger = logging.getLogger(__name__)
-
-# CJK Unicode ranges: Chinese, Japanese, Korean
-_CJK_RE = re.compile(r"[一-鿿㐀-䶿豈-﫿]")
-
-
-def _contains_cjk(text: str) -> bool:
-    """Check whether *text* contains any CJK characters."""
-    return bool(_CJK_RE.search(text))
 
 
 class BM25Searcher:
@@ -169,15 +161,22 @@ class BM25Searcher:
             project_id, document_ids, chunk_types
         )
 
-        if _contains_cjk(query):
-            sql, params = self._build_trgm_sql(conditions, param_idx, query, top_k)
-            # Merge extra params after the query param (which is $1)
-            params[1:1] = extra_params
-            # Fix param indices in merged params — _build_trgm_sql returns
-            # [query, top_k], extra_params are for conditions starting at $2
-            logger.debug("BM25 using pg_trgm path (CJK detected)")
+        if contains_cjk(query):
+            # Try jieba tokenization first for better precision with FTS.
+            # If jieba produces usable tokens, use tsquery; otherwise fall
+            # back to pg_trgm fuzzy matching.
+            tokens = tokenize(query)
+            tsquery = " & ".join(t for t in tokens if t.isalnum())
+            if tsquery:
+                sql, params = self._build_fts_sql(conditions, param_idx, tsquery, top_k)
+                params[1:1] = extra_params
+                logger.debug("BM25 using FTS path (CJK + jieba tokens)")
+            else:
+                sql, params = self._build_trgm_sql(conditions, param_idx, query, top_k)
+                params[1:1] = extra_params
+                logger.debug("BM25 using pg_trgm fallback (CJK, no jieba tokens)")
         else:
-            tokens = query.split()
+            tokens = tokenize(query)
             tsquery = " & ".join(t for t in tokens if t.isalnum())
             if not tsquery:
                 tsquery = query
@@ -242,8 +241,14 @@ class InMemoryBM25Searcher:
         document_ids: list[str] | None = None,
         chunk_types: list[str] | None = None,
     ) -> list[dict[str, Any]]:
-        """Search with simple keyword overlap scoring."""
-        query_tokens = set(query.lower().split())
+        """Search with simple keyword overlap scoring.
+
+        Uses tokenize() for Chinese-aware tokenization so that both
+        Chinese and English queries produce meaningful token sets.
+        """
+        from kb_service.tokenizer import tokenize
+
+        query_tokens = set(t.lower() for t in tokenize(query))
 
         scored: list[tuple[float, dict[str, Any]]] = []
         for chunk in self._chunks:
@@ -254,7 +259,7 @@ class InMemoryBM25Searcher:
             if chunk_types and chunk.get("chunk_type") not in chunk_types:
                 continue
 
-            content_tokens = set(chunk["content"].lower().split())
+            content_tokens = set(t.lower() for t in tokenize(chunk["content"]))
             if not query_tokens or not content_tokens:
                 continue
 

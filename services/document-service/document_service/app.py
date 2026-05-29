@@ -83,27 +83,6 @@ async def _get_session():
 # Persistent document store (PostgreSQL via async SQLAlchemy)
 # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Mock Redis client for pub/sub (MVP; replace with real Redis in production)
-# ---------------------------------------------------------------------------
-
-
-class MockRedis:
-    """Mock Redis for development/testing."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str]] = []
-
-    def publish(self, channel: str, message: str) -> int:
-        self.published.append((channel, message))
-        return 1
-
-    def get_published(self) -> list[tuple[str, str]]:
-        return self.published
-
-
-_mock_redis = MockRedis()
-
 # KB Service URL for index callbacks
 _KB_SERVICE_URL = os.getenv("KB_SERVICE_URL", "http://kb-service:8002")
 
@@ -783,13 +762,7 @@ async def parse_error_handler(request: Any, exc: ParseError) -> JSONResponse:
 
 
 def _reset_state() -> None:
-    """Clear all state (for testing). Resets mock Redis, MinIO client, and in-memory store."""
-    _mock_redis.published.clear()
+    """Clear all state (for testing). Resets MinIO client and in-memory store."""
     reset_minio_client()
     # Clear in-memory store (only affects in-memory fallback, not real DB)
     db.reset_in_memory_store()
-
-
-def _get_mock_redis() -> MockRedis:
-    """Get the mock Redis instance (for testing)."""
-    return _mock_redis
