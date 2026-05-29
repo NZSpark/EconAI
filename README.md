@@ -1,6 +1,25 @@
 # EconAI — Institutional-Grade AI Economic Policy Analysis Toolkit
 
+> **Created**: 2026-05-17 &nbsp;|&nbsp; **Status**: All 10 modules complete (376/376 subtasks) &nbsp;|&nbsp; **Tests**: 638 passing
+
 EconAI is an AI-powered toolkit for economic policy research institutions. It combines LLM reasoning with a trusted evidence base to generate structured analysis reports — literature reviews, policy drafts, policy comparisons, and technical interpretations — with sentence-level source provenance, and exports to Markdown, .docx (GB/T 9704), .xlsx, and .pptx.
+
+## Project at a Glance
+
+| Stat | Value |
+|------|-------|
+| **Created** | 2026-05-17 (13 days of active development) |
+| **Git commits** | 50 |
+| **Contributor** | 1 (NZSpark) |
+| **Microservices** | 7 + API Gateway = 8 backend modules |
+| **Docker containers** | 20 (8 app + 12 infrastructure) |
+| **Total source files** | 315 (.py + .ts + .tsx + .sql) |
+| **Total project files** | ~470 (all types, excluding node_modules/.venv) |
+| **Production code** | 26,355 lines (Python 20,453 + TypeScript/TSX 5,532 + SQL 370) |
+| **Test code** | 22,493 lines (Python 18,279 + TypeScript/TSX 4,214) |
+| **Total code** | **48,848 lines** |
+| **Code-to-test ratio** | 1.17:1 (near 1:1) |
+| **Test count** | 638 (Python 622 + TypeScript 16), all pure mock |
 
 ## Architecture
 
@@ -8,7 +27,7 @@ EconAI is an AI-powered toolkit for economic policy research institutions. It co
 
 ![Multi-Layer Architecture](doc/architecture/EconAI_MultiLayers_Architecture_EN.png)
 
-10 microservices behind an API gateway, deployed via Docker Compose:
+8 backend modules behind an API gateway, deployed via Docker Compose (20 containers):
 
 ```
 Client (React 19 + TypeScript 5 + Ant Design 6)
@@ -38,23 +57,21 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
 
 | Decision | Approach |
 |----------|----------|
-| **LLM routing** | Sensitivity analysis: internal/sensitive docs → local model (vLLM/Ollama), public docs → Claude API |
+| **LLM routing** | Sensitivity analysis: high sensitivity → local model (vLLM/Ollama), low sensitivity → Claude API. User can override per task. |
 | **Hybrid search** | Vector semantic (top-50) + BM25 keyword (top-50) → RRF fusion (k=60) → BGE-Reranker → top-10 |
 | **Chunking** | Paragraph-level (~300 tokens) for precise retrieval + section-level (~2000 tokens) for context window |
 | **Agent loop** | ReAct variant (Plan → Retrieve → Generate → Verify → Decide), max 5 iterations; forces format_output on overflow |
 | **Citations** | Inline `[ref:doc_id:page_range]` format, verified via page range matching + semantic similarity (threshold 0.85) |
 | **GB/T 9704** | Chinese government document standard for .docx: specific fonts (小标宋/黑体/楷体/仿宋), margins, heading numbering |
-| **Tests** | Pure mock — all external dependencies (DB, Redis, Milvus, MinIO, LLM APIs) mocked; 640+ tests, zero infra needed |
+| **Tests** | Pure mock — all external dependencies (DB, Redis, Milvus, MinIO, LLM APIs) mocked; 638 tests, zero infra needed |
 
-## Project Status
-
-**All 10 modules complete** (376/376 subtasks). 638 tests passing (Python 622 + TypeScript 16).
+## Module Status
 
 | Module | Service | Port | Subtasks | Key Capabilities |
 |--------|---------|------|----------|------------------|
 | M10 | Infrastructure | — | 34/34 | Docker Compose, PostgreSQL schema, Nginx, Prometheus+Grafana, Celery config, Alembic migrations |
 | M8 | User Service | 8007 | 42/42 | JWT auth, RBAC (4 roles × 6 ops), LDAP/SSO, audit log consumer, GDPR APIs |
-| M5 | LLM Router | 8004 | 33/33 | Model registry, sensitivity routing, ClaudeAdapter + LocalAdapter, circuit breaker, retry with backoff, `ANTHROPIC_API_BASE_URL` custom endpoint |
+| M5 | LLM Router | 8004 | 33/33 | Model registry, sensitivity routing, ClaudeAdapter + LocalAdapter, circuit breaker, retry with backoff |
 | M6 | Citation Service | 8005 | 30/30 | Inline `[ref:...]` parser, verification (page + semantic), formatters (Markdown/docx/xlsx/pptx) |
 | M1 | API Gateway | 8000 | 28/28 | JWT middleware, RBAC middleware, Redis token bucket rate limiter, audit logging (pub/sub), httpx reverse proxy |
 | M2 | Document Service | 8001 | 43/43 | 8-format parsing (PDF/Word/MD/Excel/PPT/Email/HTML/Image-OCR), multi-granularity chunking, MinIO storage, Celery pipeline |
@@ -191,9 +208,9 @@ Click any citation badge in the UI to see: source document, page range, original
 
 ### Hybrid LLM deployment
 
-- **Sensitive/internal documents** → local LLM (vLLM/Ollama, OpenAI-compatible API)
-- **Public/non-sensitive documents** → Claude API
-- Sensitivity classification is automatic; users can override per task
+- **High sensitivity** (internal docs, policy drafts) → local LLM (vLLM/Ollama, OpenAI-compatible API)
+- **Low sensitivity** (public docs) → Claude API
+- User can explicitly set sensitivity per task via the UI; system auto-detects otherwise
 
 ### Enterprise security
 
@@ -219,7 +236,7 @@ Embedding generation (text2vec/m3e) with Redis cache. Vector store abstraction o
 
 ### M4 — Orchestration Service (port 8003)
 
-Agent engine implementing ReAct variant: Plan → Execute (6 tools) → Observe → Update Progress, max 5 iterations. Task state machine: pending → running/cancelled → completed/failed. 6 agent tools: search_kb, generate_section, verify_citations, extract_key_claims, compare_policies, format_output. Tool execution with 60s timeout, 1 retry, exception isolation. Sensitivity analysis (4 rules). Jinja2 prompt templates for 4 task types. Forces format_output when iteration limit reached.
+Agent engine implementing ReAct variant: Plan → Execute (6 tools) → Observe → Update Progress, max 5 iterations. Task state machine: pending → running/cancelled → completed/failed. 6 agent tools: search_kb, generate_section, verify_citations, extract_key_claims, compare_policies, format_output. Tool execution with 60s timeout, 1 retry, exception isolation. Sensitivity analysis (5 rules). Jinja2 prompt templates for 4 task types. Forces format_output when iteration limit reached.
 
 ### M5 — LLM Router (port 8004)
 
@@ -239,7 +256,27 @@ JWT auth with bcrypt password hashing, access/refresh token flow. RBAC: 4 roles 
 
 ### M9 — Frontend SPA
 
-React 19 + TypeScript 5 + Vite 8 + Ant Design 6 + React Router 7. Auth flow (login, token auto-refresh, route guards). Project management (table/cards, pagination, status search, archive). Knowledge base (drag-and-drop upload with progress, document list, hybrid search with chunk highlight). Task management (type selection, create form, status polling, step progress bar). Output view (Markdown preview, citation badges with color-coded confidence, citation drawer, export format selector). Admin (user CRUD, group management, audit log viewer).
+React 19 + TypeScript 5 + Vite 8 + Ant Design 6 + React Router 7. Auth flow (login, token auto-refresh, route guards). Project management (table/cards, pagination, status search, archive). Knowledge base (drag-and-drop upload with progress, document list, hybrid search with chunk highlight). Task management (type selection, sensitivity selector, status polling, step progress bar). Output view (Markdown preview, citation badges with color-coded confidence, citation drawer, export format selector). Admin (user CRUD, group management, audit log viewer).
+
+## Project File Breakdown
+
+| Category | Files | Lines |
+|----------|-------|-------|
+| Backend Python (production) | 170 | 20,453 |
+| Backend Python (tests) | 75 | 18,279 |
+| Frontend TypeScript (production) | 28 | 2,070 |
+| Frontend TSX (production) | 40 | 3,462 |
+| Frontend TS/TSX (tests) | 21 | 4,214 |
+| SQL (schema + seed) | 2 | 370 |
+| Dockerfiles | 8 | — |
+| docker-compose files | 3 | — |
+| YAML/YML configs | 12 | — |
+| Jinja2 prompt templates | 5 | — |
+| Shell scripts | 2 | — |
+| Markdown docs | 58 | — |
+| TOML configs | 10 | — |
+| JSON configs | 8 | — |
+| **Total** | **~470** | **48,848** |
 
 ## Documentation
 
@@ -266,7 +303,7 @@ See **[doc/operation.md](doc/operation.md)** for full deployment and operations 
 cp .env.template .env   # configure all secrets
 ./deploy/deploy.sh build
 ./deploy/deploy.sh start
-./deploy/deploy.sh status  # verify 18 containers healthy
+./deploy/deploy.sh status  # verify 20 containers healthy
 ```
 
 **Key operations**: `./deploy/deploy.sh {start|stop|restart|status|logs [service]|build}`
