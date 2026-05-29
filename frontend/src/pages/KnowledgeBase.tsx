@@ -60,6 +60,9 @@ export default function KnowledgeBase() {
   const [searchTime, setSearchTime] = useState(0);
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchPageSize, setSearchPageSize] = useState(10);
+  const [searchPages, setSearchPages] = useState(1);
 
   const loadDocs = useCallback(async () => {
     if (!projectId) throw new Error('No project ID');
@@ -155,17 +158,21 @@ export default function KnowledgeBase() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (page = 1) => {
     if (!projectId || !searchQuery.trim()) return;
     setSearching(true);
+    setSearchPage(page);
     try {
       const res = await searchProjectKB(projectId, {
         query: searchQuery,
-        top_k: 10,
+        top_k: 100,
+        page,
+        page_size: searchPageSize,
       });
       setSearchResults(res.results);
       setSearchTotal(res.total_hits);
       setSearchTime(res.search_time_ms);
+      setSearchPages(res.pages);
       setHasSearched(true);
     } catch {
       message.error('搜索失败');
@@ -369,8 +376,8 @@ export default function KnowledgeBase() {
             placeholder="输入搜索关键词..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onSearch={handleSearch}
-            onPressEnter={handleSearch}
+            onSearch={() => handleSearch(1)}
+            onPressEnter={() => handleSearch(1)}
             loading={searching}
             style={{ width: 400 }}
             prefix={<SearchOutlined />}
@@ -385,6 +392,19 @@ export default function KnowledgeBase() {
         {hasSearched && searchResults.length > 0 && (
           <List
             dataSource={searchResults}
+            pagination={{
+              current: searchPage,
+              pageSize: searchPageSize,
+              total: searchTotal,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50'],
+              showTotal: (total, range) =>
+                `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+              onChange: (p, ps) => {
+                setSearchPageSize(ps);
+                handleSearch(p);
+              },
+            }}
             renderItem={(item: SearchResultChunk) => (
               <List.Item>
                 <List.Item.Meta

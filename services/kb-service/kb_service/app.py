@@ -244,15 +244,22 @@ async def search_project(project_id: str, body: SearchRequest) -> SearchResponse
         document_ids=body.filters.document_ids or None,
         chunk_types=body.filters.chunk_types or None,
         search_mode=body.search_mode,
+        page=body.page,
+        page_size=body.page_size,
     )
 
     doc_ids = {r.get("document_id", "") for r in results if r.get("document_id")}
     titles = await _fetch_document_titles(doc_ids, project_id)
 
+    total_pages = max(1, (total_hits + body.page_size - 1) // body.page_size) if total_hits else 1
+
     return SearchResponse(
         results=[_build_result(r, query=body.query, document_titles=titles) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
+        page=body.page,
+        page_size=body.page_size,
+        pages=total_pages,
     )
 
 
@@ -266,15 +273,22 @@ async def search_institutional(body: SearchRequest) -> SearchResponse:
         document_ids=body.filters.document_ids or None,
         chunk_types=body.filters.chunk_types or None,
         search_mode=body.search_mode,
+        page=body.page,
+        page_size=body.page_size,
     )
 
     doc_ids = {r.get("document_id", "") for r in results if r.get("document_id")}
     titles = await _fetch_document_titles(doc_ids)
 
+    total_pages = max(1, (total_hits + body.page_size - 1) // body.page_size) if total_hits else 1
+
     return SearchResponse(
         results=[_build_result(r, query=body.query, document_titles=titles) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
+        page=body.page,
+        page_size=body.page_size,
+        pages=total_pages,
     )
 
 
@@ -299,15 +313,22 @@ async def internal_search(body: InternalSearchRequest) -> SearchResponse:
         document_ids=body.filters.document_ids or None,
         chunk_types=body.filters.chunk_types or None,
         search_mode=body.search_mode,
+        page=body.page,
+        page_size=body.page_size,
     )
 
     doc_ids = {r.get("document_id", "") for r in results if r.get("document_id")}
     titles = await _fetch_document_titles(doc_ids, project_id)
 
+    total_pages = max(1, (total_hits + body.page_size - 1) // body.page_size) if total_hits else 1
+
     return SearchResponse(
         results=[_build_result(r, query=body.query, document_titles=titles) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
+        page=body.page,
+        page_size=body.page_size,
+        pages=total_pages,
     )
 
 

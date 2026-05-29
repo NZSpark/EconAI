@@ -56,8 +56,10 @@ class HybridSearcher:
         document_ids: list[str] | None = None,
         chunk_types: list[str] | None = None,
         search_mode: str = "hybrid",
+        page: int = 1,
+        page_size: int = 10,
     ) -> tuple[list[dict[str, Any]], int, float]:
-        """Execute hybrid search.
+        """Execute hybrid search with optional pagination.
 
         Returns:
             Tuple of (results, total_hits, search_time_ms).
@@ -78,16 +80,20 @@ class HybridSearcher:
         if search_mode == "vector":
             # Vector-only search
             vec_results = await self._vector_search_with_timeout(query_vector, self.vector_top_k, vector_filters)
+            total = len(vec_results)
+            sliced = self._paginate(vec_results[:final_top_k], page, page_size)
             elapsed_ms = (time.monotonic() - start) * 1000
-            return vec_results[:final_top_k], len(vec_results), elapsed_ms
+            return sliced, total, elapsed_ms
 
         if search_mode == "bm25":
             # BM25-only search
             bm25_results = await self._bm25_search_with_timeout(
                 query, self.bm25_top_k, project_id, document_ids, chunk_types
             )
+            total = len(bm25_results)
+            sliced = self._paginate(bm25_results[:final_top_k], page, page_size)
             elapsed_ms = (time.monotonic() - start) * 1000
-            return bm25_results[:final_top_k], len(bm25_results), elapsed_ms
+            return sliced, total, elapsed_ms
 
         # Hybrid: parallel vector + BM25 → RRF fusion
         vec_results, bm25_results = await asyncio.gather(
@@ -102,8 +108,20 @@ class HybridSearcher:
         if settings.reranker_enabled:
             fused = await self.reranker.rerank(query, fused)
 
+        total = len(vec_results) + len(bm25_results)
+        sliced = self._paginate(fused[:final_top_k], page, page_size)
         elapsed_ms = (time.monotonic() - start) * 1000
-        return fused[:final_top_k], len(vec_results) + len(bm25_results), elapsed_ms
+        return sliced, total, elapsed_ms
+
+    @staticmethod
+    def _paginate(
+        results: list[dict[str, Any]], page: int, page_size: int
+    ) -> list[dict[str, Any]]:
+        """Slice results according to page/page_size."""
+        if page < 1:
+            page = 1
+        start_idx = (page - 1) * page_size
+        return results[start_idx : start_idx + page_size]
 
     async def _vector_search_with_timeout(
         self,

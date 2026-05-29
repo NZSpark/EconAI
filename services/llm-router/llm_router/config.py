@@ -30,6 +30,7 @@ class Settings(BaseSettings):
 
     # Anthropic / Claude API
     anthropic_api_key: str = ""
+    anthropic_api_base_url: str = ""
     cloud_llm_default_model: str = "claude-sonnet-4-6"
 
     # Local LLM (OpenAI-compatible API)

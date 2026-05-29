@@ -37,9 +37,10 @@ class ClaudeAdapter:
     native Messages API format.
     """
 
-    def __init__(self, api_key: str | None = None, timeout_s: int | None = None) -> None:
+    def __init__(self, api_key: str | None = None, timeout_s: int | None = None, base_url: str | None = None) -> None:
         self._api_key = api_key or settings.anthropic_api_key
         self._timeout = timeout_s or settings.llm_request_timeout_s
+        self._base_url = base_url or settings.anthropic_api_base_url or None
 
     async def chat(self, request: ChatRequest, model_id: str) -> ChatResponse:
         """Execute a chat completion via the Anthropic Messages API.
@@ -63,7 +64,11 @@ class ClaudeAdapter:
         claude_messages = self._convert_messages(request.messages)
         tools = self._convert_tools(request.tools)
 
-        client = AsyncAnthropic(api_key=self._api_key, timeout=float(self._timeout))
+        client = AsyncAnthropic(
+            api_key=self._api_key,
+            timeout=float(self._timeout),
+            **({"base_url": self._base_url} if self._base_url else {}),
+        )
 
         try:
             if request.stream:

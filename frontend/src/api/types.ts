@@ -188,6 +188,8 @@ export interface SearchFilters {
 export interface SearchRequest {
   query: string;
   top_k?: number;
+  page?: number;
+  page_size?: number;
   filters?: SearchFilters;
   search_mode?: string;
 }
@@ -213,6 +215,9 @@ export interface SearchResponse {
   results: SearchResultChunk[];
   total_hits: number;
   search_time_ms: number;
+  page: number;
+  page_size: number;
+  pages: number;
 }
 
 // ===== Citation Types =====

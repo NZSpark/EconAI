@@ -32,6 +32,11 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "integration: marks tests that make real LLM API calls (deselect with '-m \"not integration\"')",
+    "claude: marks tests that require Anthropic Claude API access",
+    "local: marks tests that require a running local LLM (Ollama/vLLM)",
+]
 
 [tool.mypy]
 ignore_missing_imports = true

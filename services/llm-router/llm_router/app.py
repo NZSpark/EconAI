@@ -77,6 +77,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _claude_adapter = ClaudeAdapter(
         api_key=settings.anthropic_api_key or None,
         timeout_s=settings.llm_request_timeout_s,
+        base_url=settings.anthropic_api_base_url or None,
     )
     _local_adapter = LocalAdapter(
         endpoint=settings.local_llm_endpoint or None,

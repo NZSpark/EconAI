@@ -21,6 +21,8 @@ class SearchRequest(BaseModel):
 
     query: str
     top_k: int = Field(default=10, ge=1, le=100)
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=10, ge=1, le=100)
     filters: SearchFilters = Field(default_factory=SearchFilters)
     search_mode: str = Field(default="hybrid")
 
@@ -53,6 +55,9 @@ class SearchResponse(BaseModel):
     results: list[ChunkResult]
     total_hits: int
     search_time_ms: float
+    page: int = 1
+    page_size: int = 10
+    pages: int = 1
 
 
 class IndexStatusResponse(BaseModel):

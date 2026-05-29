@@ -139,3 +139,36 @@ class TestHybridSearch:
             assert "chunk_type" in r
             assert "score" in r
             assert "metadata" in r
+
+    @pytest.mark.asyncio
+    async def test_pagination_first_page(self, indexed_searcher: HybridSearcher) -> None:
+        results, total, _ = await indexed_searcher.search(
+            query="economic policy", top_k=20, project_id="proj-1", page=1, page_size=5
+        )
+        # With 20 chunks indexed, hybrid total = 20 + 20 = 40 (vec + bm25 before fusion)
+        assert len(results) <= 5
+        assert total >= 20
+
+    @pytest.mark.asyncio
+    async def test_pagination_second_page(self, indexed_searcher: HybridSearcher) -> None:
+        page1, total, _ = await indexed_searcher.search(
+            query="economic policy", top_k=20, project_id="proj-1", page=1, page_size=5
+        )
+        page2, total2, _ = await indexed_searcher.search(
+            query="economic policy", top_k=20, project_id="proj-1", page=2, page_size=5
+        )
+        assert len(page1) == 5
+        assert len(page2) <= 5
+        assert total == total2
+        # Pages should not overlap
+        p1_ids = {r["chunk_id"] for r in page1}
+        p2_ids = {r["chunk_id"] for r in page2}
+        assert p1_ids.isdisjoint(p2_ids)
+
+    @pytest.mark.asyncio
+    async def test_pagination_out_of_range(self, indexed_searcher: HybridSearcher) -> None:
+        results, total, _ = await indexed_searcher.search(
+            query="economic policy", top_k=20, project_id="proj-1", page=100, page_size=10
+        )
+        assert len(results) == 0
+        assert total > 0
