@@ -1,6 +1,6 @@
 # EconAI — Institutional-Grade AI Economic Policy Analysis Toolkit
 
-> **Created**: 2026-05-17 &nbsp;|&nbsp; **Status**: All 10 modules complete (376/376 subtasks) &nbsp;|&nbsp; **Tests**: 638 passing
+> **Created**: 2026-05-17 &nbsp;|&nbsp; **Status**: All 10 modules complete (376/376 subtasks) &nbsp;|&nbsp; **Tests**: 638 (unit + integration + e2e)
 
 EconAI is an AI-powered toolkit for economic policy research institutions. It combines LLM reasoning with a trusted evidence base to generate structured analysis reports — literature reviews, policy drafts, policy comparisons, and technical interpretations — with sentence-level source provenance, and exports to Markdown, .docx (GB/T 9704), .xlsx, and .pptx.
 
@@ -19,11 +19,11 @@ EconAI is an AI-powered toolkit for economic policy research institutions. It co
 | **Test code** | 22,493 lines (Python 18,279 + TypeScript/TSX 4,214) |
 | **Total code** | **48,848 lines** |
 | **Code-to-test ratio** | 1.17:1 (near 1:1) |
-| **Test count** | 638 (Python 622 + TypeScript 16), all pure mock |
+| **Test count** | 638 (Python 622 + TypeScript 16), 3 layers: unit mock + integration + e2e |
 
 ## Architecture
 
-![System Abstract Architecture](doc/architecture/EconAI_SystemAbstract_Architecture.png)
+![System Abstract Architecture](doc/architecture/EconAI_SystemAbstract_Architecture_EN.png)
 
 ![Multi-Layer Architecture](doc/architecture/EconAI_MultiLayers_Architecture_EN.png)
 
@@ -42,7 +42,7 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
             └── orchestration-service :8003 — Agent engine (ReAct loop), task lifecycle, tool execution
 ```
 
-![Deployment Topology](doc/architecture/EconAI_KB_Deploy.png)
+![Deployment Topology](doc/architecture/EconAI_KB_Deploy_EN.png)
 
 ### Data flow
 
@@ -51,7 +51,7 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
 3. **Cite**: LLM outputs inline `[ref:doc_id:page_range]` → Citation service verifies against source chunks → classifies confidence (direct / fuzzy / uncertain)
 4. **Export**: Output service renders Markdown preview + generates .docx / .xlsx / .pptx with citations
 
-![Data Flow](doc/architecture/EconAI_Data_Flow.png)
+![Data Flow](doc/architecture/EconAI_Data_Flow_EN.png)
 
 ### Key design decisions
 
@@ -63,7 +63,7 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
 | **Agent loop** | ReAct variant (Plan → Retrieve → Generate → Verify → Decide), max 5 iterations; forces format_output on overflow |
 | **Citations** | Inline `[ref:doc_id:page_range]` format, verified via page range matching + semantic similarity (threshold 0.85) |
 | **GB/T 9704** | Chinese government document standard for .docx: specific fonts (小标宋/黑体/楷体/仿宋), margins, heading numbering |
-| **Tests** | Pure mock — all external dependencies (DB, Redis, Milvus, MinIO, LLM APIs) mocked; 638 tests, zero infra needed |
+| **Tests** | 3-layer: per-service unit tests (mock), top-level integration tests (httpx against live services), frontend integration tests (axios against live backend) — 638 tests total |
 
 ## Module Status
 
@@ -180,7 +180,7 @@ cd frontend && npx tsc -b --noEmit && npm run lint && npm test
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| pytest | 9.0.3 | Test framework (638 tests, pure mock) |
+| pytest | 9.0.3 | Test framework (638 tests: unit mock + integration + e2e) |
 | mypy | 2.1.0 | Static type checking |
 | ruff | 0.15.13 | Linting + formatting (Rust) |
 | ESLint | 10.3 | Frontend linting |
