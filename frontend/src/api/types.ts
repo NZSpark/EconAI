@@ -203,8 +203,10 @@ export interface SearchResultChunk {
     page_start: number;
     page_end: number;
     section_title: string;
-    paragraph_index: number;
+    paragraph_index?: number;
   };
+  matched_terms: string[];
+  highlighted_content: string;
 }
 
 export interface SearchResponse {

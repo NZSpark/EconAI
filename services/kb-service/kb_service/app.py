@@ -132,6 +132,51 @@ def _check_project_access(project_id: str) -> None:
         raise HTTPException(status_code=403, detail="Project is archived")
 
 
+async def _fetch_document_titles(
+    doc_ids: set[str],
+    project_id: str | None = None,
+) -> dict[str, str]:
+    """Batch-fetch document display names from the documents table.
+
+    Uses original_name (the user-visible filename with extension) so the
+    frontend always shows the complete file name.
+    Falls back to document_id itself if no database row is found.
+    """
+    if not doc_ids:
+        return {}
+
+    import os
+
+    import asyncpg
+
+    db_url = os.getenv("KB_DATABASE_URL", settings.database_url)
+    db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+
+    try:
+        conn = await asyncpg.connect(db_url)
+        try:
+            rows = await conn.fetch(
+                """
+                SELECT id, original_name AS display_name
+                FROM documents
+                WHERE id = ANY($1::uuid[])
+                """,
+                list(doc_ids),
+            )
+            title_map = {str(r["id"]): r["display_name"] for r in rows}
+        finally:
+            await conn.close()
+    except Exception as exc:
+        logger.warning("Failed to fetch document titles: %s", exc)
+        title_map = {}
+
+    # Fallback: any doc_id not found in DB → use the doc_id itself
+    for did in doc_ids:
+        if did not in title_map:
+            title_map[did] = did
+    return title_map
+
+
 def _build_result(
     chunk: dict[str, Any],
     query: str = "",
@@ -146,7 +191,6 @@ def _build_result(
     from kb_service.tokenizer import apply_highlight, extract_matched_terms, find_highlight_spans
 
     doc_id = chunk.get("document_id", "")
-    titles = document_titles or {}
     content = chunk.get("content", "")
 
     matched_terms: list[str] = []
@@ -156,17 +200,29 @@ def _build_result(
         spans = find_highlight_spans(content, query)
         highlighted_content = apply_highlight(content, spans)
 
+    # Prefer the actual document title from the joined query (BM25 path);
+    # then from the batch-fetched title map; finally fall back to document_id.
+    titles = document_titles or {}
+    doc_title = chunk.get("document_title") or titles.get(doc_id) or doc_id
+
+    # page_start / page_end may come from the chunk root (BM25 path) or
+    # from the metadata sub-dict (vector path).
+    meta = chunk.get("metadata", {})
+    page_start = chunk.get("page_start") or meta.get("page_start", 0)
+    page_end = chunk.get("page_end") or meta.get("page_end", 0)
+    section_title = chunk.get("section_title") or meta.get("section_title", "")
+
     return ChunkResult(
         chunk_id=chunk.get("chunk_id", ""),
         document_id=doc_id,
-        document_title=titles.get(doc_id, ""),
+        document_title=doc_title,
         content=content,
         chunk_type=chunk.get("chunk_type", "paragraph"),
         score=round(chunk.get("score", 0.0), 4),
         metadata={
-            "page_start": chunk.get("metadata", {}).get("page_start", 0),
-            "page_end": chunk.get("metadata", {}).get("page_end", 0),
-            "section_title": chunk.get("metadata", {}).get("section_title", ""),
+            "page_start": page_start,
+            "page_end": page_end,
+            "section_title": section_title,
         },
         matched_terms=matched_terms,
         highlighted_content=highlighted_content,
@@ -190,8 +246,11 @@ async def search_project(project_id: str, body: SearchRequest) -> SearchResponse
         search_mode=body.search_mode,
     )
 
+    doc_ids = {r.get("document_id", "") for r in results if r.get("document_id")}
+    titles = await _fetch_document_titles(doc_ids, project_id)
+
     return SearchResponse(
-        results=[_build_result(r, query=body.query) for r in results],
+        results=[_build_result(r, query=body.query, document_titles=titles) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
     )
@@ -209,8 +268,11 @@ async def search_institutional(body: SearchRequest) -> SearchResponse:
         search_mode=body.search_mode,
     )
 
+    doc_ids = {r.get("document_id", "") for r in results if r.get("document_id")}
+    titles = await _fetch_document_titles(doc_ids)
+
     return SearchResponse(
-        results=[_build_result(r, query=body.query) for r in results],
+        results=[_build_result(r, query=body.query, document_titles=titles) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
     )
@@ -239,8 +301,11 @@ async def internal_search(body: InternalSearchRequest) -> SearchResponse:
         search_mode=body.search_mode,
     )
 
+    doc_ids = {r.get("document_id", "") for r in results if r.get("document_id")}
+    titles = await _fetch_document_titles(doc_ids, project_id)
+
     return SearchResponse(
-        results=[_build_result(r, query=body.query) for r in results],
+        results=[_build_result(r, query=body.query, document_titles=titles) for r in results],
         total_hits=total_hits,
         search_time_ms=round(search_time_ms, 2),
     )

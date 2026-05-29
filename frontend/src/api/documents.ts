@@ -99,3 +99,51 @@ export async function getDocumentContent(
   );
   return response.data;
 }
+
+export function getDocumentDownloadUrl(
+  projectId: string,
+  documentId: string
+): string {
+  return `${client.defaults.baseURL}/projects/${projectId}/documents/${documentId}/download`;
+}
+
+/**
+ * Download a document file via axios (with auth interceptor) and trigger browser download.
+ * This avoids the AUTH_TOKEN_MISSING issue that occurs with window.open().
+ */
+export async function downloadDocumentFile(
+  projectId: string,
+  documentId: string,
+  filename?: string
+): Promise<void> {
+  const url = `/projects/${projectId}/documents/${documentId}/download`;
+  const response = await client.get(url, { responseType: 'blob' });
+
+  // Extract filename from Content-Disposition header or use fallback
+  let downloadFilename = filename || documentId;
+  const disposition = response.headers['content-disposition'];
+  if (disposition) {
+    const match = disposition.match(/filename\*=UTF-8''(.+)/);
+    if (match) {
+      downloadFilename = decodeURIComponent(match[1]);
+    } else {
+      const simpleMatch = disposition.match(/filename="?([^"]+)"?/);
+      if (simpleMatch) {
+        downloadFilename = simpleMatch[1];
+      }
+    }
+  }
+
+  // Create object URL and trigger download
+  const blob = response.data instanceof Blob
+    ? response.data
+    : new Blob([response.data]);
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = downloadFilename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(objectUrl);
+}

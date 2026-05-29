@@ -165,6 +165,16 @@ class RouteRegistry:
                 description="-> kb-service",
             )
 
+        # Task export routes: /api/tasks/{id}/export -> output-service
+        if re.match(r"^/api/tasks/([^/]+)/export$", path):
+            from app.config import settings
+
+            return RouteResult(
+                service_url=settings.output_service_url,
+                target_path=path,
+                description="-> output-service (file download)",
+            )
+
         # Task routes (non-project): /api/tasks/{id}/...
         if re.match(r"^/api/tasks/([^/]+)(?:/.*)?$", path):
             from app.config import settings

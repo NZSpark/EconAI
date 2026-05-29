@@ -1,6 +1,6 @@
 # EconAI 运维手册
 
-> 版本：v1.2 | 适用于 EconAI v1.2 完整部署
+> 版本：v1.3 | 适用于 EconAI v1.3 完整部署
 
 ---
 
@@ -941,6 +941,28 @@ econai-shared = { path = "../../shared" }
 ---
 
 ## 14. 变更记录
+
+### v1.3 (2026-05-29) — 文档下载与导出修复增强
+
+**问题**：知识库文档下载失败（缺少 `minio_download` 导入，阻塞 I/O 调用）；任务导出 Word (.docx) 返回 `AUTH_TOKEN_MISSING`（前端 `window.open` 绕过 axios 认证拦截器）；API Gateway 将 `/api/tasks/{id}/export` 错误路由到 orchestration-service（返回 JSON 元数据而非二进制文件）；中文文件名在 `Content-Disposition` 头中导致 latin-1 编码错误；知识库搜索结果展示 `document_id`（UUID）而非文档名。
+
+**改动**：
+
+| 组件 | 变更内容 |
+|------|----------|
+| `kb-service/bm25.py` | BM25 SQL 查询新增 `LEFT JOIN documents` 获取 `document_title` 和 `document_filename` |
+| `kb-service/hybrid_search.py` | 向量搜索和 BM25 搜索结果新增 `document_title` 和 `document_filename` 字段 |
+| `kb-service/app.py` | 新增 `_fetch_document_titles()` 函数：通过 asyncpg 批量查询 `documents` 表的 `original_name`，为搜索结果显示完整文件名（含扩展名）；更新 `_build_result()` 使用文档名映射 |
+| `document-service/app.py` | 新增 `GET /api/projects/{project_id}/documents/{document_id}/download` 下载端点；修复 `minio_download` 缺少顶层导入的 bug；改为 `run_in_executor` 异步调用 MinIO；`Content-Disposition` 改为 RFC 5987 编码（`filename*=UTF-8''...`）支持中文文件名；`StreamingResponse` 改为 `Response` |
+| `api-gateway/routing/registry.py` | 新增 `/api/tasks/{id}/export` 优先路由至 `output-service`（文件下载），而非 `orchestration-service`（JSON 元数据） |
+| `frontend/api/tasks.ts` | 新增 `downloadExportFile()`：通过 axios（带 auth 拦截器）以 blob 方式下载文件并触发浏览器下载，替代 `window.open()` |
+| `frontend/api/documents.ts` | 新增 `downloadDocumentFile()`：同上方式下载知识库文档原始文件 |
+| `frontend/pages/TaskOutput.tsx` | `handleExport` 改用 `downloadExportFile()` |
+| `frontend/pages/KnowledgeBase.tsx` | 搜索结果显示 `highlighted_content`（关键词高亮）；文档下载按钮改用 `downloadDocumentFile()` |
+| `frontend/api/types.ts` | `SearchResultChunk` 新增 `matched_terms`、`highlighted_content` 字段 |
+| `document-service/tests/test_integration.py` | 新增 `TestDocumentDownload` 类（8 个测试用例）：覆盖 PDF/文本/DOCX/XLSX 下载、404/500 错误路径、跨项目隔离、中文文件名 |
+
+**影响**：需重建 `document-service`、`kb-service`、`api-gateway` 镜像并重启前端。无需数据库迁移。
 
 ### v1.1 (2026-05-24) — 项目组成员管理优化
 

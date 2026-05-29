@@ -22,7 +22,7 @@ from typing import Any
 import httpx
 
 from fastapi import FastAPI, Form, HTTPException, Query, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from document_service.config import config
 import document_service.db as db
@@ -34,6 +34,7 @@ from document_service.errors import (
 from document_service.format_identifier import identify_format
 from document_service.metadata_extractor import extract_metadata
 from document_service.minio_client import delete_file as minio_delete_file
+from document_service.minio_client import download_file as minio_download
 from document_service.minio_client import reset_minio_client, upload_file
 from document_service.models import (
     DocumentDetailResponse,
@@ -717,6 +718,71 @@ async def get_document_content(project_id: str, document_id: str) -> dict:
         "page_count": doc.get("page_count", 0),
         "chunk_count": len(sorted_chunks),
     }
+
+
+# ---------------------------------------------------------------------------
+# Document download
+# ---------------------------------------------------------------------------
+
+
+@app.get(
+    "/api/projects/{project_id}/documents/{document_id}/download",
+    responses={404: {"description": "Document not found"}},
+)
+async def download_document(project_id: str, document_id: str):
+    """Download the original document file from MinIO."""
+    async with _get_session() as session:
+        doc = await db.get_document(session, document_id)
+    if doc is None or str(doc.get("project_id", "")) != project_id:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "DOC_NOT_FOUND", "message": f"Document '{document_id}' not found."}},
+        )
+
+    storage_path = doc.get("storage_path", "")
+    if not storage_path:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "FILE_NOT_FOUND", "message": "File not found in storage."}},
+        )
+
+    original_name = doc.get("original_name", "download")
+    content_type_map = {
+        "pdf": "application/pdf",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "txt": "text/plain",
+        "csv": "text/csv",
+        "md": "text/markdown",
+    }
+    doc_format = doc.get("format", "")
+    content_type = content_type_map.get(doc_format, "application/octet-stream")
+
+    try:
+        loop = asyncio.get_running_loop()
+        file_bytes = await loop.run_in_executor(None, minio_download, str(storage_path))
+    except Exception as e:
+        logger.error("Failed to download file from MinIO: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail={"error": {"code": "DOWNLOAD_FAILED", "message": "Failed to download file."}},
+        )
+
+    return Response(
+        content=file_bytes,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{_rfc5987_encode(original_name)}",
+        },
+    )
+
+
+def _rfc5987_encode(value: str) -> str:
+    """Percent-encode a string for RFC 5987 Content-Disposition header value."""
+    from urllib.parse import quote
+
+    return quote(value, safe="")
 
 
 # ---------------------------------------------------------------------------

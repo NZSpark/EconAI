@@ -89,15 +89,18 @@ class BM25Searcher:
         where = " AND ".join([fts_cond] + shifted)
         sql = f"""
             SELECT
-                id AS chunk_id,
-                document_id,
-                project_id,
-                chunk_type,
-                content,
-                page_start,
-                page_end,
-                ts_rank(to_tsvector('simple', content), to_tsquery('simple', $1)) AS bm25_score
-            FROM document_chunks
+                dc.id AS chunk_id,
+                dc.document_id,
+                dc.project_id,
+                dc.chunk_type,
+                dc.content,
+                dc.page_start,
+                dc.page_end,
+                d.title AS document_title,
+                d.filename AS document_filename,
+                ts_rank(to_tsvector('simple', dc.content), to_tsquery('simple', $1)) AS bm25_score
+            FROM document_chunks dc
+            LEFT JOIN documents d ON dc.document_id = d.id
             WHERE {where}
             ORDER BY bm25_score DESC
             LIMIT ${param_idx + 1}
@@ -125,15 +128,18 @@ class BM25Searcher:
         where = " AND ".join([trgm_cond] + shifted)
         sql = f"""
             SELECT
-                id AS chunk_id,
-                document_id,
-                project_id,
-                chunk_type,
-                content,
-                page_start,
-                page_end,
-                word_similarity($1, content) AS bm25_score
-            FROM document_chunks
+                dc.id AS chunk_id,
+                dc.document_id,
+                dc.project_id,
+                dc.chunk_type,
+                dc.content,
+                dc.page_start,
+                dc.page_end,
+                d.title AS document_title,
+                d.filename AS document_filename,
+                word_similarity($1, dc.content) AS bm25_score
+            FROM document_chunks dc
+            LEFT JOIN documents d ON dc.document_id = d.id
             WHERE {where}
             ORDER BY bm25_score DESC
             LIMIT ${param_idx + 1}
@@ -197,6 +203,8 @@ class BM25Searcher:
                 "project_id": str(row["project_id"]),
                 "chunk_type": row["chunk_type"],
                 "content": row["content"],
+                "document_title": row.get("document_title") or "",
+                "document_filename": row.get("document_filename") or "",
                 "page_start": row["page_start"] or 0,
                 "page_end": row["page_end"] or 0,
                 "score": float(row["bm25_score"]),

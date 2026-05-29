@@ -260,6 +260,145 @@ class TestDocumentReindex:
         assert response.status_code == 404
 
 
+class TestDocumentDownload:
+    """Document download endpoint tests."""
+
+    def test_download_pdf_document(self, client: TestClient) -> None:
+        """Download an uploaded PDF file."""
+        pdf_bytes = _create_pdf_bytes()
+        files = {"file": ("doc.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
+        upload_resp = client.post("/api/projects/proj-1/documents", files=files)
+        assert upload_resp.status_code == 201
+        doc_id = upload_resp.json()["document_id"]
+
+        # Mock minio_download to return the same PDF bytes
+        with patch("document_service.app.minio_download", return_value=pdf_bytes):
+            response = client.get(
+                f"/api/projects/proj-1/documents/{doc_id}/download"
+            )
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/pdf"
+        assert "attachment; filename*=UTF-8''doc.pdf" in response.headers["content-disposition"]
+        assert response.content == pdf_bytes
+
+    def test_download_text_document(self, client: TestClient) -> None:
+        """Download an uploaded text file."""
+        txt_bytes = _create_text_bytes()
+        files = {"file": ("test.txt", io.BytesIO(txt_bytes), "text/plain")}
+        upload_resp = client.post("/api/projects/proj-1/documents", files=files)
+        assert upload_resp.status_code == 201
+        doc_id = upload_resp.json()["document_id"]
+
+        with patch("document_service.app.minio_download", return_value=txt_bytes):
+            response = client.get(
+                f"/api/projects/proj-1/documents/{doc_id}/download"
+            )
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("text/plain")
+        assert "attachment; filename*=UTF-8''test.txt" in response.headers["content-disposition"]
+        assert response.content == txt_bytes
+
+    def test_download_docx_document(self, client: TestClient) -> None:
+        """Download a docx file with correct content-type."""
+        docx_bytes = b"PK\x03\x04" + b"\x00" * 100  # Minimal docx-like content
+        files = {"file": ("report.docx", io.BytesIO(docx_bytes),
+                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
+        upload_resp = client.post("/api/projects/proj-1/documents", files=files)
+        assert upload_resp.status_code == 201
+        doc_id = upload_resp.json()["document_id"]
+
+        with patch("document_service.app.minio_download", return_value=docx_bytes):
+            response = client.get(
+                f"/api/projects/proj-1/documents/{doc_id}/download"
+            )
+        assert response.status_code == 200
+        assert response.headers["content-type"] == (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        assert "attachment; filename*=UTF-8''report.docx" in response.headers["content-disposition"]
+
+    def test_download_xlsx_document(self, client: TestClient) -> None:
+        """Download an xlsx file with correct content-type."""
+        xlsx_bytes = b"PK\x03\x04" + b"\x00" * 100
+        files = {"file": ("data.xlsx", io.BytesIO(xlsx_bytes),
+                          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        upload_resp = client.post("/api/projects/proj-1/documents", files=files)
+        assert upload_resp.status_code == 201
+        doc_id = upload_resp.json()["document_id"]
+
+        with patch("document_service.app.minio_download", return_value=xlsx_bytes):
+            response = client.get(
+                f"/api/projects/proj-1/documents/{doc_id}/download"
+            )
+        assert response.status_code == 200
+        assert response.headers["content-type"] == (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    def test_download_not_found(self, client: TestClient) -> None:
+        """Download non-existent document returns 404."""
+        response = client.get(
+            "/api/projects/proj-1/documents/nonexistent/download"
+        )
+        assert response.status_code == 404
+        data = response.json()
+        inner = data.get("detail", data)
+        assert inner["error"]["code"] == "DOC_NOT_FOUND"
+
+    def test_download_wrong_project(self, client: TestClient) -> None:
+        """Document from one project is not downloadable via another project."""
+        pdf_bytes = _create_pdf_bytes()
+        files = {"file": ("doc.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
+        upload_resp = client.post("/api/projects/proj-1/documents", files=files)
+        assert upload_resp.status_code == 201
+        doc_id = upload_resp.json()["document_id"]
+
+        with patch("document_service.app.minio_download", return_value=pdf_bytes):
+            response = client.get(
+                f"/api/projects/proj-2/documents/{doc_id}/download"
+            )
+        assert response.status_code == 404
+
+    def test_download_minio_failure(self, client: TestClient) -> None:
+        """MinIO download failure returns 500."""
+        pdf_bytes = _create_pdf_bytes()
+        files = {"file": ("doc.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
+        upload_resp = client.post("/api/projects/proj-1/documents", files=files)
+        assert upload_resp.status_code == 201
+        doc_id = upload_resp.json()["document_id"]
+
+        with patch(
+            "document_service.app.minio_download",
+            side_effect=Exception("MinIO connection error"),
+        ):
+            response = client.get(
+                f"/api/projects/proj-1/documents/{doc_id}/download"
+            )
+        assert response.status_code == 500
+        data = response.json()
+        inner = data.get("detail", data)
+        assert inner["error"]["code"] == "DOWNLOAD_FAILED"
+
+    def test_download_unicode_filename(self, client: TestClient) -> None:
+        """Download a document with a Chinese filename."""
+        pdf_bytes = _create_pdf_bytes()
+        filename = "测试文档.pdf"
+        files = {"file": (filename, io.BytesIO(pdf_bytes), "application/pdf")}
+        upload_resp = client.post("/api/projects/proj-1/documents", files=files)
+        assert upload_resp.status_code == 201
+        doc_id = upload_resp.json()["document_id"]
+
+        with patch("document_service.app.minio_download", return_value=pdf_bytes):
+            response = client.get(
+                f"/api/projects/proj-1/documents/{doc_id}/download"
+            )
+        assert response.status_code == 200
+        # RFC 5987: filename*=UTF-8''%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3.pdf
+        from urllib.parse import quote
+        expected = quote(filename, safe="")
+        assert f"filename*=UTF-8''{expected}" in response.headers["content-disposition"]
+
+
 class TestHealthCheck:
     """Health check endpoint."""
 

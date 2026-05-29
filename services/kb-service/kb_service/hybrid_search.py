@@ -123,6 +123,8 @@ class HybridSearcher:
                     "chunk_type": r.get("metadata", {}).get("chunk_type", ""),
                     "content": r.get("metadata", {}).get("content", ""),
                     "score": r["score"],
+                    "document_title": "",
+                    "document_filename": "",
                     "metadata": r.get("metadata", {}),
                 }
                 for r in results
@@ -160,6 +162,8 @@ class HybridSearcher:
                     "chunk_type": r.get("chunk_type", ""),
                     "content": r.get("content", ""),
                     "score": r["score"],
+                    "document_title": r.get("document_title", ""),
+                    "document_filename": r.get("document_filename", ""),
                     "metadata": {
                         "document_id": r.get("document_id", ""),
                         "chunk_type": r.get("chunk_type", ""),

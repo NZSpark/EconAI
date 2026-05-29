@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import { useRequest } from '../hooks/useRequest';
 import { usePolling } from '../hooks/usePolling';
-import { getTaskDetail, getTaskStatus, getTaskOutput as fetchTaskOutput, getExportUrl, retryTask } from '../api/tasks';
+import { getTaskDetail, getTaskStatus, getTaskOutput as fetchTaskOutput, downloadExportFile, retryTask } from '../api/tasks';
 import TaskProgress from '../components/TaskProgress';
 import MarkdownPreview from '../components/MarkdownPreview';
 import CitationBadge from '../components/CitationBadge';
@@ -134,11 +134,14 @@ export default function TaskOutput() {
     );
   }, [output]);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!taskId) return;
-    const url = getExportUrl(taskId, exportFormat);
-    // Trigger browser download
-    window.open(url, '_blank');
+    try {
+      const taskTitle = task?.title || 'output';
+      await downloadExportFile(taskId, exportFormat, taskTitle);
+    } catch {
+      message.error('导出失败，请重试');
+    }
   };
 
   const handleRetry = useCallback(async () => {

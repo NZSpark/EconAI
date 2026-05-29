@@ -25,10 +25,11 @@ import {
   EyeOutlined,
   RedoOutlined,
   FileTextOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from '../hooks/useRequest';
-import { listDocuments, uploadDocument, deleteDocument, reindexDocument, getDocument, getDocumentContent } from '../api/documents';
+import { listDocuments, uploadDocument, deleteDocument, reindexDocument, getDocument, getDocumentContent, downloadDocumentFile } from '../api/documents';
 import type { DocumentContent } from '../api/documents';
 import { searchProjectKB } from '../api/search';
 import DocumentUpload from '../components/DocumentUpload';
@@ -217,9 +218,21 @@ export default function KnowledgeBase() {
     {
       title: '操作',
       key: 'actions',
-      width: 200,
+      width: 260,
       render: (_: unknown, record: DocumentItem) => (
         <Space>
+          <Button
+            type="link"
+            size="small"
+            icon={<DownloadOutlined />}
+            onClick={() => {
+              downloadDocumentFile(projectId || '', record.document_id, record.original_name).catch(() => {
+                message.error('下载失败');
+              });
+            }}
+          >
+            下载
+          </Button>
           <Button
             type="link"
             size="small"
@@ -383,7 +396,13 @@ export default function KnowledgeBase() {
                   }
                   description={
                     <div>
-                      <Text>{item.content}</Text>
+                      <Text>
+                        {item.highlighted_content ? (
+                          <span dangerouslySetInnerHTML={{ __html: item.highlighted_content }} />
+                        ) : (
+                          item.content
+                        )}
+                      </Text>
                       <div style={{ marginTop: 4 }}>
                         <Text type="secondary" style={{ fontSize: 12 }}>
                           页码：{item.metadata.page_start}-{item.metadata.page_end}
