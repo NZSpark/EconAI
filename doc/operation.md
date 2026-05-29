@@ -229,7 +229,21 @@ LOCAL_LLM_DEFAULT_MODEL=qwen3-72b
   description: "Qwen3 72B via vLLM"
 ```
 
-#### 3.4.3 不使用本地 LLM
+#### 3.4.3 配置 Claude API 自定义端点（Ollama 代理）
+
+如果使用 Ollama 的 Anthropic 兼容代理（如 `ollama-proxy`），需配置 `ANTHROPIC_API_BASE_URL`：
+
+```bash
+# .env — 宿主机运行 Ollama 时
+ANTHROPIC_API_BASE_URL=http://host.docker.internal:11434
+
+# .env — Ollama 在远程服务器时
+ANTHROPIC_API_BASE_URL=http://192.168.1.100:11434
+```
+
+> **重要**：Docker 容器内 `localhost` 指向容器自身，访问宿主机服务必须使用 `host.docker.internal`。
+
+#### 3.4.4 不使用本地 LLM
 
 如果只使用 Anthropic Claude API，确保 `.env` 中：
 
@@ -529,6 +543,9 @@ docker compose logs llm-router
 
 # 检查 Claude API 密钥
 grep ANTHROPIC_API_KEY .env
+
+# 检查 Claude API 自定义端点（如有配置）
+grep ANTHROPIC_API_BASE_URL .env
 
 # 检查本地 LLM 连通性（Ollama 端口 11434，vLLM 端口 8000）
 curl -s http://localhost:11434/v1/models      # Ollama

@@ -1,6 +1,6 @@
 # EconAI 详细设计文档
 
-> 版本：v1.3 | 日期：2026-05-29 | 基于概要设计文档 v1.0
+> 版本：v1.4 | 日期：2026-05-30 | 基于概要设计文档 v1.0
 
 ---
 
@@ -446,6 +446,8 @@ POST /api/projects/{project_id}/search
 {
   "query": "数字贸易规则对发展中国家的影响",
   "top_k": 10,
+  "page": 1,
+  "page_size": 10,
   "filters": {
     "document_ids": ["doc-001", "doc-002"],
     "chunk_types": ["paragraph"],
@@ -454,6 +456,15 @@ POST /api/projects/{project_id}/search
   "search_mode": "hybrid"
 }
 ```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `query` | string | 是 | 搜索查询（自然语言） |
+| `top_k` | int | 否 | 每页返回数量，默认 10 |
+| `page` | int | 否 | 页码，从 1 开始，默认 1 |
+| `page_size` | int | 否 | 每页大小（1-100），默认 10 |
+| `filters` | object | 否 | 过滤条件 |
+| `search_mode` | string | 否 | hybrid / vector / bm25，默认 hybrid |
 
 **响应**:
 
@@ -478,9 +489,19 @@ POST /api/projects/{project_id}/search
     }
   ],
   "total_hits": 45,
+  "page": 1,
+  "page_size": 10,
+  "pages": 5,
   "search_time_ms": 120
 }
 ```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `total_hits` | int | 满足条件的总结果数 |
+| `page` | int | 当前页码 |
+| `page_size` | int | 每页大小 |
+| `pages` | int | 总页数 |
 
 #### 4.2.2 搜索机构知识库
 
@@ -1087,12 +1108,24 @@ GET /internal/llm/models
 | Token 超限 | 截断 messages（保留 system + 最后 N 条） |
 | 速率限制 (429) | 指数退避重试，最多 3 次 |
 
-### 6.7 配置项
+### 6.7 熔断器
+
+当 Claude API 连续调用失败达到阈值时，熔断器自动切换到 OPEN 状态，短时间内直接拒绝请求（返回 503），避免对不可达后端的雪崩式重试。
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `CIRCUIT_BREAKER_FAILURE_THRESHOLD` | 5 | 连续失败多少次触发熔断 |
+| `CIRCUIT_BREAKER_RECOVERY_TIMEOUT_S` | 60 | OPEN 后等待多久进入 HALF_OPEN 探活 |
+
+状态机：`CLOSED → (5 failures) → OPEN → (60s) → HALF_OPEN → (1 success) → CLOSED`
+
+### 6.8 配置项
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
 | `ANTHROPIC_API_KEY` | (必填) | Claude API 密钥 |
-| `LOCAL_LLM_ENDPOINT` | `http://localhost:8000/v1` | 本地 LLM 端点 |
+| `ANTHROPIC_API_BASE_URL` | (空) | Claude API 自定义端点（Docker 内使用 `http://host.docker.internal:11434` 指向宿主机 Ollama） |
+| `LOCAL_LLM_ENDPOINT` | `http://host.docker.internal:11434/v1` | 本地 LLM 端点（Docker 内使用 `host.docker.internal` 访问宿主机） |
 | `LOCAL_LLM_DEFAULT_MODEL` | `qwen3-72b` | 默认本地模型 |
 | `CLOUD_LLM_DEFAULT_MODEL` | `claude-sonnet-4-6` | 默认云端模型 |
 | `LLM_DEFAULT_TEMPERATURE` | 0.3 | 默认温度参数 |
@@ -1100,6 +1133,8 @@ GET /internal/llm/models
 | `LLM_REQUEST_TIMEOUT_S` | 120 | LLM 请求超时 |
 | `LLM_RETRY_MAX` | 3 | 最大重试次数 |
 | `LLM_RETRY_BACKOFF_BASE_S` | 2 | 重试退避基数 |
+
+> **Docker 网络注意**：容器内 `localhost` 指向容器自身，如需访问宿主机服务（如 Ollama），必须使用 `host.docker.internal`。修改 `.env` 后需 `docker compose up -d --no-deps --force-recreate llm-router` 使环境变量生效。
 
 ---
 

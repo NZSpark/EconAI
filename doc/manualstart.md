@@ -222,6 +222,13 @@ docker exec econai-redis redis-cli -a $(grep REDIS_PASSWORD .env | cut -d= -f2) 
 LOCAL_LLM_ENDPOINT=http://localhost:8000/v1   # vLLM/Ollama 地址
 ```
 
+如果使用 Ollama 作为 Claude 兼容代理，需额外配置：
+```bash
+ANTHROPIC_API_BASE_URL=http://host.docker.internal:11434
+```
+
+> 注意：Docker 容器内 `localhost` 指向容器自身。如需从容器访问宿主机服务，必须使用 `host.docker.internal`。
+
 ### 前端 API 请求被 CORS 阻止
 
 前端 Vite dev server 已配置 proxy，`/api` 开头的请求会被代理到 `localhost:8000`。确保 API 网关在 8000 端口运行。

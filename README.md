@@ -44,7 +44,7 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
 | **Agent loop** | ReAct variant (Plan → Retrieve → Generate → Verify → Decide), max 5 iterations; forces format_output on overflow |
 | **Citations** | Inline `[ref:doc_id:page_range]` format, verified via page range matching + semantic similarity (threshold 0.85) |
 | **GB/T 9704** | Chinese government document standard for .docx: specific fonts (小标宋/黑体/楷体/仿宋), margins, heading numbering |
-| **Tests** | Pure mock — all external dependencies (DB, Redis, Milvus, MinIO, LLM APIs) mocked; 638 tests, zero infra needed |
+| **Tests** | Pure mock — all external dependencies (DB, Redis, Milvus, MinIO, LLM APIs) mocked; 640+ tests, zero infra needed |
 
 ## Project Status
 
@@ -54,12 +54,12 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
 |--------|---------|------|----------|------------------|
 | M10 | Infrastructure | — | 34/34 | Docker Compose, PostgreSQL schema, Nginx, Prometheus+Grafana, Celery config, Alembic migrations |
 | M8 | User Service | 8007 | 42/42 | JWT auth, RBAC (4 roles × 6 ops), LDAP/SSO, audit log consumer, GDPR APIs |
-| M5 | LLM Router | 8004 | 33/33 | Model registry, sensitivity routing, ClaudeAdapter + LocalAdapter, circuit breaker, retry with backoff |
+| M5 | LLM Router | 8004 | 33/33 | Model registry, sensitivity routing, ClaudeAdapter + LocalAdapter, circuit breaker, retry with backoff, `ANTHROPIC_API_BASE_URL` custom endpoint |
 | M6 | Citation Service | 8005 | 30/30 | Inline `[ref:...]` parser, verification (page + semantic), formatters (Markdown/docx/xlsx/pptx) |
 | M1 | API Gateway | 8000 | 28/28 | JWT middleware, RBAC middleware, Redis token bucket rate limiter, audit logging (pub/sub), httpx reverse proxy |
 | M2 | Document Service | 8001 | 43/43 | 8-format parsing (PDF/Word/MD/Excel/PPT/Email/HTML/Image-OCR), multi-granularity chunking, MinIO storage, Celery pipeline |
 | M7 | Output Service | 8006 | 39/39 | Markdown (Jinja2), .docx (GB/T 9704), .xlsx (comparison matrix), .pptx generation, MinIO output storage |
-| M3 | KB Service | 8002 | 35/35 | Embedding (text2vec/m3e), Milvus/Qdrant vector store, BM25 (PostgreSQL FTS), hybrid search + reranker, lifecycle management |
+| M3 | KB Service | 8002 | 38/38 | Embedding (text2vec/m3e), Milvus/Qdrant vector store, BM25 (PostgreSQL FTS), hybrid search + reranker, pagination, lifecycle management |
 | M4 | Orchestration Service | 8003 | 54/54 | ReAct agent engine, 6 tools, task state machine, sensitivity analysis, Jinja2 prompt templates, progress tracking |
 | M9 | Frontend | 5173 | 38/38 | React 19 + TypeScript 5 + Vite 8 + Ant Design 6, auth flow, project/KB/task management, Markdown preview with citation badges |
 
@@ -215,7 +215,7 @@ Multi-format parsing pipeline: PDF (PyMuPDF), Word (python-docx), Markdown/txt, 
 
 ### M3 — KB Service (port 8002)
 
-Embedding generation (text2vec/m3e) with Redis cache. Vector store abstraction over Milvus/Qdrant. BM25 keyword search via PostgreSQL FTS with GIN index. Hybrid search pipeline: parallel vector(top-50) + BM25(top-50) → RRF fusion(k=60) → reranker → top-10. Consumes `kb:index:request` channel for auto-indexing. Supports KB isolation (per-project and institutional cross-project) with archive/restore lifecycle.
+Embedding generation (text2vec/m3e) with Redis cache. Vector store abstraction over Milvus/Qdrant. BM25 keyword search via PostgreSQL FTS with GIN index. Hybrid search pipeline: parallel vector(top-50) + BM25(top-50) → RRF fusion(k=60) → reranker → top-10. Server-side pagination with `page`/`page_size`/`pages`. Consumes `kb:index:request` channel for auto-indexing. Supports KB isolation (per-project and institutional cross-project) with archive/restore lifecycle.
 
 ### M4 — Orchestration Service (port 8003)
 
@@ -223,7 +223,7 @@ Agent engine implementing ReAct variant: Plan → Execute (6 tools) → Observe 
 
 ### M5 — LLM Router (port 8004)
 
-Model registry + sensitivity-based routing. ClaudeAdapter (anthropic SDK, tool_use bidirectional conversion) + LocalAdapter (OpenAI-compatible /v1/chat/completions). Circuit breaker pattern with retry + exponential backoff. Token usage tracking.
+Model registry + sensitivity-based routing. ClaudeAdapter (anthropic SDK, tool_use bidirectional conversion, custom `ANTHROPIC_API_BASE_URL`) + LocalAdapter (OpenAI-compatible /v1/chat/completions). Circuit breaker pattern with retry + exponential backoff. Token usage tracking.
 
 ### M6 — Citation Service (port 8005)
 

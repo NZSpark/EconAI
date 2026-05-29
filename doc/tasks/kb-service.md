@@ -45,6 +45,8 @@
 - [x] M3-24 实现项目知识库搜索端点 `POST /api/projects/{project_id}/search`
 - [x] M3-25 实现机构知识库搜索端点 `POST /api/institutional/search`
 - [x] M3-26 实现内部搜索端点 `POST /internal/search`（供 orchestration-service 调用）
+- [x] M3-26a 实现搜索结果分页：SearchRequest 新增 `page`/`page_size` 字段，SearchResponse 新增 `page`/`page_size`/`pages` 字段
+- [x] M3-26b 前端 KnowledgeBase 页面实现分页 UI：页码切换 + 每页条数选择器（10/20/50）
 
 ### 生命周期管理
 - [x] M3-27 实现文档索引归档：项目归档时将索引标记为 archived（不参与搜索）
@@ -58,3 +60,4 @@
 - [x] M3-33 编写混合检索端到端测试（向量召回 + BM25 互补验证）
 - [x] M3-34 编写知识库隔离测试（不同 project_id/group_id 的数据不可见）
 - [x] M3-35 编写索引事件消费测试（pub → 消费 → 向量库可查）
+- [x] M3-36 编写分页测试（首页/第二页/越界）

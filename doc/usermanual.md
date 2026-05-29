@@ -332,6 +332,7 @@ EconAI 是一个 AI 驱动的经济政策分析工具包。您可以上传政策
 
 常见原因：
 - Claude API 密钥未配置或额度不足（联系管理员）
+- Claude API 自定义端点配置错误（Docker 内 `localhost` 需改为 `host.docker.internal`）
 - 知识库中缺少相关文档（先上传文档再创建任务）
 - 任务超时（大项目可能需要更长处理时间，重试通常可解决）
 
