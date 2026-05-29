@@ -239,6 +239,7 @@ services:
       - CHUNK_SECTION_OVERLAP=${CHUNK_SECTION_OVERLAP:-100}
       - OCR_LANGUAGE=${OCR_LANGUAGE:-chi_sim+eng}
       - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-100}
+      - KB_SERVICE_URL=http://kb-service:8002
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
     ports:

@@ -97,6 +97,7 @@ class MilvusVectorStore(VectorStore):
                 "chunk_type": metadata.get("chunk_type", "paragraph"),
             }],
         )
+        self._client.flush(collection_name=self._collection_name)
 
     async def insert_batch(
         self,
@@ -114,6 +115,7 @@ class MilvusVectorStore(VectorStore):
             for chunk_id, vector, meta in entries
         ]
         self._client.insert(collection_name=self._collection_name, data=data)
+        self._client.flush(collection_name=self._collection_name)
 
     async def search(
         self,

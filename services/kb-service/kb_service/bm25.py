@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from typing import Any
 
@@ -39,7 +40,12 @@ class BM25Searcher:
     async def _get_pool(self) -> asyncpg.Pool:
         if self._pool is not None:
             return self._pool
-        self._pool = await asyncpg.create_pool(settings.database_url, min_size=1, max_size=5)
+        # Use KB_DATABASE_URL env var directly because the AppSettings property
+        # for database_url is computed from postgres_host (always localhost).
+        # Convert SQLAlchemy DSN (postgresql+asyncpg://) to asyncpg format (postgresql://).
+        db_url = os.getenv("KB_DATABASE_URL", settings.database_url)
+        db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+        self._pool = await asyncpg.create_pool(db_url, min_size=1, max_size=5)
         return self._pool
 
     # ── shared WHERE-clause builder ──────────────────────────────────────
@@ -82,9 +88,13 @@ class BM25Searcher:
         tsquery: str,
         top_k: int,
     ) -> tuple[str, list[Any]]:
+        import re as _re
+
         params: list[Any] = [tsquery]
         fts_cond = "to_tsvector('simple', content) @@ to_tsquery('simple', $1)"
-        where = " AND ".join([fts_cond] + conditions)
+        # Re-number condition placeholders: $N → $(N+1) because $1 is the tsquery
+        shifted = [_re.sub(r'\$(\d+)', lambda m: f'${int(m.group(1)) + 1}', c) for c in conditions]
+        where = " AND ".join([fts_cond] + shifted)
         sql = f"""
             SELECT
                 id AS chunk_id,
@@ -112,11 +122,15 @@ class BM25Searcher:
         query: str,
         top_k: int,
     ) -> tuple[str, list[Any]]:
+        import re as _re
+
         params: list[Any] = [query]
         # word_similarity() scores how well the query matches substrings in content.
         # The gin_trgm_ops index on content supports the %> operator efficiently.
         trgm_cond = "content %> $1"
-        where = " AND ".join([trgm_cond] + conditions)
+        # Re-number condition placeholders: $N → $(N+1) because $1 is the query
+        shifted = [_re.sub(r'\$(\d+)', lambda m: f'${int(m.group(1)) + 1}', c) for c in conditions]
+        where = " AND ".join([trgm_cond] + shifted)
         sql = f"""
             SELECT
                 id AS chunk_id,

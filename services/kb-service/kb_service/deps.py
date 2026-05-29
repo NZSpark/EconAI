@@ -92,7 +92,12 @@ def create_bm25_searcher() -> BM25Searcher | InMemoryBM25Searcher:
     Uses PostgreSQL FTS BM25Searcher when a database_url is configured,
     InMemoryBM25Searcher for development/testing.
     """
-    if settings.database_url and "localhost" not in settings.database_url:
+    import os
+
+    # Check the raw environment variable because the parent AppSettings property
+    # shadows the KBSettings field for database_url (computed from postgres_host).
+    db_url = os.getenv("KB_DATABASE_URL", "") or settings.database_url
+    if db_url and "localhost" not in db_url:
         from kb_service.bm25 import BM25Searcher
 
         logger.info("Using BM25Searcher (PostgreSQL FTS)")

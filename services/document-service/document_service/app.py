@@ -19,6 +19,8 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
+import httpx
+
 from fastapi import FastAPI, Form, HTTPException, Query, UploadFile
 from fastapi.responses import JSONResponse
 
@@ -101,6 +103,64 @@ class MockRedis:
 
 
 _mock_redis = MockRedis()
+
+# KB Service URL for index callbacks
+_KB_SERVICE_URL = os.getenv("KB_SERVICE_URL", "http://kb-service:8002")
+
+
+async def _index_chunks_in_kb_service(
+    document_id: str,
+    project_id: str,
+    chunk_records: list,
+) -> None:
+    """Send chunks to KB Service for vector indexing.
+
+    Calls POST /internal/index on the kb-service to trigger embedding
+    generation and vector store insertion.
+    """
+    if not chunk_records:
+        logger.warning("No chunks to index for document %s", document_id)
+        return
+
+    chunks_payload = [
+        {
+            "chunk_id": c.chunk_id,
+            "document_id": c.document_id,
+            "project_id": c.project_id,
+            "content": c.chunk_text,
+            "chunk_type": c.chunk_type,
+            "chunk_index": c.chunk_index,
+            "token_count": c.token_count,
+            "page_start": c.page_start,
+            "page_end": c.page_end,
+            "section_title": c.section_title,
+        }
+        for c in chunk_records
+    ]
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{_KB_SERVICE_URL}/internal/index",
+                json={"chunks": chunks_payload},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            logger.info(
+                "Indexed %s chunks for document %s in KB service (status=%s)",
+                data.get("indexed_chunks", 0),
+                document_id,
+                data.get("status", "unknown"),
+            )
+    except httpx.HTTPStatusError as exc:
+        logger.error(
+            "KB service returned error %d for document %s: %s",
+            exc.response.status_code,
+            document_id,
+            exc.response.text[:500] if exc.response.text else "no body",
+        )
+    except httpx.RequestError as exc:
+        logger.error("Failed to reach KB service for document %s: %s", document_id, exc)
 
 
 # ---------------------------------------------------------------------------
@@ -392,15 +452,8 @@ async def _execute_processing_pipeline_async(
                 author=", ".join(doc_metadata.authors) or None,
             )
 
-        # Publish index event
-        from document_service.models import IndexEvent
-        event = IndexEvent(
-            document_id=document_id,
-            project_id=project_id,
-            chunk_ids=[c.chunk_id for c in chunk_records],
-            is_internal=is_internal,
-        )
-        _mock_redis.publish("kb:index:request", event.model_dump_json())
+        # Index chunks in KB service
+        await _index_chunks_in_kb_service(document_id, project_id, chunk_records)
 
         logger.info("Processing pipeline complete for %s", document_id)
 
