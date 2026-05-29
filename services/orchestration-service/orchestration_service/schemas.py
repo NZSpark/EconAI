@@ -52,6 +52,7 @@ class CreateTaskRequest(BaseModel):
     kb_sources: KBSources = Field(default_factory=KBSources)
     output_formats: list[str] = Field(default_factory=lambda: ["docx", "md"])
     llm_preference: LLMPreference = LLMPreference.auto
+    sensitivity: str | None = None  # User-selected sensitivity: "high" | "low", overrides auto-detection
     analysis_params: AnalysisParams = Field(default_factory=AnalysisParams)
 
 

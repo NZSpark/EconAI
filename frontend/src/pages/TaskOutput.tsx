@@ -31,6 +31,11 @@ import { taskStatusColorMap, taskStatusLabelMap } from '../constants/labels';
 
 const { Title, Text } = Typography;
 
+const sensitivityLabelMap: Record<string, string> = { high: '高敏感度', low: '低敏感度' };
+const sensitivityColorMap: Record<string, string> = { high: 'red', low: 'green' };
+const llmRouteLabelMap: Record<string, string> = { local: '本地LLM', cloud: '云端LLM' };
+const llmRouteColorMap: Record<string, string> = { local: 'orange', cloud: 'blue' };
+
 export default function TaskOutput() {
   const { id: projectId, taskId } = useParams<{ id: string; taskId: string }>();
   const navigate = useNavigate();
@@ -202,6 +207,16 @@ export default function TaskOutput() {
           <Tag color={taskStatusColorMap[task.status]}>
             {taskStatusLabelMap[task.status]}
           </Tag>
+          {task.sensitivity && (
+            <Tag color={sensitivityColorMap[task.sensitivity] || 'default'}>
+              {sensitivityLabelMap[task.sensitivity] || task.sensitivity}
+            </Tag>
+          )}
+          {task.llm_route && (
+            <Tag color={llmRouteColorMap[task.llm_route] || 'default'}>
+              {llmRouteLabelMap[task.llm_route] || task.llm_route}
+            </Tag>
+          )}
           {task.status === 'completed' && output && (
             <>
               <Tag color="blue">引用 {citationSummary.total}</Tag>

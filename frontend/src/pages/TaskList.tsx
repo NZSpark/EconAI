@@ -27,7 +27,7 @@ import { useRequest } from '../hooks/useRequest';
 import { listTasks, createTask, cancelTask, retryTask } from '../api/tasks';
 import { listDocuments } from '../api/documents';
 import { formatDate } from '../utils/format';
-import type { TaskListItem, CreateTaskRequest, TaskType, OutputFormat, LLMPreference, DocumentItem } from '../api/types';
+import type { TaskListItem, CreateTaskRequest, TaskType, OutputFormat, Sensitivity, DocumentItem } from '../api/types';
 import { taskTypeColorMap, taskTypeLabelMap, taskStatusColorMap, taskStatusLabelMap } from '../constants/labels';
 
 const { Title, Text } = Typography;
@@ -72,6 +72,7 @@ export default function TaskList() {
     title: string;
     description: string;
     output_format: OutputFormat[];
+    sensitivity: Sensitivity;
     analysis_params: string;
     kb_document_ids: string[];
   }) => {
@@ -96,7 +97,7 @@ export default function TaskList() {
           include_institutional: false,
         },
         output_formats: values.output_format || ['md'],
-        llm_preference: 'auto' as LLMPreference,
+        sensitivity: values.sensitivity,
         analysis_params: analysisParams,
       };
       await createTask(projectId, taskData);
@@ -400,6 +401,21 @@ export default function TaskList() {
                   value: d.document_id,
                 }))}
               notFoundContent="暂无就绪的文档，请先上传并等待解析完成"
+            />
+          </Form.Item>
+          <Form.Item
+            name="sensitivity"
+            label="数据敏感度"
+            tooltip="高敏感度将使用本地LLM，不上传数据到云端；低敏感度可使用云端高性能模型"
+            rules={[{ required: true, message: '请选择数据敏感度' }]}
+            initialValue="low"
+          >
+            <Select
+              placeholder="选择数据敏感度"
+              options={[
+                { label: '低 — 可使用云端LLM', value: 'low' },
+                { label: '高 — 仅使用本地LLM', value: 'high' },
+              ]}
             />
           </Form.Item>
           <Form.Item

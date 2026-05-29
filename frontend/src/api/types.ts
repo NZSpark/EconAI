@@ -107,6 +107,7 @@ export type TaskType = 'literature_review' | 'policy_draft' | 'policy_comparison
 export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 export type OutputFormat = 'md' | 'docx' | 'xlsx' | 'pptx';
 export type LLMPreference = 'auto' | 'local' | 'cloud';
+export type Sensitivity = 'high' | 'low';
 
 export interface KBSources {
   documents: string[];
@@ -126,6 +127,7 @@ export interface CreateTaskRequest {
   kb_sources: KBSources;
   output_formats: OutputFormat[];
   llm_preference?: LLMPreference;
+  sensitivity?: Sensitivity;
   analysis_params: AnalysisParams;
 }
 
@@ -163,7 +165,7 @@ export interface TaskDetail {
   progress: TaskProgress | null;
   params: CreateTaskRequest;
   llm_route: string;
-  sensitivity: string;
+  sensitivity: Sensitivity;
   iteration_count: number;
   error_message: string | null;
   created_by: string;
