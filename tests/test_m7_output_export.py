@@ -11,7 +11,7 @@ import time
 import httpx
 import pytest
 
-RATE_LIMIT_DELAY = float(os.environ.get("ECONAI_TEST_RATE_LIMIT_DELAY", "0.3"))
+RATE_LIMIT_DELAY = float(os.environ.get("POLICYAI_TEST_RATE_LIMIT_DELAY", "0.3"))
 
 
 def _unique_name(name: str) -> str:

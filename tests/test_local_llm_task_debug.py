@@ -20,11 +20,11 @@ Run:
   uv run pytest tests/test_local_llm_task_debug.py -v -s --tb=short
 
 Environment variables:
-  ECONAI_TEST_LLM_ROUTER_URL  — default http://localhost:8004
-  ECONAI_TEST_OLLAMA_URL      — default http://localhost:11434
-  ECONAI_TEST_LOCAL_MODEL     — default local:qwen2.5-coder:7b
-  ECONAI_TEST_LLM_TIMEOUT_S   — default 300 (generous for diagnostics)
-  ECONAI_TEST_ORCH_URL        — default http://localhost:8003
+  POLICYAI_TEST_LLM_ROUTER_URL  — default http://localhost:8004
+  POLICYAI_TEST_OLLAMA_URL      — default http://localhost:11434
+  POLICYAI_TEST_LOCAL_MODEL     — default local:qwen2.5-coder:7b
+  POLICYAI_TEST_LLM_TIMEOUT_S   — default 300 (generous for diagnostics)
+  POLICYAI_TEST_ORCH_URL        — default http://localhost:8003
 """
 
 from __future__ import annotations
@@ -42,11 +42,11 @@ import pytest
 # Environment
 # ---------------------------------------------------------------------------
 
-LLM_ROUTER_URL = os.environ.get("ECONAI_TEST_LLM_ROUTER_URL", "http://localhost:8004")
-OLLAMA_URL = os.environ.get("ECONAI_TEST_OLLAMA_URL", "http://localhost:11434")
-LOCAL_MODEL = os.environ.get("ECONAI_TEST_LOCAL_MODEL", "local:qwen2.5-coder:7b")
-ORCH_URL = os.environ.get("ECONAI_TEST_ORCH_URL", "http://localhost:8003")
-CHAT_TIMEOUT = int(os.environ.get("ECONAI_TEST_LLM_TIMEOUT_S", "300"))
+LLM_ROUTER_URL = os.environ.get("POLICYAI_TEST_LLM_ROUTER_URL", "http://localhost:8004")
+OLLAMA_URL = os.environ.get("POLICYAI_TEST_OLLAMA_URL", "http://localhost:11434")
+LOCAL_MODEL = os.environ.get("POLICYAI_TEST_LOCAL_MODEL", "local:qwen2.5-coder:7b")
+ORCH_URL = os.environ.get("POLICYAI_TEST_ORCH_URL", "http://localhost:8003")
+CHAT_TIMEOUT = int(os.environ.get("POLICYAI_TEST_LLM_TIMEOUT_S", "300"))
 
 
 # ---------------------------------------------------------------------------

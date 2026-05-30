@@ -10,10 +10,10 @@ import time
 
 import httpx
 
-ADMIN_USERNAME = os.environ.get("ECONAI_TEST_ADMIN_USERNAME", "admin")
+ADMIN_USERNAME = os.environ.get("POLICYAI_TEST_ADMIN_USERNAME", "admin")
 
 # Pacing between requests to avoid 429 rate limiting
-_LOGIN_PACE = float(os.environ.get("ECONAI_TEST_AUTH_PACE", "0.5"))
+_LOGIN_PACE = float(os.environ.get("POLICYAI_TEST_AUTH_PACE", "0.5"))
 
 
 def _unique_username(name: str) -> str:

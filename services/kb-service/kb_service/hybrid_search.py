@@ -108,7 +108,7 @@ class HybridSearcher:
         if settings.reranker_enabled:
             fused = await self.reranker.rerank(query, fused)
 
-        total = len(vec_results) + len(bm25_results)
+        total = len(fused)
         sliced = self._paginate(fused[:final_top_k], page, page_size)
         elapsed_ms = (time.monotonic() - start) * 1000
         return sliced, total, elapsed_ms

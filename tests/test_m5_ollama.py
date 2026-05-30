@@ -21,12 +21,12 @@ import pytest
 # Environment
 # ---------------------------------------------------------------------------
 
-LLM_ROUTER_URL = os.environ.get("ECONAI_TEST_LLM_ROUTER_URL", "http://localhost:8004")
-OLLAMA_URL = os.environ.get("ECONAI_TEST_OLLAMA_URL", "http://localhost:11434")
-LOCAL_MODEL = os.environ.get("ECONAI_TEST_LOCAL_MODEL", "local:qwen2.5-coder:7b")
+LLM_ROUTER_URL = os.environ.get("POLICYAI_TEST_LLM_ROUTER_URL", "http://localhost:8004")
+OLLAMA_URL = os.environ.get("POLICYAI_TEST_OLLAMA_URL", "http://localhost:11434")
+LOCAL_MODEL = os.environ.get("POLICYAI_TEST_LOCAL_MODEL", "local:qwen2.5-coder:7b")
 LOCAL_MODEL_BARE = LOCAL_MODEL.replace("local:", "")  # "qwen2.5-coder:7b"
 
-CHAT_TIMEOUT = int(os.environ.get("ECONAI_TEST_LLM_TIMEOUT_S", "120"))
+CHAT_TIMEOUT = int(os.environ.get("POLICYAI_TEST_LLM_TIMEOUT_S", "120"))
 
 
 # ---------------------------------------------------------------------------

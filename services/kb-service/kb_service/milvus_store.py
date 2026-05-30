@@ -51,6 +51,7 @@ class MilvusVectorStore(VectorStore):
                 schema.add_field(field_name="document_id", datatype=DataType.VARCHAR, max_length=64)
                 schema.add_field(field_name="project_id", datatype=DataType.VARCHAR, max_length=64)
                 schema.add_field(field_name="chunk_type", datatype=DataType.VARCHAR, max_length=16)
+                schema.add_field(field_name="content", datatype=DataType.VARCHAR, max_length=65535)
 
                 index_params = self._client.prepare_index_params()
                 index_params.add_index(
@@ -95,6 +96,7 @@ class MilvusVectorStore(VectorStore):
                 "document_id": metadata.get("document_id", ""),
                 "project_id": metadata.get("project_id", ""),
                 "chunk_type": metadata.get("chunk_type", "paragraph"),
+                "content": metadata.get("content", ""),
             }],
         )
         self._client.flush(collection_name=self._collection_name)
@@ -111,6 +113,7 @@ class MilvusVectorStore(VectorStore):
                 "document_id": meta.get("document_id", ""),
                 "project_id": meta.get("project_id", ""),
                 "chunk_type": meta.get("chunk_type", "paragraph"),
+                "content": meta.get("content", ""),
             }
             for chunk_id, vector, meta in entries
         ]
@@ -130,18 +133,20 @@ class MilvusVectorStore(VectorStore):
             data=[query_vector],
             limit=top_k,
             filter=filter_expr or None,
-            output_fields=["document_id", "project_id", "chunk_type"],
+            output_fields=["document_id", "project_id", "chunk_type", "content"],
         )
         if not results or not results[0]:
             return []
         return [
+            entity = hit.get("entity", {})
             {
                 "chunk_id": hit["id"],
                 "score": hit["distance"],
                 "metadata": {
-                    "document_id": hit.get("entity", {}).get("document_id", ""),
-                    "project_id": hit.get("entity", {}).get("project_id", ""),
-                    "chunk_type": hit.get("entity", {}).get("chunk_type", ""),
+                    "document_id": entity.get("document_id", ""),
+                    "project_id": entity.get("project_id", ""),
+                    "chunk_type": entity.get("chunk_type", ""),
+                    "content": entity.get("content", ""),
                 },
             }
             for hit in results[0]

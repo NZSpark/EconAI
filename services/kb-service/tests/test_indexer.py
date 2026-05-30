@@ -289,3 +289,99 @@ class TestVectorStore:
         await vs.insert_batch(entries)
         results = await vs.search([1.0, 0.0, 0.0, 0.0], top_k=5)
         assert len(results) == 3
+
+    # ------------------------------------------------------------------
+    # Content field round-trip — ensures content survives insert→search
+    # Mirrors the fix that added "content" to MilvusVectorStore
+    #   - schema output_fields
+    #   - insert / insert_batch data payload
+    #   - search result metadata
+    # ------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_insert_returns_content(self) -> None:
+        """After insert, search results must include the content field."""
+        vs = InMemoryVectorStore(dim=4)
+        await vs.insert("c1", [1.0, 0.0, 0.0, 0.0], {
+            "document_id": "doc-1",
+            "project_id": "proj-1",
+            "chunk_type": "paragraph",
+            "content": "关税壁垒是贸易保护主义的主要形式。",
+        })
+        results = await vs.search([1.0, 0.0, 0.0, 0.0], top_k=1)
+        assert len(results) == 1
+        meta = results[0]["metadata"]
+        assert meta["content"] == "关税壁垒是贸易保护主义的主要形式。"
+        assert meta["document_id"] == "doc-1"
+        assert meta["project_id"] == "proj-1"
+        assert meta["chunk_type"] == "paragraph"
+
+    @pytest.mark.asyncio
+    async def test_insert_batch_returns_content(self) -> None:
+        """After insert_batch, every result must include its content."""
+        vs = InMemoryVectorStore(dim=4)
+        entries: list[tuple[str, list[float], dict[str, Any]]] = [
+            ("c1", [1.0, 0.0, 0.0, 0.0], {
+                "document_id": "doc-a",
+                "project_id": "proj-1",
+                "chunk_type": "paragraph",
+                "content": "数字贸易规则核心议题。",
+            }),
+            ("c2", [0.0, 1.0, 0.0, 0.0], {
+                "document_id": "doc-a",
+                "project_id": "proj-1",
+                "chunk_type": "paragraph",
+                "content": "碳排放交易体系政策工具。",
+            }),
+            ("c3", [0.0, 0.0, 1.0, 0.0], {
+                "document_id": "doc-b",
+                "project_id": "proj-1",
+                "chunk_type": "table",
+                "content": "WTO e-commerce negotiations progress.",
+            }),
+        ]
+        await vs.insert_batch(entries)
+        results = await vs.search([0.0, 1.0, 0.0, 0.0], top_k=3)
+        assert len(results) == 3
+        contents = {r["metadata"]["content"] for r in results}
+        assert "数字贸易规则核心议题。" in contents
+        assert "碳排放交易体系政策工具。" in contents
+        assert "WTO e-commerce negotiations progress." in contents
+
+    @pytest.mark.asyncio
+    async def test_content_empty_string(self) -> None:
+        """Empty content string is stored and returned as-is."""
+        vs = InMemoryVectorStore(dim=4)
+        await vs.insert("c1", [1.0, 0.0, 0.0, 0.0], {
+            "document_id": "doc-1",
+            "project_id": "proj-1",
+            "content": "",
+        })
+        results = await vs.search([1.0, 0.0, 0.0, 0.0], top_k=1)
+        assert results[0]["metadata"]["content"] == ""
+
+    @pytest.mark.asyncio
+    async def test_content_missing_key(self) -> None:
+        """When metadata lacks 'content' key, it defaults to empty string."""
+        vs = InMemoryVectorStore(dim=4)
+        # Simulate old metadata format (no "content" key)
+        await vs.insert("c1", [1.0, 0.0, 0.0, 0.0], {
+            "document_id": "doc-1",
+            "project_id": "proj-1",
+            "chunk_type": "paragraph",
+        })
+        results = await vs.search([1.0, 0.0, 0.0, 0.0], top_k=1)
+        assert results[0]["metadata"].get("content", "") == ""
+
+    @pytest.mark.asyncio
+    async def test_content_long_text(self) -> None:
+        """Long content (up to 65535 chars) round-trips correctly."""
+        vs = InMemoryVectorStore(dim=4)
+        long_text = "政策分析" * 500  # ~2000 chars, representative long chunk
+        await vs.insert("c1", [1.0, 0.0, 0.0, 0.0], {
+            "document_id": "doc-1",
+            "project_id": "proj-1",
+            "content": long_text,
+        })
+        results = await vs.search([1.0, 0.0, 0.0, 0.0], top_k=1)
+        assert results[0]["metadata"]["content"] == long_text

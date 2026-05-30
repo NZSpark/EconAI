@@ -53,19 +53,19 @@ class BM25Searcher:
         idx = 1
 
         if project_id:
-            conditions.append(f"project_id = ${idx}::uuid")
+            conditions.append(f"dc.project_id = ${idx}::uuid")
             params.append(project_id)
             idx += 1
 
         if document_ids:
             placeholders = ", ".join(f"${idx + i}::uuid" for i in range(len(document_ids)))
-            conditions.append(f"document_id IN ({placeholders})")
+            conditions.append(f"dc.document_id IN ({placeholders})")
             params.extend(document_ids)
             idx += len(document_ids)
 
         if chunk_types:
             placeholders = ", ".join(f"${idx + i}" for i in range(len(chunk_types)))
-            conditions.append(f"chunk_type IN ({placeholders})")
+            conditions.append(f"dc.chunk_type IN ({placeholders})")
             params.extend(chunk_types)
             idx += len(chunk_types)
 

@@ -14,20 +14,20 @@ import httpx
 import pytest
 
 # Environment variable controls — set in CI or via command line
-BASE_URL = os.environ.get("ECONAI_TEST_BASE_URL", "http://localhost:8000")
-USER_SERVICE_URL = os.environ.get("ECONAI_TEST_USER_SERVICE_URL", "http://localhost:8007")
-DOCUMENT_SERVICE_URL = os.environ.get("ECONAI_TEST_DOCUMENT_SERVICE_URL", "http://localhost:8001")
-KB_SERVICE_URL = os.environ.get("ECONAI_TEST_KB_SERVICE_URL", "http://localhost:8002")
-ORCHESTRATION_SERVICE_URL = os.environ.get("ECONAI_TEST_ORCHESTRATION_SERVICE_URL", "http://localhost:8003")
-LLM_ROUTER_URL = os.environ.get("ECONAI_TEST_LLM_ROUTER_URL", "http://localhost:8004")
-CITATION_SERVICE_URL = os.environ.get("ECONAI_TEST_CITATION_SERVICE_URL", "http://localhost:8005")
-OUTPUT_SERVICE_URL = os.environ.get("ECONAI_TEST_OUTPUT_SERVICE_URL", "http://localhost:8006")
+BASE_URL = os.environ.get("POLICYAI_TEST_BASE_URL", "http://localhost:8000")
+USER_SERVICE_URL = os.environ.get("POLICYAI_TEST_USER_SERVICE_URL", "http://localhost:8007")
+DOCUMENT_SERVICE_URL = os.environ.get("POLICYAI_TEST_DOCUMENT_SERVICE_URL", "http://localhost:8001")
+KB_SERVICE_URL = os.environ.get("POLICYAI_TEST_KB_SERVICE_URL", "http://localhost:8002")
+ORCHESTRATION_SERVICE_URL = os.environ.get("POLICYAI_TEST_ORCHESTRATION_SERVICE_URL", "http://localhost:8003")
+LLM_ROUTER_URL = os.environ.get("POLICYAI_TEST_LLM_ROUTER_URL", "http://localhost:8004")
+CITATION_SERVICE_URL = os.environ.get("POLICYAI_TEST_CITATION_SERVICE_URL", "http://localhost:8005")
+OUTPUT_SERVICE_URL = os.environ.get("POLICYAI_TEST_OUTPUT_SERVICE_URL", "http://localhost:8006")
 
-ADMIN_USERNAME = os.environ.get("ECONAI_TEST_ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.environ.get("ECONAI_TEST_ADMIN_PASSWORD", "Admin@123456")
+ADMIN_USERNAME = os.environ.get("POLICYAI_TEST_ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("POLICYAI_TEST_ADMIN_PASSWORD", "Admin@123456")
 
 # Rate-limit pacing: sleep between requests to avoid 429
-RATE_LIMIT_DELAY = float(os.environ.get("ECONAI_TEST_RATE_LIMIT_DELAY", "0.3"))
+RATE_LIMIT_DELAY = float(os.environ.get("POLICYAI_TEST_RATE_LIMIT_DELAY", "0.3"))
 
 
 @pytest.fixture(scope="session")  # type: ignore[untyped-decorator]
