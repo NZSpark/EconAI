@@ -19,7 +19,7 @@ class DocumentServiceConfig(BaseSettings):
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
-    MINIO_BUCKET: str = "econai-documents"
+    MINIO_BUCKET: str = "policyai-documents"
     MINIO_SECURE: bool = False
 
     # Chunk parameters - paragraph level
@@ -47,7 +47,7 @@ class DocumentServiceConfig(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://econai:econai_secret_change_me@localhost:5432/econai"
+    DATABASE_URL: str = "postgresql+asyncpg://policyai:policyai_secret_change_me@localhost:5432/policyai"
 
     # Redis for pub/sub
     REDIS_URL: str = "redis://localhost:6379/0"

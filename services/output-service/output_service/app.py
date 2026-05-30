@@ -25,7 +25,7 @@ from shared.metrics import setup_metrics
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="EconAI Output Generation Service",
+    title="PolicyAI Output Generation Service",
     version="0.1.0",
     description="Multi-format output generation (Markdown, DOCX GB/T 9704, XLSX, PPTX).",
 )
@@ -67,7 +67,7 @@ class CitationData(BaseModel):
 class MetadataModel(BaseModel):
     """Optional metadata for output generation."""
 
-    author: str = "EconAI"
+    author: str = "PolicyAI"
     date: str = ""
     keywords: list[str] = Field(default_factory=list)
     subtitle: str = ""

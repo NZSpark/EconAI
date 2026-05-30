@@ -1,4 +1,4 @@
-"""Structured JSON logging setup for all EconAI services."""
+"""Structured JSON logging setup for all PolicyAI services."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_entry, ensure_ascii=False)
 
 
-def setup_logging(level: str = "INFO", service_name: str = "econai") -> None:
+def setup_logging(level: str = "INFO", service_name: str = "policyai") -> None:
     """Configure root logger with JSON output to stdout."""
     root = logging.getLogger()
     root.setLevel(getattr(logging, level.upper(), logging.INFO))

@@ -63,7 +63,7 @@ export default function Login() {
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <SafetyOutlined style={{ fontSize: 48, color: '#1677ff' }} />
           <Title level={2} style={{ marginTop: 16, marginBottom: 4 }}>
-            EconAI
+            PolicyAI
           </Title>
           <Text type="secondary">智能经济政策分析平台</Text>
         </div>
@@ -121,7 +121,7 @@ export default function Login() {
 
         <div style={{ textAlign: 'center' }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            EconAI v1.0 | Institutional-grade AI Economic Policy Analysis
+            PolicyAI v1.0 | Institutional-grade AI Economic Policy Analysis
           </Text>
         </div>
       </Card>

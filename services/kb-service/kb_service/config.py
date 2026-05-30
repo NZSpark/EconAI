@@ -14,14 +14,14 @@ class KBSettings(AppSettings):
     service_port: int = 8002
 
     # Override parent computed properties with direct defaults for Docker compatibility
-    database_url: str = "postgresql+asyncpg://econai:econai_secret_change_me@localhost:5432/econai"
+    database_url: str = "postgresql+asyncpg://policyai:policyai_secret_change_me@localhost:5432/policyai"
     redis_url: str = "redis://localhost:6379/0"
 
     # Vector DB
     vector_db_type: str = "milvus"
     vector_db_host: str = "localhost"
     vector_db_port: int = 19530
-    vector_db_collection: str = "econai_chunks"
+    vector_db_collection: str = "policyai_chunks"
 
     # Embedding
     embedding_model: str = "text2vec-large-chinese"

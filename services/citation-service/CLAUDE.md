@@ -40,7 +40,7 @@ LLM MUST use this exact format for all factual claims. Citation service parses, 
 
 - SQLAlchemy[asyncio] + asyncpg (reference storage)
 - redis + numpy
-- `econai-shared`
+- `policyai-shared`
 
 ## Run / test
 

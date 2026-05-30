@@ -1,1 +1,1 @@
-"""EconAI Output Generation Service (M7)."""
+"""PolicyAI Output Generation Service (M7)."""

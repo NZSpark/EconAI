@@ -16,8 +16,8 @@ celery/
 
 | Task prefix | Queue | Purpose |
 |-------------|-------|---------|
-| `econai.document.*` | `document` | Document parsing, chunking |
-| `econai.orchestration.*` | `orchestration` | Agent loop task execution |
+| `policyai.document.*` | `document` | Document parsing, chunking |
+| `policyai.orchestration.*` | `orchestration` | Agent loop task execution |
 
 ## Config highlights
 

@@ -580,7 +580,7 @@ async def _format_output(args: dict[str, Any], state: AgentState) -> dict[str, A
         ),
         "formats": formats,
         "metadata": {
-            "author": "EconAI",
+            "author": "PolicyAI",
             "date": "",
             "keywords": [],
         },

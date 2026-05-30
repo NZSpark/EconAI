@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# EconAI 开发环境手动启动脚本
+# PolicyAI 开发环境手动启动脚本
 #
 # 用法：
 #   ./deploy/manualstart.sh infra       — 启动基础设施容器
@@ -306,7 +306,7 @@ case "${1:-help}" in
         cmd_logs "$@"
         ;;
     help|--help|-h)
-        echo "EconAI 开发环境管理脚本"
+        echo "PolicyAI 开发环境管理脚本"
         echo ""
         echo "用法: $0 {command}"
         echo ""

@@ -1,4 +1,4 @@
-# EconAI 开发环境软件清单
+# PolicyAI 开发环境软件清单
 
 > 版本：v2.0 | 日期：2026-05-21
 
@@ -116,7 +116,7 @@
 
 | 包 | 版本 | 适用模块 | 作用 |
 |----|------|----------|------|
-| econai-shared | 0.1.0 (本地) | M2, M3, M4 | Pydantic models + 配置加载器 + 结构化日志 |
+| policyai-shared | 0.1.0 (本地) | M2, M3, M4 | Pydantic models + 配置加载器 + 结构化日志 |
 
 ### 2.10 开发工具
 
@@ -219,7 +219,7 @@ tesseract --list-langs | grep chi_sim  # 确认中文语言包
 brew install node  # Node 26.x
 
 # === 启动基础设施 ===
-cd /path/to/EconAI
+cd /path/to/PolicyAI
 docker compose up -d
 docker compose ps
 

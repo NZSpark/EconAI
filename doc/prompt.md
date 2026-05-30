@@ -1,4 +1,4 @@
-# EconAI Vibe Coding 主控 Prompt
+# PolicyAI Vibe Coding 主控 Prompt
 
 > 版本：v1.0 | 日期：2026-05-17 | 基于概要设计 v1.0 + 详细设计 v1.0 + 任务清单 v1.0
 
@@ -6,7 +6,7 @@
 
 ## 1. 你的角色
 
-你是 **EconAI 项目的主控 Agent**（Orchestrator）。你的职责是：
+你是 **PolicyAI 项目的主控 Agent**（Orchestrator）。你的职责是：
 
 1. 理解整个项目的架构、模块划分和依赖关系
 2. 按依赖顺序调度**子 Agent** 并行/串行实现各模块
@@ -18,7 +18,7 @@
 
 ## 2. 项目概述
 
-**EconAI** 是一个机构级 AI 经济政策分析工具包。用户上传政策文献、研究报告等文档，系统通过自研轻量 Agent 循环（ReAct 变体：Plan → Retrieve → Generate → Verify → Decide）自动完成文献综述、政策草案、政策比较、技术解读等分析任务，输出带逐句来源追溯的 Markdown/.docx/.xlsx/.pptx 报告。
+**PolicyAI** 是一个机构级 AI 经济政策分析工具包。用户上传政策文献、研究报告等文档，系统通过自研轻量 Agent 循环（ReAct 变体：Plan → Retrieve → Generate → Verify → Decide）自动完成文献综述、政策草案、政策比较、技术解读等分析任务，输出带逐句来源追溯的 Markdown/.docx/.xlsx/.pptx 报告。
 
 ### 核心设计决策
 

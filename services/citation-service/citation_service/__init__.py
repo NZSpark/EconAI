@@ -1,1 +1,1 @@
-"""EconAI Citation and Provenance Service (M6)."""
+"""PolicyAI Citation and Provenance Service (M6)."""

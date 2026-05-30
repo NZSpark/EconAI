@@ -13,7 +13,7 @@ class OrchestrationSettings(AppSettings):
     service_port: int = 8003
 
     # Override parent computed properties with direct defaults for Docker compatibility
-    database_url: str = "postgresql+asyncpg://econai:econai_secret_change_me@localhost:5432/econai"
+    database_url: str = "postgresql+asyncpg://policyai:policyai_secret_change_me@localhost:5432/policyai"
     redis_url: str = "redis://localhost:6379/0"
     celery_orchestration_queue: str = "orchestration"
 

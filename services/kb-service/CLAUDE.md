@@ -47,7 +47,7 @@ Parallel:
 
 - httpx (calls other services)
 - asyncpg + redis
-- `econai-shared`
+- `policyai-shared`
 
 ## Indexing trigger
 

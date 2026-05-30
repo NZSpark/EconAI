@@ -1,6 +1,6 @@
 """Shared Prometheus metrics instrumentation for FastAPI apps.
 
-Usage in any EconAI service:
+Usage in any PolicyAI service:
     from shared.metrics import setup_metrics
 
     app = FastAPI(...)

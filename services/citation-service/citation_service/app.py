@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="EconAI Citation Service",
+    title="PolicyAI Citation Service",
     version="0.1.0",
     description="Inline citation parsing, verification, and formatting (M6).",
 )

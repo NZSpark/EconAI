@@ -1,4 +1,4 @@
-# CLAUDE.md — shared (econai-shared)
+# CLAUDE.md — shared (policyai-shared)
 
 ## Role
 
@@ -25,7 +25,7 @@ class AppSettings(BaseSettings):
     # PostgreSQL
     postgres_host: str = "localhost"
     postgres_port: int = 5432
-    postgres_user: str = "econai"
+    postgres_user: str = "policyai"
     postgres_password: str = ""
     # Redis
     redis_host: str = "localhost"

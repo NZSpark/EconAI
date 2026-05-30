@@ -1,4 +1,4 @@
-# EconAI Development Environment Manual Startup Guide
+# PolicyAI Development Environment Manual Startup Guide
 
 > Version: v1.2 | Date: 2026-05-23
 
@@ -28,7 +28,7 @@ On M1/M2/M3/M4 chip Macs, the official Milvus image has known compatibility issu
 ### Install Dependencies
 
 ```bash
-cd /Users/onetreehill/EconAI
+cd /Users/onetreehill/PolicyAI
 
 # Install Python dependencies for each backend service
 for dir in api-gateway services/*/; do
@@ -74,7 +74,7 @@ Final Wave: Frontend
 #### Step 1: Infrastructure (Terminal 1)
 
 ```bash
-cd /Users/onetreehill/EconAI
+cd /Users/onetreehill/PolicyAI
 docker compose up -d postgres redis etcd minio minio-init milvus
 
 # Wait for all infrastructure to be ready (Milvus may need 90s+ on ARM)
@@ -88,15 +88,15 @@ docker compose ps | grep -E "postgres|redis|milvus|minio" | grep -v "minio-init"
 
 ```bash
 # Terminal 2: user-service
-cd /Users/onetreehill/EconAI/services/user-service
+cd /Users/onetreehill/PolicyAI/services/user-service
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload
 
 # Terminal 3: llm-router
-cd /Users/onetreehill/EconAI/services/llm-router
+cd /Users/onetreehill/PolicyAI/services/llm-router
 uv run uvicorn llm_router.app:app --host 0.0.0.0 --port 8004 --reload
 
 # Terminal 4: citation-service
-cd /Users/onetreehill/EconAI/services/citation-service
+cd /Users/onetreehill/PolicyAI/services/citation-service
 uv run uvicorn citation_service.app:app --host 0.0.0.0 --port 8005 --reload
 ```
 
@@ -104,31 +104,31 @@ uv run uvicorn citation_service.app:app --host 0.0.0.0 --port 8005 --reload
 
 ```bash
 # Terminal 5: document-service + Celery worker
-cd /Users/onetreehill/EconAI/services/document-service
+cd /Users/onetreehill/PolicyAI/services/document-service
 uv run uvicorn document_service.app:app --host 0.0.0.0 --port 8001 --reload
 # Open another terminal tab for Celery worker:
-cd /Users/onetreehill/EconAI/services/document-service
+cd /Users/onetreehill/PolicyAI/services/document-service
 uv run celery -A document_service.celery_app worker --loglevel=INFO --concurrency=2 --queues=document
 
 # Terminal 6: output-service
-cd /Users/onetreehill/EconAI/services/output-service
+cd /Users/onetreehill/PolicyAI/services/output-service
 uv run uvicorn output_service.app:app --host 0.0.0.0 --port 8006 --reload
 ```
 
 #### Step 4: Knowledge Base Service (Terminal 7)
 
 ```bash
-cd /Users/onetreehill/EconAI/services/kb-service
+cd /Users/onetreehill/PolicyAI/services/kb-service
 uv run uvicorn kb_service.app:app --host 0.0.0.0 --port 8002 --reload
 ```
 
 #### Step 5: Orchestration Service (Terminal 8)
 
 ```bash
-cd /Users/onetreehill/EconAI/services/orchestration-service
+cd /Users/onetreehill/PolicyAI/services/orchestration-service
 uv run uvicorn orchestration_service.app:app --host 0.0.0.0 --port 8003 --reload
 # Celery Agent worker (another tab):
-cd /Users/onetreehill/EconAI/services/orchestration-service
+cd /Users/onetreehill/PolicyAI/services/orchestration-service
 uv run celery -A orchestration_service.celery_app worker --loglevel=INFO --concurrency=4 --queues=orchestration
 ```
 
@@ -137,8 +137,8 @@ uv run celery -A orchestration_service.celery_app worker --loglevel=INFO --concu
 **Important**: When manually starting the api-gateway, you must explicitly pass the Redis password and localhost addresses for all backend services. Default Docker container names (e.g., `http://user-service:8007`) only work in Docker Compose environments.
 
 ```bash
-cd /Users/onetreehill/EconAI/api-gateway
-API_GATEWAY_REDIS_URL="redis://:econai_redis_change_me@localhost:6379/0" \
+cd /Users/onetreehill/PolicyAI/api-gateway
+API_GATEWAY_REDIS_URL="redis://:policyai_redis_change_me@localhost:6379/0" \
   API_GATEWAY_USER_SERVICE_URL="http://localhost:8007" \
   API_GATEWAY_DOCUMENT_SERVICE_URL="http://localhost:8001" \
   API_GATEWAY_KB_SERVICE_URL="http://localhost:8002" \
@@ -148,12 +148,12 @@ API_GATEWAY_REDIS_URL="redis://:econai_redis_change_me@localhost:6379/0" \
   uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-> If you modified `REDIS_PASSWORD` in `.env`, replace `econai_redis_change_me` in the URL above with your actual password.
+> If you modified `REDIS_PASSWORD` in `.env`, replace `policyai_redis_change_me` in the URL above with your actual password.
 
 #### Step 7: Frontend (Terminal 10)
 
 ```bash
-cd /Users/onetreehill/EconAI/frontend
+cd /Users/onetreehill/PolicyAI/frontend
 npm run dev
 ```
 
@@ -206,13 +206,13 @@ lsof -ti:8000 | xargs kill -9   # Replace port number
 Verify PostgreSQL is up and healthy:
 ```bash
 docker compose ps postgres
-docker exec econai-postgres pg_isready -U econai
+docker exec policyai-postgres pg_isready -U policyai
 ```
 
 ### Celery Worker Cannot Connect to Redis
 
 ```bash
-docker exec econai-redis redis-cli -a $(grep REDIS_PASSWORD .env | cut -d= -f2) ping
+docker exec policyai-redis redis-cli -a $(grep REDIS_PASSWORD .env | cut -d= -f2) ping
 ```
 
 ### Claude API Not Configured
@@ -255,7 +255,7 @@ lsof -ti:19530 | xargs kill -9
 # Rebuild Milvus
 docker compose stop milvus
 docker compose rm -f milvus
-docker volume rm econai_milvus-data   # Clear old data (optional)
+docker volume rm policyai_milvus-data   # Clear old data (optional)
 docker compose up -d milvus
 # Wait ~90s
 docker compose ps milvus
@@ -296,11 +296,11 @@ API_GATEWAY_REDIS_URL="redis://:${REDIS_PASSWORD}:<your-password>@localhost:6379
 
 3. **Audit log write failed** — user sees `HTTP 500` and logs have `DatatypeMismatchError` or `UndefinedColumnError`:
    - If `column "resource_id" is of type uuid`: confirm `audit_log` model and DB schema are both fixed (already applied in code)
-   - If `column users.ldap_dn does not exist`: run `docker exec econai-postgres psql -U econai -d econai -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS ldap_dn VARCHAR(255);"`
+   - If `column users.ldap_dn does not exist`: run `docker exec policyai-postgres psql -U policyai -d policyai -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS ldap_dn VARCHAR(255);"`
 
 4. **Password hash mismatch** — user sees `AUTH_INVALID_CREDENTIALS`:
    - Regenerate admin password: in `services/user-service` directory run `uv run python3 -c "import bcrypt; print(bcrypt.hashpw(b'Admin@123456', bcrypt.gensalt(rounds=12)).decode())"`
-   - Update database: `docker exec econai-postgres psql -U econai -d econai -c "UPDATE users SET hashed_password = '<new hash>' WHERE username = 'admin';"`
+   - Update database: `docker exec policyai-postgres psql -U policyai -d policyai -c "UPDATE users SET hashed_password = '<new hash>' WHERE username = 'admin';"`
 
 ---
 

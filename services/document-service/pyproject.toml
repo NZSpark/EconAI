@@ -1,7 +1,7 @@
 [project]
 name = "document-service"
 version = "0.1.0"
-description = "EconAI Document Parsing Service (M2)"
+description = "PolicyAI Document Parsing Service (M2)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -25,7 +25,7 @@ dependencies = [
     "pillow>=10.0",
     "pytesseract>=0.3",
     "lxml>=5.0",
-    "econai-shared",
+    "policyai-shared",
 ]
 
 [project.optional-dependencies]
@@ -60,7 +60,7 @@ line-length = 120
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
 
 [tool.uv.sources]
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 
 [tool.ruff.format]
 quote-style = "double"

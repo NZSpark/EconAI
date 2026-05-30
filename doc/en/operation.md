@@ -1,36 +1,36 @@
-# EconAI Operations Manual
+# PolicyAI Operations Manual
 
-> Version: v1.3 | Applicable to EconAI v1.3 Full Deployment
+> Version: v1.3 | Applicable to PolicyAI v1.3 Full Deployment
 
 ---
 
 ## 1. System Architecture Overview
 
-EconAI consists of the following services, deployed on a single server or multiple servers:
+PolicyAI consists of the following services, deployed on a single server or multiple servers:
 
 | Component | Container Name | Port | Description |
 |------|--------|------|------|
-| Nginx | `econai-nginx` | 80, 443 | Reverse proxy + TLS termination |
-| API Gateway | `econai-api-gateway` | 8000 | JWT authentication/RBAC/rate limiting/audit |
-| Document Service | `econai-document-service` | 8001 | Document upload/parsing/chunking/OCR |
-| KB Service | `econai-kb-service` | 8002 | Vector indexing/hybrid search |
-| Orchestration Service | `econai-orchestration-service` | 8003 | Agent engine/task orchestration |
-| LLM Router | `econai-llm-router` | 8004 | LLM routing/adapter |
-| Citation Service | `econai-citation-service` | 8005 | Citation resolution/validation/formatting |
-| Output Service | `econai-output-service` | 8006 | Multi-format report generation |
-| User Service | `econai-user-service` | 8007 | Authentication/RBAC/audit logs |
-| PostgreSQL | `econai-postgres` | 5432 | Business data + FTS |
-| Redis | `econai-redis` | 6379 | Cache/queue/pub-sub/rate limiting |
-| Milvus | `econai-milvus` | 19530 | Vector indexing |
-| etcd | `econai-etcd` | 2379 | Milvus metadata coordination |
-| MinIO | `econai-minio` | 9000, 9001 | Object storage |
-| Celery Worker (Document) | `econai-celery-document` | - | Async document parsing |
-| Celery Worker (Orchestration) | `econai-celery-orchestration` | - | Async Agent analysis |
-| Celery Beat | `econai-celery-beat` | - | Scheduled task scheduler |
-| Prometheus | `econai-prometheus` | 9090 | Metrics collection |
-| Grafana | `econai-grafana` | 3000 | Monitoring dashboards |
+| Nginx | `policyai-nginx` | 80, 443 | Reverse proxy + TLS termination |
+| API Gateway | `policyai-api-gateway` | 8000 | JWT authentication/RBAC/rate limiting/audit |
+| Document Service | `policyai-document-service` | 8001 | Document upload/parsing/chunking/OCR |
+| KB Service | `policyai-kb-service` | 8002 | Vector indexing/hybrid search |
+| Orchestration Service | `policyai-orchestration-service` | 8003 | Agent engine/task orchestration |
+| LLM Router | `policyai-llm-router` | 8004 | LLM routing/adapter |
+| Citation Service | `policyai-citation-service` | 8005 | Citation resolution/validation/formatting |
+| Output Service | `policyai-output-service` | 8006 | Multi-format report generation |
+| User Service | `policyai-user-service` | 8007 | Authentication/RBAC/audit logs |
+| PostgreSQL | `policyai-postgres` | 5432 | Business data + FTS |
+| Redis | `policyai-redis` | 6379 | Cache/queue/pub-sub/rate limiting |
+| Milvus | `policyai-milvus` | 19530 | Vector indexing |
+| etcd | `policyai-etcd` | 2379 | Milvus metadata coordination |
+| MinIO | `policyai-minio` | 9000, 9001 | Object storage |
+| Celery Worker (Document) | `policyai-celery-document` | - | Async document parsing |
+| Celery Worker (Orchestration) | `policyai-celery-orchestration` | - | Async Agent analysis |
+| Celery Beat | `policyai-celery-beat` | - | Scheduled task scheduler |
+| Prometheus | `policyai-prometheus` | 9090 | Metrics collection |
+| Grafana | `policyai-grafana` | 3000 | Monitoring dashboards |
 
-All services communicate through the `econai-network` bridge network.
+All services communicate through the `policyai-network` bridge network.
 
 ---
 
@@ -57,8 +57,8 @@ All services communicate through the `econai-network` bridge network.
 ### 3.1 Obtain the Code
 
 ```bash
-git clone <repository-url> /opt/econai
-cd /opt/econai
+git clone <repository-url> /opt/policyai
+cd /opt/policyai
 ```
 
 ### 3.2 Configure Environment Variables
@@ -101,19 +101,19 @@ mkdir -p nginx/ssl
 
 # Self-signed certificate (dev/test only)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/econai.key \
-  -out nginx/ssl/econai.crt \
+  -keyout nginx/ssl/policyai.key \
+  -out nginx/ssl/policyai.crt \
   -subj "/CN=localhost"
 
 # For production, use Let's Encrypt or a CA-issued certificate
 # certbot certonly --standalone -d your-domain.com
-# cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/econai.crt
-# cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/econai.key
+# cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/policyai.crt
+# cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/policyai.key
 ```
 
 ### 3.4 Configure Local LLM (Optional)
 
-EconAI's LLM Router supports two backend providers:
+PolicyAI's LLM Router supports two backend providers:
 
 - **Cloud (Anthropic Claude)**: Uses `ClaudeAdapter`, directly calling the Anthropic Messages API
 - **Local (vLLM / Ollama / OpenAI compatible)**: Uses `LocalAdapter`, calling via an OpenAI-compatible `/v1/chat/completions` endpoint
@@ -149,7 +149,7 @@ ollama list
 curl http://localhost:11434/v1/models
 ```
 
-**3. Modify EconAI Configuration**
+**3. Modify PolicyAI Configuration**
 
 Edit `.env` and set Ollama's OpenAI-compatible endpoint:
 
@@ -320,7 +320,7 @@ docker compose up -d api-gateway
 
 ```bash
 # Connect to database
-docker exec -it econai-postgres psql -U econai -d econai
+docker exec -it policyai-postgres psql -U policyai -d policyai
 
 # Common queries
 SELECT count(*) FROM documents;           -- Total document count
@@ -328,10 +328,10 @@ SELECT count(*) FROM analysis_tasks;      -- Total task count
 SELECT status, count(*) FROM analysis_tasks GROUP BY status;  -- Task status distribution
 
 # Backup database
-docker exec econai-postgres pg_dump -U econai econai > backup_$(date +%Y%m%d).sql
+docker exec policyai-postgres pg_dump -U policyai policyai > backup_$(date +%Y%m%d).sql
 
 # Restore database
-docker exec -i econai-postgres psql -U econai econai < backup_20260101.sql
+docker exec -i policyai-postgres psql -U policyai policyai < backup_20260101.sql
 ```
 
 ### MinIO File Management
@@ -341,7 +341,7 @@ MinIO Console address: `http://<host>:9001`
 - Username: `MINIO_ROOT_USER` (default `minioadmin`)
 - Password: `MINIO_ROOT_PASSWORD`
 
-Two Buckets: `econai-documents` (original documents), `econai-outputs` (generated report files).
+Two Buckets: `policyai-documents` (original documents), `policyai-outputs` (generated report files).
 
 ### Viewing Logs
 
@@ -356,7 +356,7 @@ docker compose logs --tail=200 api-gateway
 docker compose logs --since 2026-01-01T00:00:00 orchestration-service
 
 # Export logs
-docker compose logs > econai-logs-$(date +%Y%m%d).txt 2>&1
+docker compose logs > policyai-logs-$(date +%Y%m%d).txt 2>&1
 ```
 
 Log format is JSON, containing fields such as `timestamp`, `level`, `logger`, `message`, `request_id`.
@@ -365,13 +365,13 @@ Log format is JSON, containing fields such as `timestamp`, `level`, `logger`, `m
 
 ```bash
 # View the document queue
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD LLEN document
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD LLEN document
 
 # View the orchestration queue
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD LLEN orchestration
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD LLEN orchestration
 
 # Clear a queue (use with caution!)
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD DEL document
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD DEL document
 ```
 
 ---
@@ -411,28 +411,28 @@ docker exec econai-redis redis-cli -a $REDIS_PASSWORD DEL document
 
 | Data | Location | Backup Method | Frequency |
 |------|------|----------|------|
-| PostgreSQL | Docker Volume `econai-postgres-data` | `pg_dump` | Daily |
-| MinIO Files | Docker Volume `econai-minio-data` | `mc mirror` | Daily |
-| Redis Data | Docker Volume `econai-redis-data` | AOF file (enabled by default) | Real-time |
+| PostgreSQL | Docker Volume `policyai-postgres-data` | `pg_dump` | Daily |
+| MinIO Files | Docker Volume `policyai-minio-data` | `mc mirror` | Daily |
+| Redis Data | Docker Volume `policyai-redis-data` | AOF file (enabled by default) | Real-time |
 | Config Files | `.env`, `nginx/` | Git or file copy | After modification |
 
 ### Sample Backup Script
 
 ```bash
 #!/bin/bash
-# Save as /opt/econai/deploy/backup.sh
-BACKUP_DIR=/backup/econai
+# Save as /opt/policyai/deploy/backup.sh
+BACKUP_DIR=/backup/policyai
 DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p $BACKUP_DIR/$DATE
 
 # Backup PostgreSQL
-docker exec econai-postgres pg_dump -U econai econai > $BACKUP_DIR/$DATE/db.sql
+docker exec policyai-postgres pg_dump -U policyai policyai > $BACKUP_DIR/$DATE/db.sql
 
 # Backup MinIO
-docker run --rm --network econai-network \
+docker run --rm --network policyai-network \
   -v $BACKUP_DIR/$DATE:/backup \
   minio/mc:latest \
-  mc mirror local/econai-documents /backup/documents
+  mc mirror local/policyai-documents /backup/documents
 
 # Backup config
 cp .env $BACKUP_DIR/$DATE/.env
@@ -450,7 +450,7 @@ find $BACKUP_DIR -maxdepth 1 -type d -mtime +30 -exec rm -rf {} \;
 # 2. Restore database
 docker compose up -d postgres
 sleep 10
-docker exec -i econai-postgres psql -U econai econai < backup/db.sql
+docker exec -i policyai-postgres psql -U policyai policyai < backup/db.sql
 
 # 3. Restore MinIO files
 # Upload via MinIO Console, or use the mc client
@@ -526,10 +526,10 @@ docker compose logs redis
 
 ```bash
 # Check if PostgreSQL is ready
-docker exec econai-postgres pg_isready -U econai
+docker exec policyai-postgres pg_isready -U policyai
 
 # Check connection count
-docker exec econai-postgres psql -U econai -c "SELECT count(*) FROM pg_stat_activity;"
+docker exec policyai-postgres psql -U policyai -c "SELECT count(*) FROM pg_stat_activity;"
 
 # Reset connections
 docker compose restart postgres
@@ -583,25 +583,25 @@ killall ollama && ollama serve &
 
 ```bash
 # View stuck tasks
-docker exec econai-postgres psql -U econai -c \
+docker exec policyai-postgres psql -U policyai -c \
   "SELECT id, title, status, started_at FROM analysis_tasks WHERE status='running' AND started_at < now() - interval '30 minutes';"
 
 # Manually cancel a task
-docker exec econai-postgres psql -U econai -c \
+docker exec policyai-postgres psql -U policyai -c \
   "UPDATE analysis_tasks SET status='failed', error_message='Manual timeout recovery' WHERE id='<task-id>';"
 
 # Clear old tasks from the Celery queue
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD DEL orchestration
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD DEL orchestration
 ```
 
 ### Redis Out of Memory
 
 ```bash
 # Check memory usage
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD INFO memory
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD INFO memory
 
 # Manually purge expired cache
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD MEMORY PURGE
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD MEMORY PURGE
 
 # Increase maxmemory (modify .env then restart)
 REDIS_MAXMEMORY=4gb
@@ -723,7 +723,7 @@ docker image prune -a
 docker rmi $(docker images -q)
 ```
 
-Typical deletable EconAI infrastructure images:
+Typical deletable PolicyAI infrastructure images:
 
 | Image | Size | Description |
 |------|------|------|
@@ -739,13 +739,13 @@ Typical deletable EconAI infrastructure images:
 > **Dangerous operation**: Volumes contain databases, vector indexes, and uploaded files. Only execute after confirming data is no longer needed.
 
 ```bash
-# View EconAI-related volumes
-docker volume ls --filter "name=econai"
+# View PolicyAI-related volumes
+docker volume ls --filter "name=policyai"
 
-# Delete all EconAI volumes (data is unrecoverable!)
-docker volume rm econai-etcd-data econai-milvus-data \
-                econai-minio-data econai-postgres-data \
-                econai-redis-data
+# Delete all PolicyAI volumes (data is unrecoverable!)
+docker volume rm policyai-etcd-data policyai-milvus-data \
+                policyai-minio-data policyai-postgres-data \
+                policyai-redis-data
 
 # Or delete all unused volumes
 docker volume prune
@@ -754,7 +754,7 @@ docker volume prune
 ### 11.6 Complete Cleanup (One-Click)
 
 ```bash
-# Stop and clean up all EconAI-related resources
+# Stop and clean up all PolicyAI-related resources
 ./deploy/deploy.sh stop
 docker image prune -a --force
 docker volume prune --force
@@ -798,7 +798,7 @@ class UserServiceSettings(AppSettings):
 
 ```yaml
 # ❌ Wrong — both services' env_prefix will ignore these
-- JWT_SECRET=econai_jwt_secret_change_me_min_32_chars
+- JWT_SECRET=policyai_jwt_secret_change_me_min_32_chars
 - JWT_ALGORITHM=HS256
 ```
 
@@ -808,13 +808,13 @@ Both services' `JWT_SECRET` fields fall back to their respective hardcoded defau
 
 ```yaml
 # ✅ Correct — api-gateway environment variables
-- API_GATEWAY_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+- API_GATEWAY_JWT_SECRET=${JWT_SECRET:-policyai_jwt_secret_change_me_min_32_chars}
 - API_GATEWAY_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
 - API_GATEWAY_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
 - API_GATEWAY_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
 
 # ✅ Correct — user-service environment variables
-- USER_SERVICE_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+- USER_SERVICE_JWT_SECRET=${JWT_SECRET:-policyai_jwt_secret_change_me_min_32_chars}
 - USER_SERVICE_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
 - USER_SERVICE_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
 - USER_SERVICE_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
@@ -823,8 +823,8 @@ Both services' `JWT_SECRET` fields fall back to their respective hardcoded defau
 **Verification Method**:
 
 ```bash
-docker exec econai-api-gateway python -c "from app.config import settings; print(settings.jwt_secret)"
-docker exec econai-user-service python -c "from app.config import settings; print(settings.jwt_secret)"
+docker exec policyai-api-gateway python -c "from app.config import settings; print(settings.jwt_secret)"
+docker exec policyai-user-service python -c "from app.config import settings; print(settings.jwt_secret)"
 # Both outputs must be identical
 ```
 
@@ -860,16 +860,16 @@ LOCAL_LLM_ENDPOINT=http://host.docker.internal:11434/v1
 **Diagnosis**: Check for accumulated orphan test data in the database:
 
 ```bash
-docker exec econai-postgres psql -U econai -d econai -c \
+docker exec policyai-postgres psql -U policyai -d policyai -c \
   "SELECT username FROM users WHERE username LIKE 'lifecycle_%' OR username LIKE 'test%';"
-docker exec econai-postgres psql -U econai -d econai -c \
+docker exec policyai-postgres psql -U policyai -d policyai -c \
   "SELECT name FROM projects ORDER BY created_at DESC LIMIT 20;"
 ```
 
 **Cleanup**:
 
 ```bash
-docker exec econai-postgres psql -U econai -d econai -c \
+docker exec policyai-postgres psql -U policyai -d policyai -c \
   "DELETE FROM projects; DELETE FROM users WHERE username != 'admin';"
 ```
 
@@ -891,7 +891,7 @@ docker compose up -d --no-deps --force-recreate service-name
 
 ## 13. Dockerfile Build Specifications
 
-All EconAI service Dockerfiles follow a unified build pattern. The following four key elements are hard rules refined after multiple pitfalls and must be followed when modifying Dockerfiles:
+All PolicyAI service Dockerfiles follow a unified build pattern. The following four key elements are hard rules refined after multiple pitfalls and must be followed when modifying Dockerfiles:
 
 ### 13.1 Do Not Use BuildKit Bind Mount
 
@@ -924,7 +924,7 @@ include = ["shared"]
 ### 13.3 Do Not Use `--only-binary :all:`
 
 ```dockerfile
-# ❌ Wrong (prohibits all source installations, including your own econai-shared and `uv pip install .`)
+# ❌ Wrong (prohibits all source installations, including your own policyai-shared and `uv pip install .`)
 RUN uv pip install --only-binary :all: --system .
 
 # ✅ Correct (all dependencies already have ARM64 precompiled wheels)
@@ -947,7 +947,7 @@ RUN sed -i 's|path = "../shared"|path = "/shared"|g' pyproject.toml && \
 
 **Reason**: The `[tool.uv.sources]` in service `pyproject.toml` files use relative paths pointing to shared:
 ```toml
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 ```
 `uv pip install .` will forcibly resolve this path. Computing `../../shared` from `/app/` escapes the base directory, and uv errors out directly. Using `sed` to change it to the container absolute path `/shared` allows uv to resolve normally.
 
@@ -1033,8 +1033,8 @@ econai-shared = { path = "../../shared" }
 | View disk usage | `docker system df` |
 | Delete all images | `docker rmi $(docker images -q)` |
 | Clean up unused resources | `docker system prune -a` |
-| Enter PostgreSQL | `docker exec -it econai-postgres psql -U econai` |
-| Enter Redis | `docker exec -it econai-redis redis-cli -a <password>` |
+| Enter PostgreSQL | `docker exec -it policyai-postgres psql -U policyai` |
+| Enter Redis | `docker exec -it policyai-redis redis-cli -a <password>` |
 | API health check | `curl http://localhost:8000/health` |
 | Prometheus | `http://<host>:9090` |
 | Grafana | `http://<host>:3000` |

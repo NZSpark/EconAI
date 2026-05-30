@@ -27,7 +27,7 @@
 - [x] M10-14 配置向量数据库持久化和备份策略
 
 ### MinIO
-- [x] M10-15 配置 MinIO：创建 buckets（econai-documents, econai-outputs）、访问策略
+- [x] M10-15 配置 MinIO：创建 buckets（policyai-documents, policyai-outputs）、访问策略
 - [x] M10-16 配置 MinIO 生命周期规则（文档临时文件自动过期）
 - [x] M10-17 生成 MinIO access key/secret key，写入各服务环境变量
 

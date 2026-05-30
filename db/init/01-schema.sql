@@ -1,5 +1,5 @@
 -- =============================================================================
--- EconAI Database Schema
+-- PolicyAI Database Schema
 -- All tables, indexes, and FTS configuration
 -- =============================================================================
 
@@ -286,7 +286,7 @@ CREATE INDEX idx_llm_usage_created_at ON llm_usage_logs(created_at DESC);
 -- Audit log immutability: revoke UPDATE/DELETE at database level
 -- ---------------------------------------------------------------------------
 REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM PUBLIC;
-REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM econai;
+REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM policyai;
 
 -- ---------------------------------------------------------------------------
 -- Updated_at trigger function
@@ -334,6 +334,6 @@ CREATE TABLE user_consents (
 
 CREATE INDEX idx_consents_user_id ON user_consents(user_id);
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON user_consents TO econai;
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_consents TO policyai;
 
 COMMIT;

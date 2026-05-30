@@ -1,4 +1,4 @@
-"""EconAI LLM Router Service (M5) — FastAPI application.
+"""PolicyAI LLM Router Service (M5) — FastAPI application.
 
 Port 8004. Provides:
   - GET  /health                       Health check
@@ -112,7 +112,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 # ── Application ──────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="EconAI LLM Router Service",
+    title="PolicyAI LLM Router Service",
     version="0.1.0",
     lifespan=lifespan,
 )

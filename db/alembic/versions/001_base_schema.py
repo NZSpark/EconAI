@@ -1,4 +1,4 @@
-"""Initial baseline schema — full EconAI database.
+"""Initial baseline schema — full PolicyAI database.
 
 Revision ID: 001_base
 Revises: None
@@ -256,7 +256,7 @@ def upgrade() -> None:
 
     # ── audit immutability ──
     op.execute("REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM PUBLIC")
-    op.execute("REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM econai")
+    op.execute("REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM policyai")
 
     # ── updated_at trigger ──
     op.execute(

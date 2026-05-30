@@ -215,7 +215,7 @@ class TestGenerateSectionSimulation:
         )
 
         # Replicate the user prompt structure
-        section_goal = "Analyze the key factors causing local LLM task timeouts in the EconAI system"
+        section_goal = "Analyze the key factors causing local LLM task timeouts in the PolicyAI system"
         section_title = "Timeout Root Cause Analysis"
         context_text = (
             "[Chunk 1] doc:test_001 (score:0.950)\n"
@@ -571,7 +571,7 @@ class TestToolTimeoutBoundary:
             "and evidence-based arguments."
         )
         user_prompt = (
-            "## Section Goal\nDiagnose the timeout issue in the EconAI Agent loop.\n\n"
+            "## Section Goal\nDiagnose the timeout issue in the PolicyAI Agent loop.\n\n"
             "## Section Title\nTimeout Root Cause\n\n"
             "## Reference Context\n"
             "[Chunk 1] doc:test_001 (score:0.950)\n"

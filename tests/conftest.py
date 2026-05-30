@@ -1,4 +1,4 @@
-"""Shared fixtures for EconAI integration tests.
+"""Shared fixtures for PolicyAI integration tests.
 
 All tests run against the running local services.
 """

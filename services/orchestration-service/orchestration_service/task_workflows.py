@@ -25,7 +25,7 @@ _templates: dict[str, str] = {}
 
 
 DEFAULT_TEMPLATES: dict[str, str] = {
-    "system_prompt.j2": """You are EconAI, an institutional-grade AI economic policy analysis assistant.
+    "system_prompt.j2": """You are PolicyAI, an institutional-grade AI economic policy analysis assistant.
 Your task is to complete a {{ task_type }} analysis titled "{{ title }}".
 
 ## Task Description

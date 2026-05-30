@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# EconAI Deploy Script
+# PolicyAI Deploy Script
 # Usage:
 #   ./deploy/deploy.sh start    — start all services
 #   ./deploy/deploy.sh stop     — stop all services
@@ -23,20 +23,20 @@ else
 fi
 
 cmd_start() {
-    echo "==> Starting EconAI services..."
+    echo "==> Starting PolicyAI services..."
     docker compose $COMPOSE_FILES up -d --wait
     echo "==> All services started."
     cmd_status
 }
 
 cmd_stop() {
-    echo "==> Stopping EconAI services..."
+    echo "==> Stopping PolicyAI services..."
     docker compose $COMPOSE_FILES down --remove-orphans
     echo "==> All services stopped."
 }
 
 cmd_restart() {
-    echo "==> Restarting EconAI services..."
+    echo "==> Restarting PolicyAI services..."
     docker compose $COMPOSE_FILES down --remove-orphans
     docker compose $COMPOSE_FILES up -d --wait
     echo "==> All services restarted."

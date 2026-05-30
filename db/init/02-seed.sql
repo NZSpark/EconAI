@@ -1,5 +1,5 @@
 -- =============================================================================
--- EconAI Seed Data
+-- PolicyAI Seed Data
 -- Default admin user + example project group
 -- =============================================================================
 
@@ -8,7 +8,7 @@ INSERT INTO users (id, username, email, display_name, hashed_password, role, aut
 VALUES (
     '00000000-0000-0000-0000-000000000001',
     'admin',
-    'admin@econai.local',
+    'admin@policyai.local',
     'System Administrator',
     '$2b$12$peUuCfbcJgduIVpcb/ovHOAgt7KD6lQhVdJWz8NN87HXIinvnU.XG',
     'system_admin',

@@ -2,10 +2,10 @@
 # 用于 output-service 的 openpyxl 生成器
 
 metadata:
-  template_name: "EconAI 对比分析矩阵"
+  template_name: "PolicyAI 对比分析矩阵"
   version: "1.0"
   description: >
-    EconAI 政策比较任务的 Excel 输出模版。包含对比分析矩阵、
+    PolicyAI 政策比较任务的 Excel 输出模版。包含对比分析矩阵、
     引用清单和数据摘要三个工作表。
 
 # ============================================================

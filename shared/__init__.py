@@ -1,4 +1,4 @@
-"""EconAI shared package — common models, config loader, structured logging, and MinIO client."""
+"""PolicyAI shared package — common models, config loader, structured logging, and MinIO client."""
 
 from shared.config import AppSettings, get_settings
 from shared.log_setup import setup_logging

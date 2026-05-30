@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     )
 
     # ——— Application ———
-    app_name: str = "EconAI API Gateway"
+    app_name: str = "PolicyAI API Gateway"
     debug: bool = False
     host: str = "0.0.0.0"
     port: int = 8000

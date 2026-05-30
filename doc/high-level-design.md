@@ -1,4 +1,4 @@
-# EconAI 概要设计文档
+# PolicyAI 概要设计文档
 
 > 版本：v1.0 | 日期：2026-05-17 | 基于需求文档 v2.0（终稿）
 
@@ -89,7 +89,7 @@
 ### 2.2 模块划分与职责
 
 ```
-EconAI
+PolicyAI
 ├── api-gateway/           # API 网关 + 中间件
 │   ├── auth_middleware    # JWT 认证
 │   ├── rbac_middleware    # 角色权限校验
@@ -1030,7 +1030,7 @@ class AgentEngine:
 ```jinja2
 # System
 
-你是 EconAI 经济政策分析助手。你的任务是撰写一份基于给定文献的综述报告。
+你是 PolicyAI 经济政策分析助手。你的任务是撰写一份基于给定文献的综述报告。
 
 ## 当前任务
 {{ task.title }}
@@ -1183,7 +1183,7 @@ async def search_kb(query: str, kb_sources: list[KBSource], user: User) -> list[
 ### 9.2 容器化部署
 
 ```
-econai/
+policyai/
 ├── docker-compose.yml
 ├── services/
 │   ├── api/          # FastAPI 应用

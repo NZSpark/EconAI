@@ -21,7 +21,7 @@ class CitationConfig(BaseSettings):
     CITATION_FORMAT_FOOTNOTE: bool = True  # True = footnote, False = endnote for .docx
 
     # Database (optional, for persistence subtasks)
-    DATABASE_URL: str = "postgresql+asyncpg://localhost:5432/econai"
+    DATABASE_URL: str = "postgresql+asyncpg://localhost:5432/policyai"
 
     # Redis (optional, for service communication)
     REDIS_URL: str = "redis://localhost:6379/0"

@@ -164,7 +164,7 @@ export default function AppLayout() {
             borderBottom: '1px solid rgba(255,255,255,0.1)',
           }}
         >
-          {collapsed ? 'EAI' : 'EconAI'}
+          {collapsed ? 'EAI' : 'PolicyAI'}
         </div>
         <Menu
           theme="dark"

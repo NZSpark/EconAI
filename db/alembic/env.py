@@ -1,4 +1,4 @@
-"""Alembic migration environment for EconAI infrastructure.
+"""Alembic migration environment for PolicyAI infrastructure.
 
 This env.py is shared across all services. Each service's alembic.ini
 points to this file and its own models for autogenerate support.

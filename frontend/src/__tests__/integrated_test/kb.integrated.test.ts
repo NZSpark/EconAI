@@ -308,7 +308,7 @@ function createMinimalDOCX(): Buffer {
     '</Relationships>';
   const document = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-    '<w:body><w:p><w:r><w:t>EconAI DOCX test document</w:t></w:r></w:p></w:body></w:document>';
+    '<w:body><w:p><w:r><w:t>PolicyAI DOCX test document</w:t></w:r></w:p></w:body></w:document>';
   return createMinimalZip([
     { name: '[Content_Types].xml', data: Buffer.from(contentTypes, 'utf-8') },
     { name: '_rels/.rels', data: Buffer.from(rels, 'utf-8') },
@@ -336,10 +336,10 @@ function createMinimalXLSX(): Buffer {
     '</Relationships>';
   const sheet = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-    '<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>EconAI XLSX test</t></is></c></row></sheetData></worksheet>';
+    '<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>PolicyAI XLSX test</t></is></c></row></sheetData></worksheet>';
   const sharedStrings = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="1" uniqueCount="1">' +
-    '<si><t>EconAI XLSX test</t></si></sst>';
+    '<si><t>PolicyAI XLSX test</t></si></sst>';
   return createMinimalZip([
     { name: '[Content_Types].xml', data: Buffer.from(contentTypes, 'utf-8') },
     { name: '_rels/.rels', data: Buffer.from(rels, 'utf-8') },
@@ -396,14 +396,14 @@ function createMinimalEML(): string {
   return [
     'From: sender@example.com',
     'To: recipient@example.com',
-    'Subject: Test Email for EconAI KB Upload',
+    'Subject: Test Email for PolicyAI KB Upload',
     'Date: Mon, 25 May 2026 10:00:00 +0800',
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset="utf-8"',
     '',
     '这是一封测试邮件。',
     '',
-    '用于测试EconAI知识库的邮件文件上传功能。',
+    '用于测试PolicyAI知识库的邮件文件上传功能。',
     '内容包括贸易政策相关的讨论内容。',
     '',
     'Best regards,',
@@ -416,7 +416,7 @@ function createMinimalEML(): string {
 function createMinimalHTML(): string {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><title>EconAI 测试文档</title></head>
+<head><meta charset="UTF-8"><title>PolicyAI 测试文档</title></head>
 <body>
 <h1>贸易政策分析报告</h1>
 <p>本文档用于测试HTML格式的知识库上传功能。</p>

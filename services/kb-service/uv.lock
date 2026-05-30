@@ -337,7 +337,7 @@ wheels = [
 ]
 
 [[package]]
-name = "econai-shared"
+name = "policyai-shared"
 version = "0.1.0"
 source = { directory = "../../shared" }
 dependencies = [
@@ -512,7 +512,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "asyncpg" },
-    { name = "econai-shared" },
+    { name = "policyai-shared" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "jieba" },
@@ -535,7 +535,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.29" },
-    { name = "econai-shared", directory = "../../shared" },
+    { name = "policyai-shared", directory = "../../shared" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jieba", specifier = ">=0.42" },

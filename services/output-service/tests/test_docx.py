@@ -44,7 +44,7 @@ class TestDocxGenerator:
         assert result[:2] == b"PK"
 
     def test_generates_with_header_and_footer(self) -> None:
-        gen = DocxGenerator(institution_name="EconAI")
+        gen = DocxGenerator(institution_name="PolicyAI")
         result = gen.generate(
             title="Report",
             sections=[{"title": "S1", "level": 1, "content": "Content."}],
@@ -58,7 +58,7 @@ class TestDocxGenerator:
             title="Report",
             sections=[{"title": "S1", "level": 1, "content": "Content."}],
             citations=[],
-            metadata={"date": "2026-05-19", "issue_number": "EconAI〔2026〕1号"},
+            metadata={"date": "2026-05-19", "issue_number": "PolicyAI〔2026〕1号"},
         )
         assert isinstance(result, bytes)
         assert result[:2] == b"PK"

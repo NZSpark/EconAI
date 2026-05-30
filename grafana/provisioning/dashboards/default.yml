@@ -2,7 +2,7 @@ apiVersion: 1
 
 providers:
   - name: default
-    folder: EconAI
+    folder: PolicyAI
     type: file
     options:
       path: /var/lib/grafana/dashboards

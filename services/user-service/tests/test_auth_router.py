@@ -97,7 +97,7 @@ def _make_mock_user():
     user.id = uuid.UUID("00000000-0000-0000-0000-000000000001")
     user.username = "admin"
     user.display_name = "Admin"
-    user.email = "admin@econai.local"
+    user.email = "admin@policyai.local"
     user.role = "system_admin"
     user.auth_provider = "local"
     user.is_active = True

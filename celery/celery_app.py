@@ -1,4 +1,4 @@
-"""Celery application factory for EconAI."""
+"""Celery application factory for PolicyAI."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from celery import Celery
 from celery_config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, CELERY_TASK_ROUTES
 
 celery_app = Celery(
-    "econai",
+    "policyai",
     broker=CELERY_BROKER_URL,
     backend=CELERY_RESULT_BACKEND,
     include=[],  # tasks registered by each service at import time
@@ -26,8 +26,8 @@ celery_app.conf.update(
     worker_max_tasks_per_child=200,
     task_routes=CELERY_TASK_ROUTES,
     task_annotations={
-        "econai.document.*": {"queue": "document"},
-        "econai.orchestration.*": {"queue": "orchestration"},
+        "policyai.document.*": {"queue": "document"},
+        "policyai.orchestration.*": {"queue": "orchestration"},
     },
     beat_schedule={},
 )

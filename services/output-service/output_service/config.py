@@ -14,7 +14,7 @@ class OutputServiceConfig(BaseSettings):
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
-    MINIO_BUCKET: str = "econai-outputs"
+    MINIO_BUCKET: str = "policyai-outputs"
     MINIO_SECURE: bool = False
 
     # Output storage
@@ -23,14 +23,14 @@ class OutputServiceConfig(BaseSettings):
     OUTPUT_MAX_FILE_SIZE_MB: int = 50
 
     # DOCX
-    DOCX_INSTITUTION_NAME: str = "EconAI 分析中心"
+    DOCX_INSTITUTION_NAME: str = "PolicyAI 分析中心"
     DOCX_DEFAULT_FONT: str = "仿宋_GB2312"
 
     # PPTX
     PPTX_DEFAULT_THEME: str = "default"
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://econai:econai_secret_change_me@localhost:5432/econai"
+    DATABASE_URL: str = "postgresql+asyncpg://policyai:policyai_secret_change_me@localhost:5432/policyai"
 
     model_config = {"case_sensitive": True}
 

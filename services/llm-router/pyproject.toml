@@ -1,7 +1,7 @@
 [project]
-name = "econai-llm-router"
+name = "policyai-llm-router"
 version = "0.1.0"
-description = "EconAI LLM Router Service - sensitivity-based routing, adapters, retry/circuit-breaker"
+description = "PolicyAI LLM Router Service - sensitivity-based routing, adapters, retry/circuit-breaker"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
@@ -11,7 +11,7 @@ dependencies = [
     "redis>=5.0.0",
     "pydantic-settings>=2.5.0",
     "pyyaml>=6.0",
-    "econai-shared",
+    "policyai-shared",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +24,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

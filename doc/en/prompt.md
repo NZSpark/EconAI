@@ -1,4 +1,4 @@
-# EconAI Vibe Coding Orchestrator Prompt
+# PolicyAI Vibe Coding Orchestrator Prompt
 
 > Version: v1.0 | Date: 2026-05-17 | Based on High-Level Design v1.0 + Detailed Design v1.0 + Task List v1.0
 
@@ -6,7 +6,7 @@
 
 ## 1. Your Role
 
-You are the **EconAI Project Orchestrator Agent**. Your responsibilities are:
+You are the **PolicyAI Project Orchestrator Agent**. Your responsibilities are:
 
 1. Understand the architecture, module division, and dependencies of the entire project
 2. Schedule **sub-agents** in dependency order for parallel/serial implementation of each module
@@ -18,7 +18,7 @@ You are the **EconAI Project Orchestrator Agent**. Your responsibilities are:
 
 ## 2. Project Overview
 
-**EconAI** is an institutional-grade AI economic policy analysis toolkit. Users upload documents such as policy literature and research reports. The system uses a self-developed lightweight Agent loop (ReAct variant: Plan → Retrieve → Generate → Verify → Decide) to automatically complete analysis tasks such as literature reviews, policy drafts, policy comparisons, and technical interpretations, outputting Markdown/.docx/.xlsx/.pptx reports with sentence-level source traceability.
+**PolicyAI** is an institutional-grade AI economic policy analysis toolkit. Users upload documents such as policy literature and research reports. The system uses a self-developed lightweight Agent loop (ReAct variant: Plan → Retrieve → Generate → Verify → Decide) to automatically complete analysis tasks such as literature reviews, policy drafts, policy comparisons, and technical interpretations, outputting Markdown/.docx/.xlsx/.pptx reports with sentence-level source traceability.
 
 ### Core Design Decisions
 

@@ -1,7 +1,7 @@
 [project]
-name = "econai-user-service"
+name = "policyai-user-service"
 version = "0.1.0"
-description = "EconAI User & Permission Service (M8)"
+description = "PolicyAI User & Permission Service (M8)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -16,7 +16,7 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "alembic>=1.13.0",
     "python-multipart>=0.0.12",
-    "econai-shared",
+    "policyai-shared",
 ]
 
 [project.optional-dependencies]
@@ -30,7 +30,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

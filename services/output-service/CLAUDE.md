@@ -43,7 +43,7 @@ Style configs in `templates/output/`:
 - python-docx, openpyxl, python-pptx (document generation)
 - Jinja2 + pyyaml (templates)
 - MinIO (output file storage)
-- `econai-shared`
+- `policyai-shared`
 
 ## Run / test
 

@@ -52,7 +52,7 @@ def _setup_project(
     return resp2.json()["project_id"]
 
 
-def _create_text_file(filename: str, content: str = "Hello, this is a test document for EconAI.") -> str:
+def _create_text_file(filename: str, content: str = "Hello, this is a test document for PolicyAI.") -> str:
     """Create a temporary text file and return its path."""
     tmpdir = tempfile.mkdtemp()
     filepath = os.path.join(tmpdir, filename)
@@ -107,7 +107,7 @@ class TestDocumentUpload:
     ) -> None:
         """Upload a simple .txt file."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
-        filepath = _create_text_file("test_upload.txt", "EconAI document upload test content.")
+        filepath = _create_text_file("test_upload.txt", "PolicyAI document upload test content.")
 
         time.sleep(RATE_LIMIT_DELAY)
         resp = _upload_document(base_url, project_id, auth_headers, filepath)

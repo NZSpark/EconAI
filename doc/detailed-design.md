@@ -1,4 +1,4 @@
-# EconAI 详细设计文档
+# PolicyAI 详细设计文档
 
 > 版本：v1.4 | 日期：2026-05-30 | 基于概要设计文档 v1.0
 
@@ -8,7 +8,7 @@
 
 ### 1.1 目的与范围
 
-本文档对 EconAI 系统的全部服务模块进行接口级详细设计，明确各模块的：
+本文档对 PolicyAI 系统的全部服务模块进行接口级详细设计，明确各模块的：
 - 外部 API 接口（RESTful 端点 + 请求/响应模型）
 - 内部服务间调用接口（同步 RPC + 异步消息）
 - 数据模型定义（逻辑模型 + 物理表映射）
@@ -411,7 +411,7 @@ pending ──→ parsing ──→ ready
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
 | `MINIO_ENDPOINT` | `localhost:9000` | MinIO 地址 |
-| `MINIO_BUCKET` | `econai-documents` | 文档存储 bucket |
+| `MINIO_BUCKET` | `policyai-documents` | 文档存储 bucket |
 | `CHUNK_PARAGRAPH_TARGET_TOKENS` | 300 | 段落级目标 token 数 |
 | `CHUNK_PARAGRAPH_MIN_TOKENS` | 100 | 段落级最小 token 数 |
 | `CHUNK_PARAGRAPH_MAX_TOKENS` | 500 | 段落级最大 token 数 |
@@ -522,7 +522,7 @@ POST /api/institutional/search
     │     每个 chunk → 768d 或 1024d 向量
     │
     ├──→ 写入向量数据库 (Milvus / Qdrant)
-    │     collection: econai_chunks
+    │     collection: policyai_chunks
     │     字段: chunk_id, vector, project_id, document_id, chunk_type
     │
     ├──→ 更新 BM25 索引 (PostgreSQL FTS)
@@ -1364,7 +1364,7 @@ POST /internal/output/generate
     }
   ],
   "metadata": {
-    "author": "EconAI",
+    "author": "PolicyAI",
     "date": "2026-05-17",
     "keywords": ["数字贸易", "发展中国家", "政策分析"]
   },
@@ -1641,7 +1641,7 @@ GET /api/admin/audit-logs?user_id=uuid&action=create_task&resource_type=task&fro
 
 审计日志表通过以下机制保证完整性：
 - 仅 INSERT，无 UPDATE/DELETE 权限（应用层 + 数据库层）
-- 独立的数据库用户 `econai_audit` 写入，应用用户仅 SELECT
+- 独立的数据库用户 `policyai_audit` 写入，应用用户仅 SELECT
 - 定期归档（6 个月后导出至冷存储）
 
 ### 9.6 GDPR 数据主体权利

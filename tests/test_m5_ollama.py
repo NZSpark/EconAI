@@ -139,7 +139,7 @@ class TestLocalLLMChat:
                 "model": "auto",
                 "sensitivity": "high",
                 "messages": [
-                    {"role": "user", "content": "Say exactly: 'Hello from EconAI test'."}
+                    {"role": "user", "content": "Say exactly: 'Hello from PolicyAI test'."}
                 ],
                 "max_tokens": 50,
                 "temperature": 0.0,

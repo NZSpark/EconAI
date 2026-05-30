@@ -274,11 +274,11 @@ wheels = [
 ]
 
 [[package]]
-name = "econai-api-gateway"
+name = "policyai-api-gateway"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "econai-shared" },
+    { name = "policyai-shared" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
@@ -305,7 +305,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "econai-shared", directory = "../shared" },
+    { name = "policyai-shared", directory = "../shared" },
     { name = "fastapi", specifier = ">=0.109.0" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28.0" },
@@ -328,7 +328,7 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [[package]]
-name = "econai-shared"
+name = "policyai-shared"
 version = "0.1.0"
 source = { directory = "../shared" }
 dependencies = [

@@ -50,7 +50,7 @@ services/llm-router/
 - anthropic (Claude SDK)
 - httpx + redis
 - pyyaml (model registry)
-- `econai-shared`
+- `policyai-shared`
 
 ## Model registry (models.yaml)
 

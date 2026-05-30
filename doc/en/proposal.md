@@ -1,10 +1,10 @@
-# EconAI Requirements Document
+# PolicyAI Requirements Document
 
 ## 1. Project Overview
 
 ### 1.1 Project Positioning
 
-EconAI is an AI toolkit for economic policy research institutions. It accelerates the delivery of high-quality economic policy analysis and research results by combining large language model capabilities, trusted evidence bases, project context, and transparent reasoning chains.
+PolicyAI is an AI toolkit for economic policy research institutions. It accelerates the delivery of high-quality economic policy analysis and research results by combining large language model capabilities, trusted evidence bases, project context, and transparent reasoning chains.
 
 ### 1.2 Core Differentiation
 
@@ -29,7 +29,7 @@ EconAI is an AI toolkit for economic policy research institutions. It accelerate
 
 ### 2.1 User Personas
 
-EconAI targets **overall deployment in policy research institutions**, with main user roles:
+PolicyAI targets **overall deployment in policy research institutions**, with main user roles:
 
 | Role | Description | Typical Scenario |
 |------|-------------|-----------------|
@@ -389,7 +389,7 @@ The following items need confirmation from stakeholders before Sprint 1 starts, 
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  EconAI                      [Project▾] [User▾]     │
+│  PolicyAI                      [Project▾] [User▾]     │
 ├──────────┬──────────────────────────────────────────┤
 │          │                                          │
 │  📁 Projects│  Current Task: Literature Review        │

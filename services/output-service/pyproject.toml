@@ -1,7 +1,7 @@
 [project]
 name = "output-service"
 version = "0.1.0"
-description = "EconAI Output Generation Service (M7)"
+description = "PolicyAI Output Generation Service (M7)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -16,7 +16,7 @@ dependencies = [
     "python-pptx>=1.0",
     "jinja2>=3.1",
     "pyyaml>=6.0",
-    "econai-shared",
+    "policyai-shared",
     ]
 
 [project.optional-dependencies]
@@ -30,7 +30,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

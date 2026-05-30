@@ -7,7 +7,7 @@
 
 ## 1. Background
 
-EconAI is currently positioned as an institutional-grade economic policy analysis system, supporting 4 task types:
+PolicyAI is currently positioned as an institutional-grade economic policy analysis system, supporting 4 task types:
 
 | Task Type | Identifier | Description |
 |-----------|-----------|-------------|
@@ -380,7 +380,7 @@ The following is a copy-and-paste standard template — simply replace placehold
 
 ## 7. System Capabilities After Extension
 
-When the system is extended from 4 specialized task types to support arbitrary custom types, EconAI will transform into a **universal knowledge base file analysis system**:
+When the system is extended from 4 specialized task types to support arbitrary custom types, PolicyAI will transform into a **universal knowledge base file analysis system**:
 
 | Capability Dimension | Current (Specialized) | Extended (Universal) |
 |----------------------|----------------------|----------------------|
@@ -416,6 +416,6 @@ When the system is extended from 4 specialized task types to support arbitrary c
 
 ## 9. Conclusion
 
-EconAI's Agent engine (ReAct loop + ToolRegistry) is naturally decoupled from the business domain. Upgrading from a specialized policy analysis system to a universal knowledge base analysis system requires only **approximately 70 lines of code changes**, spread across 7 existing files + 1 new template file. The essence of adding a new task type is **configuration-based registration** — define the output structure (section list), the Agent step plan (tool invocation sequence), and the prompt strategy (Jinja2 template) to adapt the entire system to any knowledge-base-driven analysis scenario.
+PolicyAI's Agent engine (ReAct loop + ToolRegistry) is naturally decoupled from the business domain. Upgrading from a specialized policy analysis system to a universal knowledge base analysis system requires only **approximately 70 lines of code changes**, spread across 7 existing files + 1 new template file. The essence of adding a new task type is **configuration-based registration** — define the output structure (section list), the Agent step plan (tool invocation sequence), and the prompt strategy (Jinja2 template) to adapt the entire system to any knowledge-base-driven analysis scenario.
 
 The core advantage of this architectural design is: **the Agent engine is a platform, and task types are configuration**. Through simple dictionary registration and template authoring, horizontal business domain expansion is achieved without modifying the core loop, tool implementations, state management, or frontend rendering logic.

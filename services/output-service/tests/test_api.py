@@ -126,7 +126,7 @@ class TestGenerateEndpoint:
             "sections": [{"title": "S1", "level": 1, "content": "Text."}],
             "citations": [],
             "formats": ["md"],
-            "metadata": {"author": "EconAI", "date": "2026-05-19", "keywords": ["trade"]},
+            "metadata": {"author": "PolicyAI", "date": "2026-05-19", "keywords": ["trade"]},
         }
         response = await client.post("/internal/output/generate", json=request_body)
         assert response.status_code == 200

@@ -1,4 +1,4 @@
-"""EconAI Knowledge Base Service (M3) — FastAPI application.
+"""PolicyAI Knowledge Base Service (M3) — FastAPI application.
 
 Port 8002. Provides:
   - GET  /health                              Health check
@@ -78,7 +78,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="EconAI Knowledge Base Service",
+    title="PolicyAI Knowledge Base Service",
     version="0.1.0",
     lifespan=lifespan,
 )

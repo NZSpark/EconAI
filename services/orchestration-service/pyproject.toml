@@ -1,7 +1,7 @@
 [project]
 name = "orchestration-service"
 version = "0.1.0"
-description = "EconAI Task Orchestration Service (M4)"
+description = "PolicyAI Task Orchestration Service (M4)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -12,7 +12,7 @@ dependencies = [
     "jinja2>=3.1",
     "redis>=5.0",
     "celery>=5.4",
-    "econai-shared",
+    "policyai-shared",
 ]
 
 [project.optional-dependencies]
@@ -46,7 +46,7 @@ line-length = 120
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
 
 [tool.uv.sources]
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 
 [tool.ruff.format]
 quote-style = "double"

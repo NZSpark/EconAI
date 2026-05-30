@@ -18,7 +18,7 @@ class PptxGenerator:
     """Generates briefing slides in .pptx format."""
 
     def __init__(self, institution_name: str | None = None) -> None:
-        self._institution_name = institution_name or "EconAI 分析中心"
+        self._institution_name = institution_name or "PolicyAI 分析中心"
 
     def generate(
         self,

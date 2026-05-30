@@ -1,4 +1,4 @@
-"""EconAI Task Orchestration Service (M4) — FastAPI application.
+"""PolicyAI Task Orchestration Service (M4) — FastAPI application.
 
 Port 8003. Provides:
   - GET  /health                                      Health check
@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="EconAI Task Orchestration Service",
+    title="PolicyAI Task Orchestration Service",
     version="0.1.0",
     lifespan=lifespan,
 )

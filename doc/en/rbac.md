@@ -1,4 +1,4 @@
-# EconAI Role-Based Access Control (RBAC) Design
+# PolicyAI Role-Based Access Control (RBAC) Design
 
 > Version: v2.0 | Date: 2026-05-24 | Derived from Requirements v2.0, High-Level Design v1.0, Detailed Design v1.0
 

@@ -25,9 +25,9 @@ describe('Login Page', () => {
     expect(screen.getByPlaceholderText('密码')).toBeInTheDocument();
   });
 
-  it('should show EconAI title', () => {
+  it('should show PolicyAI title', () => {
     render(<MemoryRouter><Login /></MemoryRouter>);
-    expect(screen.getByText('EconAI')).toBeInTheDocument();
+    expect(screen.getByText('PolicyAI')).toBeInTheDocument();
     expect(screen.getByText('智能经济政策分析平台')).toBeInTheDocument();
   });
 

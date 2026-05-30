@@ -1,8 +1,8 @@
-# EconAI — Institutional-Grade AI Economic Policy Analysis Toolkit
+# PolicyAI — Institutional-Grade AI Economic Policy Analysis Toolkit
 
 > **Created**: 2026-05-17 &nbsp;|&nbsp; **Status**: All 10 modules complete (376/376 subtasks) &nbsp;|&nbsp; **Tests**: 638 (unit + integration + e2e)
 
-EconAI is an AI-powered toolkit for economic policy research institutions. It combines LLM reasoning with a trusted evidence base to generate structured analysis reports — literature reviews, policy drafts, policy comparisons, and technical interpretations — with sentence-level source provenance, and exports to Markdown, .docx (GB/T 9704), .xlsx, and .pptx.
+PolicyAI is an AI-powered toolkit for economic policy research institutions. It combines LLM reasoning with a trusted evidence base to generate structured analysis reports — literature reviews, policy drafts, policy comparisons, and technical interpretations — with sentence-level source provenance, and exports to Markdown, .docx (GB/T 9704), .xlsx, and .pptx.
 
 ## Project at a Glance
 
@@ -23,9 +23,9 @@ EconAI is an AI-powered toolkit for economic policy research institutions. It co
 
 ## Architecture
 
-![System Abstract Architecture](doc/architecture/EconAI_SystemAbstract_Architecture_EN.png)
+![System Abstract Architecture](doc/architecture/PolicyAI_SystemAbstract_Architecture_EN.png)
 
-![Multi-Layer Architecture](doc/architecture/EconAI_MultiLayers_Architecture_EN.png)
+![Multi-Layer Architecture](doc/architecture/PolicyAI_MultiLayers_Architecture_EN.png)
 
 8 backend modules behind an API gateway, deployed via Docker Compose (20 containers):
 
@@ -42,7 +42,7 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
             └── orchestration-service :8003 — Agent engine (ReAct loop), task lifecycle, tool execution
 ```
 
-![Deployment Topology](doc/architecture/EconAI_KB_Deploy_EN.png)
+![Deployment Topology](doc/architecture/PolicyAI_KB_Deploy_EN.png)
 
 ### Data flow
 
@@ -51,7 +51,7 @@ Client (React 19 + TypeScript 5 + Ant Design 6)
 3. **Cite**: LLM outputs inline `[ref:doc_id:page_range]` → Citation service verifies against source chunks → classifies confidence (direct / fuzzy / uncertain)
 4. **Export**: Output service renders Markdown preview + generates .docx / .xlsx / .pptx with citations
 
-![Data Flow](doc/architecture/EconAI_Data_Flow_EN.png)
+![Data Flow](doc/architecture/PolicyAI_Data_Flow_EN.png)
 
 ### Key design decisions
 
@@ -101,7 +101,7 @@ brew install colima docker docker-compose python@3.14 uv node tesseract
 colima start --cpu 4 --memory 8 --disk 60
 
 # Clone and enter project
-git clone <repo-url> && cd EconAI
+git clone <repo-url> && cd PolicyAI
 
 # Start infrastructure services (PostgreSQL, Redis, Milvus, MinIO, Nginx, Prometheus, Grafana)
 docker compose up -d

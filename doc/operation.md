@@ -1,36 +1,36 @@
-# EconAI 运维手册
+# PolicyAI 运维手册
 
-> 版本：v1.3 | 适用于 EconAI v1.3 完整部署
+> 版本：v1.3 | 适用于 PolicyAI v1.3 完整部署
 
 ---
 
 ## 1. 系统架构概览
 
-EconAI 由以下服务组成，部署在单台或多台服务器上：
+PolicyAI 由以下服务组成，部署在单台或多台服务器上：
 
 | 组件 | 容器名 | 端口 | 说明 |
 |------|--------|------|------|
-| Nginx | `econai-nginx` | 80, 443 | 反向代理 + TLS 终结 |
-| API Gateway | `econai-api-gateway` | 8000 | JWT 认证/RBAC/限流/审计 |
-| Document Service | `econai-document-service` | 8001 | 文档上传/解析/分块/OCR |
-| KB Service | `econai-kb-service` | 8002 | 向量索引/混合检索 |
-| Orchestration Service | `econai-orchestration-service` | 8003 | Agent 引擎/任务编排 |
-| LLM Router | `econai-llm-router` | 8004 | LLM 路由/适配器 |
-| Citation Service | `econai-citation-service` | 8005 | 引用解析/校验/格式化 |
-| Output Service | `econai-output-service` | 8006 | 多格式报告生成 |
-| User Service | `econai-user-service` | 8007 | 认证/RBAC/审计日志 |
-| PostgreSQL | `econai-postgres` | 5432 | 业务数据 + FTS |
-| Redis | `econai-redis` | 6379 | 缓存/队列/pub-sub/限流 |
-| Milvus | `econai-milvus` | 19530 | 向量索引 |
-| etcd | `econai-etcd` | 2379 | Milvus 元数据协调 |
-| MinIO | `econai-minio` | 9000, 9001 | 对象存储 |
-| Celery Worker (Document) | `econai-celery-document` | - | 异步文档解析 |
-| Celery Worker (Orchestration) | `econai-celery-orchestration` | - | 异步 Agent 分析 |
-| Celery Beat | `econai-celery-beat` | - | 定时任务调度 |
-| Prometheus | `econai-prometheus` | 9090 | 指标采集 |
-| Grafana | `econai-grafana` | 3000 | 监控仪表盘 |
+| Nginx | `policyai-nginx` | 80, 443 | 反向代理 + TLS 终结 |
+| API Gateway | `policyai-api-gateway` | 8000 | JWT 认证/RBAC/限流/审计 |
+| Document Service | `policyai-document-service` | 8001 | 文档上传/解析/分块/OCR |
+| KB Service | `policyai-kb-service` | 8002 | 向量索引/混合检索 |
+| Orchestration Service | `policyai-orchestration-service` | 8003 | Agent 引擎/任务编排 |
+| LLM Router | `policyai-llm-router` | 8004 | LLM 路由/适配器 |
+| Citation Service | `policyai-citation-service` | 8005 | 引用解析/校验/格式化 |
+| Output Service | `policyai-output-service` | 8006 | 多格式报告生成 |
+| User Service | `policyai-user-service` | 8007 | 认证/RBAC/审计日志 |
+| PostgreSQL | `policyai-postgres` | 5432 | 业务数据 + FTS |
+| Redis | `policyai-redis` | 6379 | 缓存/队列/pub-sub/限流 |
+| Milvus | `policyai-milvus` | 19530 | 向量索引 |
+| etcd | `policyai-etcd` | 2379 | Milvus 元数据协调 |
+| MinIO | `policyai-minio` | 9000, 9001 | 对象存储 |
+| Celery Worker (Document) | `policyai-celery-document` | - | 异步文档解析 |
+| Celery Worker (Orchestration) | `policyai-celery-orchestration` | - | 异步 Agent 分析 |
+| Celery Beat | `policyai-celery-beat` | - | 定时任务调度 |
+| Prometheus | `policyai-prometheus` | 9090 | 指标采集 |
+| Grafana | `policyai-grafana` | 3000 | 监控仪表盘 |
 
-所有服务通过 `econai-network` 桥接网络通信。
+所有服务通过 `policyai-network` 桥接网络通信。
 
 ---
 
@@ -57,8 +57,8 @@ EconAI 由以下服务组成，部署在单台或多台服务器上：
 ### 3.1 获取代码
 
 ```bash
-git clone <repository-url> /opt/econai
-cd /opt/econai
+git clone <repository-url> /opt/policyai
+cd /opt/policyai
 ```
 
 ### 3.2 配置环境变量
@@ -101,19 +101,19 @@ mkdir -p nginx/ssl
 
 # 自签证书（仅开发/测试）
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/econai.key \
-  -out nginx/ssl/econai.crt \
+  -keyout nginx/ssl/policyai.key \
+  -out nginx/ssl/policyai.crt \
   -subj "/CN=localhost"
 
 # 生产环境请使用 Let's Encrypt 或机构签发证书
 # certbot certonly --standalone -d your-domain.com
-# cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/econai.crt
-# cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/econai.key
+# cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/policyai.crt
+# cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/policyai.key
 ```
 
 ### 3.4 配置本地 LLM（可选）
 
-EconAI 的 LLM Router 支持两种后端提供商：
+PolicyAI 的 LLM Router 支持两种后端提供商：
 
 - **Cloud（Anthropic Claude）**：走 `ClaudeAdapter`，直接调用 Anthropic Messages API
 - **Local（vLLM / Ollama / OpenAI 兼容）**：走 `LocalAdapter`，通过 OpenAI-compatible `/v1/chat/completions` 接口调用
@@ -149,7 +149,7 @@ ollama list
 curl http://localhost:11434/v1/models
 ```
 
-**3. 修改 EconAI 配置**
+**3. 修改 PolicyAI 配置**
 
 编辑 `.env`，设置 Ollama 的 OpenAI 兼容端点：
 
@@ -320,7 +320,7 @@ docker compose up -d api-gateway
 
 ```bash
 # 连接数据库
-docker exec -it econai-postgres psql -U econai -d econai
+docker exec -it policyai-postgres psql -U policyai -d policyai
 
 # 常用查询
 SELECT count(*) FROM documents;           -- 文档总数
@@ -328,10 +328,10 @@ SELECT count(*) FROM analysis_tasks;      -- 任务总数
 SELECT status, count(*) FROM analysis_tasks GROUP BY status;  -- 任务状态分布
 
 # 备份数据库
-docker exec econai-postgres pg_dump -U econai econai > backup_$(date +%Y%m%d).sql
+docker exec policyai-postgres pg_dump -U policyai policyai > backup_$(date +%Y%m%d).sql
 
 # 恢复数据库
-docker exec -i econai-postgres psql -U econai econai < backup_20260101.sql
+docker exec -i policyai-postgres psql -U policyai policyai < backup_20260101.sql
 ```
 
 ### MinIO 文件管理
@@ -341,7 +341,7 @@ MinIO Console 地址：`http://<host>:9001`
 - 用户名：`MINIO_ROOT_USER`（默认 `minioadmin`）
 - 密码：`MINIO_ROOT_PASSWORD`
 
-两个 Bucket：`econai-documents`（原始文档）、`econai-outputs`（生成的报告文件）。
+两个 Bucket：`policyai-documents`（原始文档）、`policyai-outputs`（生成的报告文件）。
 
 ### 日志查看
 
@@ -356,7 +356,7 @@ docker compose logs --tail=200 api-gateway
 docker compose logs --since 2026-01-01T00:00:00 orchestration-service
 
 # 导出日志
-docker compose logs > econai-logs-$(date +%Y%m%d).txt 2>&1
+docker compose logs > policyai-logs-$(date +%Y%m%d).txt 2>&1
 ```
 
 日志格式为 JSON，包含 `timestamp`、`level`、`logger`、`message`、`request_id` 等字段。
@@ -365,13 +365,13 @@ docker compose logs > econai-logs-$(date +%Y%m%d).txt 2>&1
 
 ```bash
 # 查看 document 队列
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD LLEN document
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD LLEN document
 
 # 查看 orchestration 队列
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD LLEN orchestration
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD LLEN orchestration
 
 # 清空队列（谨慎！）
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD DEL document
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD DEL document
 ```
 
 ---
@@ -411,28 +411,28 @@ docker exec econai-redis redis-cli -a $REDIS_PASSWORD DEL document
 
 | 数据 | 位置 | 备份方式 | 频率 |
 |------|------|----------|------|
-| PostgreSQL | Docker Volume `econai-postgres-data` | `pg_dump` | 每日 |
-| MinIO 文件 | Docker Volume `econai-minio-data` | `mc mirror` | 每日 |
-| Redis 数据 | Docker Volume `econai-redis-data` | AOF 文件（默认开启） | 实时 |
+| PostgreSQL | Docker Volume `policyai-postgres-data` | `pg_dump` | 每日 |
+| MinIO 文件 | Docker Volume `policyai-minio-data` | `mc mirror` | 每日 |
+| Redis 数据 | Docker Volume `policyai-redis-data` | AOF 文件（默认开启） | 实时 |
 | 配置文件 | `.env`、`nginx/` | Git 或文件复制 | 修改后 |
 
 ### 备份脚本示例
 
 ```bash
 #!/bin/bash
-# 保存为 /opt/econai/deploy/backup.sh
-BACKUP_DIR=/backup/econai
+# 保存为 /opt/policyai/deploy/backup.sh
+BACKUP_DIR=/backup/policyai
 DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p $BACKUP_DIR/$DATE
 
 # 备份 PostgreSQL
-docker exec econai-postgres pg_dump -U econai econai > $BACKUP_DIR/$DATE/db.sql
+docker exec policyai-postgres pg_dump -U policyai policyai > $BACKUP_DIR/$DATE/db.sql
 
 # 备份 MinIO
-docker run --rm --network econai-network \
+docker run --rm --network policyai-network \
   -v $BACKUP_DIR/$DATE:/backup \
   minio/mc:latest \
-  mc mirror local/econai-documents /backup/documents
+  mc mirror local/policyai-documents /backup/documents
 
 # 备份配置
 cp .env $BACKUP_DIR/$DATE/.env
@@ -450,7 +450,7 @@ find $BACKUP_DIR -maxdepth 1 -type d -mtime +30 -exec rm -rf {} \;
 # 2. 恢复数据库
 docker compose up -d postgres
 sleep 10
-docker exec -i econai-postgres psql -U econai econai < backup/db.sql
+docker exec -i policyai-postgres psql -U policyai policyai < backup/db.sql
 
 # 3. 恢复 MinIO 文件
 # 通过 MinIO Console 上传，或使用 mc 客户端
@@ -526,10 +526,10 @@ docker compose logs redis
 
 ```bash
 # 检查 PostgreSQL 是否就绪
-docker exec econai-postgres pg_isready -U econai
+docker exec policyai-postgres pg_isready -U policyai
 
 # 检查连接数
-docker exec econai-postgres psql -U econai -c "SELECT count(*) FROM pg_stat_activity;"
+docker exec policyai-postgres psql -U policyai -c "SELECT count(*) FROM pg_stat_activity;"
 
 # 重置连接
 docker compose restart postgres
@@ -581,31 +581,31 @@ killall ollama && ollama serve &
 
 <｜｜DSML｜｜tool_calls>
 <｜｜DSML｜｜invoke name="read_file">
-<｜｜DSML｜｜parameter name="filePath" string="true">/Users/onetreehill/EconAI/doc/operation.md
+<｜｜DSML｜｜parameter name="filePath" string="true">/Users/onetreehill/PolicyAI/doc/operation.md
 
 ### 任务卡在 running 状态
 
 ```bash
 # 查看卡住的任务
-docker exec econai-postgres psql -U econai -c \
+docker exec policyai-postgres psql -U policyai -c \
   "SELECT id, title, status, started_at FROM analysis_tasks WHERE status='running' AND started_at < now() - interval '30 minutes';"
 
 # 手动取消任务
-docker exec econai-postgres psql -U econai -c \
+docker exec policyai-postgres psql -U policyai -c \
   "UPDATE analysis_tasks SET status='failed', error_message='Manual timeout recovery' WHERE id='<task-id>';"
 
 # 清空 Celery 队列中的旧任务
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD DEL orchestration
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD DEL orchestration
 ```
 
 ### Redis 内存不足
 
 ```bash
 # 检查内存使用
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD INFO memory
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD INFO memory
 
 # 手动清理过期缓存
-docker exec econai-redis redis-cli -a $REDIS_PASSWORD MEMORY PURGE
+docker exec policyai-redis redis-cli -a $REDIS_PASSWORD MEMORY PURGE
 
 # 增大 maxmemory（修改 .env 后重启）
 REDIS_MAXMEMORY=4gb
@@ -727,7 +727,7 @@ docker image prune -a
 docker rmi $(docker images -q)
 ```
 
-典型可删除的 EconAI 基础设施镜像：
+典型可删除的 PolicyAI 基础设施镜像：
 
 | 镜像 | 大小 | 说明 |
 |------|------|------|
@@ -743,13 +743,13 @@ docker rmi $(docker images -q)
 > **危险操作**：卷中包含数据库、向量索引和上传文件。确认不需要数据后再执行。
 
 ```bash
-# 查看 EconAI 相关卷
-docker volume ls --filter "name=econai"
+# 查看 PolicyAI 相关卷
+docker volume ls --filter "name=policyai"
 
-# 删除所有 EconAI 卷（数据不可恢复！）
-docker volume rm econai-etcd-data econai-milvus-data \
-                econai-minio-data econai-postgres-data \
-                econai-redis-data
+# 删除所有 PolicyAI 卷（数据不可恢复！）
+docker volume rm policyai-etcd-data policyai-milvus-data \
+                policyai-minio-data policyai-postgres-data \
+                policyai-redis-data
 
 # 或删除所有未使用的卷
 docker volume prune
@@ -758,7 +758,7 @@ docker volume prune
 ### 11.6 完全清理（一键）
 
 ```bash
-# 停止并清理所有 EconAI 相关资源
+# 停止并清理所有 PolicyAI 相关资源
 ./deploy/deploy.sh stop
 docker image prune -a --force
 docker volume prune --force
@@ -802,7 +802,7 @@ class UserServiceSettings(AppSettings):
 
 ```yaml
 # ❌ 错误 —— 会被两个服务的 env_prefix 双双忽略
-- JWT_SECRET=econai_jwt_secret_change_me_min_32_chars
+- JWT_SECRET=policyai_jwt_secret_change_me_min_32_chars
 - JWT_ALGORITHM=HS256
 ```
 
@@ -812,13 +812,13 @@ class UserServiceSettings(AppSettings):
 
 ```yaml
 # ✅ 正确 —— api-gateway 环境变量
-- API_GATEWAY_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+- API_GATEWAY_JWT_SECRET=${JWT_SECRET:-policyai_jwt_secret_change_me_min_32_chars}
 - API_GATEWAY_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
 - API_GATEWAY_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
 - API_GATEWAY_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
 
 # ✅ 正确 —— user-service 环境变量
-- USER_SERVICE_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+- USER_SERVICE_JWT_SECRET=${JWT_SECRET:-policyai_jwt_secret_change_me_min_32_chars}
 - USER_SERVICE_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
 - USER_SERVICE_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
 - USER_SERVICE_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
@@ -827,8 +827,8 @@ class UserServiceSettings(AppSettings):
 **验证方法**：
 
 ```bash
-docker exec econai-api-gateway python -c "from app.config import settings; print(settings.jwt_secret)"
-docker exec econai-user-service python -c "from app.config import settings; print(settings.jwt_secret)"
+docker exec policyai-api-gateway python -c "from app.config import settings; print(settings.jwt_secret)"
+docker exec policyai-user-service python -c "from app.config import settings; print(settings.jwt_secret)"
 # 两个输出必须完全一致
 ```
 
@@ -864,16 +864,16 @@ LOCAL_LLM_ENDPOINT=http://host.docker.internal:11434/v1
 **排查**：检查数据库中是否有累积的孤儿测试数据：
 
 ```bash
-docker exec econai-postgres psql -U econai -d econai -c \
+docker exec policyai-postgres psql -U policyai -d policyai -c \
   "SELECT username FROM users WHERE username LIKE 'lifecycle_%' OR username LIKE 'test%';"
-docker exec econai-postgres psql -U econai -d econai -c \
+docker exec policyai-postgres psql -U policyai -d policyai -c \
   "SELECT name FROM projects ORDER BY created_at DESC LIMIT 20;"
 ```
 
 **清理**：
 
 ```bash
-docker exec econai-postgres psql -U econai -d econai -c \
+docker exec policyai-postgres psql -U policyai -d policyai -c \
   "DELETE FROM projects; DELETE FROM users WHERE username != 'admin';"
 ```
 
@@ -895,7 +895,7 @@ docker compose up -d --no-deps --force-recreate service-name
 
 ## 13. Dockerfile 构建规范
 
-EconAI 所有服务 Dockerfile 遵循统一的构建模式。以下四个关键要素是多次踩坑后沉淀的硬性规范，修改 Dockerfile 时必须遵守：
+PolicyAI 所有服务 Dockerfile 遵循统一的构建模式。以下四个关键要素是多次踩坑后沉淀的硬性规范，修改 Dockerfile 时必须遵守：
 
 ### 13.1 不使用 BuildKit bind mount
 
@@ -928,7 +928,7 @@ include = ["shared"]
 ### 13.3 不用 `--only-binary :all:`
 
 ```dockerfile
-# ❌ 错误（禁止所有源码安装，包括自己的 econai-shared 和 `uv pip install .`）
+# ❌ 错误（禁止所有源码安装，包括自己的 policyai-shared 和 `uv pip install .`）
 RUN uv pip install --only-binary :all: --system .
 
 # ✅ 正确（所有依赖已有 ARM64 预编译 wheel）
@@ -951,7 +951,7 @@ RUN sed -i 's|path = "../shared"|path = "/shared"|g' pyproject.toml && \
 
 **原因**：服务 `pyproject.toml` 中的 `[tool.uv.sources]` 使用相对路径指向 shared：
 ```toml
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 ```
 `uv pip install .` 会强制解析此路径。从 `/app/` 计算 `../../shared` 逃出基目录，uv 直接报错。先用 `sed` 改成容器内绝对路径 `/shared` 即可让 uv 正常解析。
 
@@ -1037,8 +1037,8 @@ econai-shared = { path = "../../shared" }
 | 查看磁盘占用 | `docker system df` |
 | 删除所有镜像 | `docker rmi $(docker images -q)` |
 | 清理未使用资源 | `docker system prune -a` |
-| 进入 PostgreSQL | `docker exec -it econai-postgres psql -U econai` |
-| 进入 Redis | `docker exec -it econai-redis redis-cli -a <password>` |
+| 进入 PostgreSQL | `docker exec -it policyai-postgres psql -U policyai` |
+| 进入 Redis | `docker exec -it policyai-redis redis-cli -a <password>` |
 | API 健康检查 | `curl http://localhost:8000/health` |
 | Prometheus | `http://<host>:9090` |
 | Grafana | `http://<host>:3000` |

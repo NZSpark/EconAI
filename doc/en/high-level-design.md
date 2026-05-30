@@ -1,4 +1,4 @@
-# EconAI High-Level Design Document
+# PolicyAI High-Level Design Document
 
 > Version: v1.0 | Date: 2026-05-17 | Based on Requirements Document v2.0 (Final)
 
@@ -96,7 +96,7 @@ Based on the institutional-grade AI analysis toolkit positioning confirmed in th
 ### 2.2 Module Division and Responsibilities
 
 ```
-EconAI
+PolicyAI
 ├── api-gateway/           # API Gateway + Middleware
 │   ├── auth_middleware    # JWT Authentication
 │   ├── rbac_middleware    # Role-Based Access Control
@@ -1049,7 +1049,7 @@ class AgentEngine:
 ```jinja2
 # System
 
-You are the EconAI economic policy analysis assistant. Your task is to write a review report based on the provided literature.
+You are the PolicyAI economic policy analysis assistant. Your task is to write a review report based on the provided literature.
 
 ## Current Task
 {{ task.title }}
@@ -1209,7 +1209,7 @@ async def search_kb(query: str, kb_sources: list[KBSource], user: User) -> list[
 ### 9.2 Containerized Deployment
 
 ```
-econai/
+policyai/
 ├── docker-compose.yml
 ├── services/
 │   ├── api/          # FastAPI Application

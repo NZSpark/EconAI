@@ -12,7 +12,7 @@ FROM python:3.12-slim
 ARG SERVICE_DIR=.
 
 WORKDIR /app
-RUN groupadd -r econai && useradd -r -g econai econai
+RUN groupadd -r policyai && useradd -r -g policyai policyai
 
 RUN pip install --no-cache-dir uv
 
@@ -23,8 +23,8 @@ RUN uv pip install --system --no-deps .
 
 COPY ${SERVICE_DIR}/. .
 
-RUN chown -R econai:econai /app
-USER econai
+RUN chown -R policyai:policyai /app
+USER policyai
 
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 \

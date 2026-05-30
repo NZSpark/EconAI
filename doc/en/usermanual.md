@@ -1,12 +1,12 @@
-# EconAI User Manual
+# PolicyAI User Manual
 
-> Version: v1.3 | For EconAI v1.3
+> Version: v1.3 | For PolicyAI v1.3
 
 ---
 
 ## 1. System Overview
 
-EconAI is an AI-driven economic policy analysis toolkit. You can upload policy literature, research reports, and other documents. The system automatically completes analysis tasks such as literature reviews, policy drafts, policy comparisons, and technical interpretations, producing professional reports with **sentence-level source traceability**.
+PolicyAI is an AI-driven economic policy analysis toolkit. You can upload policy literature, research reports, and other documents. The system automatically completes analysis tasks such as literature reviews, policy drafts, policy comparisons, and technical interpretations, producing professional reports with **sentence-level source traceability**.
 
 ### Core Features
 
@@ -33,7 +33,7 @@ All AI-generated reports carry **sentence-level citation annotations** traceable
 
 ### 2.1 Open the System
 
-Access the link provided by your system administrator in a browser (e.g., `https://econai.your-institution.cn`).
+Access the link provided by your system administrator in a browser (e.g., `https://policyai.your-institution.cn`).
 
 ### 2.2 Login
 

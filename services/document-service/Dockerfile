@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-chi-tra \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r econai && useradd -r -g econai econai
+RUN groupadd -r policyai && useradd -r -g policyai policyai
 RUN pip install --no-cache-dir uv
 
 COPY shared /shared
@@ -19,8 +19,8 @@ RUN sed -i 's|path = "../../shared"|path = "/shared"|g' pyproject.toml && uv pip
 
 COPY ${SERVICE_DIR}/. .
 
-RUN chown -R econai:econai /app
-USER econai
+RUN chown -R policyai:policyai /app
+USER policyai
 
 EXPOSE 8001
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 \

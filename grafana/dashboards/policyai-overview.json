@@ -29,8 +29,8 @@
       "type": "graph",
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
       "targets": [
-        {"expr": "rate(econai_tasks_total{status=\"completed\"}[5m])", "legendFormat": "completed"},
-        {"expr": "rate(econai_tasks_total{status=\"failed\"}[5m])", "legendFormat": "failed"}
+        {"expr": "rate(policyai_tasks_total{status=\"completed\"}[5m])", "legendFormat": "completed"},
+        {"expr": "rate(policyai_tasks_total{status=\"failed\"}[5m])", "legendFormat": "failed"}
       ],
       "yaxes": [{"format": "ops"}]
     },
@@ -39,7 +39,7 @@
       "type": "graph",
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
       "targets": [
-        {"expr": "sum(rate(econai_llm_tokens_total[5m])) by (model)", "legendFormat": "{{model}}"}
+        {"expr": "sum(rate(policyai_llm_tokens_total[5m])) by (model)", "legendFormat": "{{model}}"}
       ],
       "yaxes": [{"format": "short"}]
     },
@@ -57,7 +57,7 @@
       "type": "stat",
       "gridPos": {"h": 6, "w": 8, "x": 0, "y": 24},
       "targets": [
-        {"expr": "econai_tasks_active", "legendFormat": "{{task_type}}"}
+        {"expr": "policyai_tasks_active", "legendFormat": "{{task_type}}"}
       ]
     },
     {
@@ -74,8 +74,8 @@
   ],
   "refresh": "30s",
   "schemaVersion": 27,
-  "tags": ["econai"],
+  "tags": ["policyai"],
   "time": {"from": "now-1h", "to": "now"},
   "timepicker": {"refresh_intervals": ["10s", "30s", "1m", "5m"]},
-  "title": "EconAI Overview"
+  "title": "PolicyAI Overview"
 }

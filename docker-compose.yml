@@ -1,11 +1,11 @@
 # =============================================================================
-# EconAI Docker Compose - All Services
+# PolicyAI Docker Compose - All Services
 # =============================================================================
 
 x-common-service: &common-service
   restart: unless-stopped
   networks:
-    - econai-network
+    - policyai-network
 
 x-microservice: &microservice
   <<: *common-service
@@ -17,13 +17,13 @@ x-microservice: &microservice
     - LOG_LEVEL=${LOG_LEVEL:-INFO}
     - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
     - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-    - POSTGRES_DB=${POSTGRES_DB:-econai}
-    - POSTGRES_USER=${POSTGRES_USER:-econai}
-    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-econai_secret_change_me}
+    - POSTGRES_DB=${POSTGRES_DB:-policyai}
+    - POSTGRES_USER=${POSTGRES_USER:-policyai}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-policyai_secret_change_me}
     - REDIS_HOST=${REDIS_HOST:-redis}
     - REDIS_PORT=${REDIS_PORT:-6379}
-    - REDIS_PASSWORD=${REDIS_PASSWORD:-econai_redis_change_me}
-    - JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+    - REDIS_PASSWORD=${REDIS_PASSWORD:-policyai_redis_change_me}
+    - JWT_SECRET=${JWT_SECRET:-policyai_jwt_secret_change_me_min_32_chars}
     - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
 
 services:
@@ -34,18 +34,18 @@ services:
   postgres:
     <<: *common-service
     image: postgres:${POSTGRES_VERSION:-16}-alpine
-    container_name: econai-postgres
+    container_name: policyai-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-econai}
-      POSTGRES_USER: ${POSTGRES_USER:-econai}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-econai_secret_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-policyai}
+      POSTGRES_USER: ${POSTGRES_USER:-policyai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-policyai_secret_change_me}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-econai} -d ${POSTGRES_DB:-econai}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-policyai} -d ${POSTGRES_DB:-policyai}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -54,10 +54,10 @@ services:
   redis:
     <<: *common-service
     image: redis:${REDIS_VERSION:-7}-alpine
-    container_name: econai-redis
+    container_name: policyai-redis
     command: >
       redis-server
-      --requirepass ${REDIS_PASSWORD:-econai_redis_change_me}
+      --requirepass ${REDIS_PASSWORD:-policyai_redis_change_me}
       --maxmemory ${REDIS_MAXMEMORY:-2gb}
       --maxmemory-policy ${REDIS_MAXMEMORY_POLICY:-allkeys-lru}
       --appendonly yes
@@ -70,7 +70,7 @@ services:
       - redis-data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     healthcheck:
-      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-econai_redis_change_me}", "ping"]
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-policyai_redis_change_me}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -79,7 +79,7 @@ services:
   milvus:
     <<: *common-service
     image: milvusdb/milvus:v2.4.0
-    container_name: econai-milvus
+    container_name: policyai-milvus
     environment:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
@@ -106,7 +106,7 @@ services:
   etcd:
     <<: *common-service
     image: quay.io/coreos/etcd:v3.5.5
-    container_name: econai-etcd
+    container_name: policyai-etcd
     environment:
       ETCD_AUTO_COMPACTION_MODE: revision
       ETCD_AUTO_COMPACTION_RETENTION: "1000"
@@ -125,7 +125,7 @@ services:
   minio:
     <<: *common-service
     image: minio/minio:latest
-    container_name: econai-minio
+    container_name: policyai-minio
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin_change_me}
@@ -148,19 +148,19 @@ services:
     image: minio/mc:latest
     restart: "no"
     networks:
-      - econai-network
-    container_name: econai-minio-init
+      - policyai-network
+    container_name: policyai-minio-init
     entrypoint: >
       /bin/sh -c "
       until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin_change_me}; do
         echo 'Waiting for MinIO...';
         sleep 3;
       done;
-      mc mb --ignore-existing local/${MINIO_DOCUMENT_BUCKET:-econai-documents};
-      mc mb --ignore-existing local/${MINIO_OUTPUT_BUCKET:-econai-outputs};
-      mc policy set download local/${MINIO_DOCUMENT_BUCKET:-econai-documents};
-      mc policy set download local/${MINIO_OUTPUT_BUCKET:-econai-outputs};
-      mc ilm add --expiry-days 7 local/${MINIO_DOCUMENT_BUCKET:-econai-documents}/tmp/;
+      mc mb --ignore-existing local/${MINIO_DOCUMENT_BUCKET:-policyai-documents};
+      mc mb --ignore-existing local/${MINIO_OUTPUT_BUCKET:-policyai-outputs};
+      mc policy set download local/${MINIO_DOCUMENT_BUCKET:-policyai-documents};
+      mc policy set download local/${MINIO_OUTPUT_BUCKET:-policyai-outputs};
+      mc ilm add --expiry-days 7 local/${MINIO_DOCUMENT_BUCKET:-policyai-documents}/tmp/;
       echo 'MinIO buckets initialized.';
       exit 0;
       "
@@ -174,7 +174,7 @@ services:
 
   api-gateway:
     <<: *microservice
-    container_name: econai-api-gateway
+    container_name: policyai-api-gateway
     build:
       context: .
       dockerfile: ./api-gateway/Dockerfile
@@ -185,7 +185,7 @@ services:
       - API_GATEWAY_PORT=${API_GATEWAY_PORT:-8000}
       - API_GATEWAY_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
       - API_GATEWAY_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
-      - API_GATEWAY_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+      - API_GATEWAY_JWT_SECRET=${JWT_SECRET:-policyai_jwt_secret_change_me_min_32_chars}
       - API_GATEWAY_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - CORS_ORIGINS=${CORS_ORIGINS:-[\"*\"]}
       - AUDIT_LOG_ENABLED=${AUDIT_LOG_ENABLED:-true}
@@ -198,7 +198,7 @@ services:
       - KB_SERVICE_URL=http://kb-service:8002
       - ORCHESTRATION_SERVICE_URL=http://orchestration-service:8003
       - OUTPUT_SERVICE_URL=http://output-service:8006
-      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
+      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
     ports:
       - "${API_GATEWAY_PORT:-8000}:8000"
     depends_on:
@@ -215,7 +215,7 @@ services:
 
   document-service:
     <<: *microservice
-    container_name: econai-document-service
+    container_name: policyai-document-service
     build:
       context: .
       dockerfile: ./services/document-service/Dockerfile
@@ -224,11 +224,11 @@ services:
     environment:
       - DOCUMENT_SERVICE_HOST=${DOCUMENT_SERVICE_HOST:-0.0.0.0}
       - DOCUMENT_SERVICE_PORT=${DOCUMENT_SERVICE_PORT:-8001}
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-econai}:${POSTGRES_PASSWORD:-econai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-econai}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-policyai}:${POSTGRES_PASSWORD:-policyai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-policyai}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-econai_access_key}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-econai_secret_key_change_me}
-      - MINIO_BUCKET=${MINIO_DOCUMENT_BUCKET:-econai-documents}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-policyai_access_key}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-policyai_secret_key_change_me}
+      - MINIO_BUCKET=${MINIO_DOCUMENT_BUCKET:-policyai-documents}
       - CHUNK_PARAGRAPH_TARGET_TOKENS=${CHUNK_PARAGRAPH_TARGET_TOKENS:-300}
       - CHUNK_PARAGRAPH_MIN_TOKENS=${CHUNK_PARAGRAPH_MIN_TOKENS:-100}
       - CHUNK_PARAGRAPH_MAX_TOKENS=${CHUNK_PARAGRAPH_MAX_TOKENS:-500}
@@ -240,8 +240,8 @@ services:
       - OCR_LANGUAGE=${OCR_LANGUAGE:-chi_sim+eng}
       - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-100}
       - KB_SERVICE_URL=http://kb-service:8002
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/1
     ports:
       - "${DOCUMENT_SERVICE_PORT:-8001}:8001"
     depends_on:
@@ -260,7 +260,7 @@ services:
 
   kb-service:
     <<: *microservice
-    container_name: econai-kb-service
+    container_name: policyai-kb-service
     build:
       context: .
       dockerfile: ./services/kb-service/Dockerfile
@@ -269,8 +269,8 @@ services:
     environment:
       - KB_SERVICE_HOST=${KB_SERVICE_HOST:-0.0.0.0}
       - KB_SERVICE_PORT=${KB_SERVICE_PORT:-8002}
-      - KB_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-econai}:${POSTGRES_PASSWORD:-econai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-econai}
-      - KB_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}
+      - KB_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-policyai}:${POSTGRES_PASSWORD:-policyai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-policyai}
+      - KB_REDIS_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}
       - KB_LLM_ROUTER_URL=http://llm-router:8004
       - KB_VECTOR_DB_TYPE=${VECTOR_DB_TYPE:-milvus}
       - KB_VECTOR_DB_HOST=${VECTOR_DB_HOST:-milvus}
@@ -304,7 +304,7 @@ services:
 
   orchestration-service:
     <<: *microservice
-    container_name: econai-orchestration-service
+    container_name: policyai-orchestration-service
     build:
       context: .
       dockerfile: ./services/orchestration-service/Dockerfile
@@ -317,13 +317,13 @@ services:
       - AGENT_TOOL_TIMEOUT_S=${AGENT_TOOL_TIMEOUT_S:-60}
       - AGENT_MAX_RETRIEVED_CHUNKS=${AGENT_MAX_RETRIEVED_CHUNKS:-30}
       - TASK_TIMEOUT_MINUTES=${TASK_TIMEOUT_MINUTES:-30}
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/1
       - ORCH_KB_SERVICE_URL=http://kb-service:8002
       - ORCH_LLM_ROUTER_URL=http://llm-router:8004
       - ORCH_CITATION_SERVICE_URL=http://citation-service:8005
       - ORCH_OUTPUT_SERVICE_URL=http://output-service:8006
-      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
+      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
       - ORCH_PROMPT_TEMPLATES_DIR=${PROMPT_TEMPLATES_DIR:-templates/prompts}
     ports:
       - "${ORCHESTRATION_SERVICE_PORT:-8003}:8003"
@@ -345,7 +345,7 @@ services:
 
   llm-router:
     <<: *microservice
-    container_name: econai-llm-router
+    container_name: policyai-llm-router
     build:
       context: .
       dockerfile: ./services/llm-router/Dockerfile
@@ -378,7 +378,7 @@ services:
 
   citation-service:
     <<: *microservice
-    container_name: econai-citation-service
+    container_name: policyai-citation-service
     build:
       context: .
       dockerfile: ./services/citation-service/Dockerfile
@@ -404,7 +404,7 @@ services:
 
   output-service:
     <<: *microservice
-    container_name: econai-output-service
+    container_name: policyai-output-service
     build:
       context: .
       dockerfile: ./services/output-service/Dockerfile
@@ -415,14 +415,14 @@ services:
       - OUTPUT_SERVICE_PORT=${OUTPUT_SERVICE_PORT:-8006}
       - OUTPUT_STORAGE_PATH=${OUTPUT_STORAGE_PATH:-outputs/}
       - OUTPUT_TEMPLATES_DIR=${OUTPUT_TEMPLATES_DIR:-templates/output/}
-      - DOCX_INSTITUTION_NAME=${DOCX_INSTITUTION_NAME:-EconAI Institution}
+      - DOCX_INSTITUTION_NAME=${DOCX_INSTITUTION_NAME:-PolicyAI Institution}
       - DOCX_DEFAULT_FONT=${DOCX_DEFAULT_FONT:-仿宋_GB2312}
       - PPTX_DEFAULT_THEME=${PPTX_DEFAULT_THEME:-default}
       - OUTPUT_MAX_FILE_SIZE_MB=${OUTPUT_MAX_FILE_SIZE_MB:-50}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-econai_access_key}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-econai_secret_key_change_me}
-      - MINIO_OUTPUT_BUCKET=${MINIO_OUTPUT_BUCKET:-econai-outputs}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-policyai_access_key}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-policyai_secret_key_change_me}
+      - MINIO_OUTPUT_BUCKET=${MINIO_OUTPUT_BUCKET:-policyai-outputs}
     ports:
       - "${OUTPUT_SERVICE_PORT:-8006}:8006"
     depends_on:
@@ -437,7 +437,7 @@ services:
 
   user-service:
     <<: *microservice
-    container_name: econai-user-service
+    container_name: policyai-user-service
     build:
       context: .
       dockerfile: ./services/user-service/Dockerfile
@@ -446,7 +446,7 @@ services:
     environment:
       - USER_SERVICE_HOST=${USER_SERVICE_HOST:-0.0.0.0}
       - USER_SERVICE_PORT=${USER_SERVICE_PORT:-8007}
-      - USER_SERVICE_JWT_SECRET=${JWT_SECRET:-econai_jwt_secret_change_me_min_32_chars}
+      - USER_SERVICE_JWT_SECRET=${JWT_SECRET:-policyai_jwt_secret_change_me_min_32_chars}
       - USER_SERVICE_JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - USER_SERVICE_JWT_ACCESS_EXPIRE_MINUTES=${JWT_ACCESS_EXPIRE_MINUTES:-120}
       - USER_SERVICE_JWT_REFRESH_EXPIRE_HOURS=${JWT_REFRESH_EXPIRE_HOURS:-24}
@@ -458,12 +458,12 @@ services:
       - TOKEN_BLACKLIST_ENABLED=${TOKEN_BLACKLIST_ENABLED:-true}
       - USER_SERVICE_POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - USER_SERVICE_POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - USER_SERVICE_POSTGRES_DB=${POSTGRES_DB:-econai}
-      - USER_SERVICE_POSTGRES_USER=${POSTGRES_USER:-econai}
-      - USER_SERVICE_POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-econai_secret_change_me}
+      - USER_SERVICE_POSTGRES_DB=${POSTGRES_DB:-policyai}
+      - USER_SERVICE_POSTGRES_USER=${POSTGRES_USER:-policyai}
+      - USER_SERVICE_POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-policyai_secret_change_me}
       - USER_SERVICE_REDIS_HOST=${REDIS_HOST:-redis}
       - USER_SERVICE_REDIS_PORT=${REDIS_PORT:-6379}
-      - USER_SERVICE_REDIS_PASSWORD=${REDIS_PASSWORD:-econai_redis_change_me}
+      - USER_SERVICE_REDIS_PASSWORD=${REDIS_PASSWORD:-policyai_redis_change_me}
     ports:
       - "${USER_SERVICE_PORT:-8007}:8007"
     depends_on:
@@ -484,7 +484,7 @@ services:
 
   celery-worker-document:
     <<: *microservice
-    container_name: econai-celery-document
+    container_name: policyai-celery-document
     build:
       context: .
       dockerfile: ./services/document-service/Dockerfile
@@ -498,15 +498,15 @@ services:
       --queues=${CELERY_DOCUMENT_QUEUE:-document}
       --hostname=document-worker@%h
     environment:
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/1
       - CELERY_TASK_TIME_LIMIT=${CELERY_TASK_TIME_LIMIT:-1800}
       - CELERY_TASK_SOFT_TIME_LIMIT=${CELERY_TASK_SOFT_TIME_LIMIT:-1500}
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-econai}:${POSTGRES_PASSWORD:-econai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-econai}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-policyai}:${POSTGRES_PASSWORD:-policyai_secret_change_me}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-policyai}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-econai_access_key}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-econai_secret_key_change_me}
-      - MINIO_BUCKET=${MINIO_DOCUMENT_BUCKET:-econai-documents}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-policyai_access_key}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-policyai_secret_key_change_me}
+      - MINIO_BUCKET=${MINIO_DOCUMENT_BUCKET:-policyai-documents}
     depends_on:
       postgres:
         condition: service_healthy
@@ -523,7 +523,7 @@ services:
 
   celery-worker-orchestration:
     <<: *microservice
-    container_name: econai-celery-orchestration
+    container_name: policyai-celery-orchestration
     build:
       context: .
       dockerfile: ./services/orchestration-service/Dockerfile
@@ -537,21 +537,21 @@ services:
       --queues=${CELERY_ORCHESTRATION_QUEUE:-orchestration}
       --hostname=orchestration-worker@%h
     environment:
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/1
       - CELERY_TASK_TIME_LIMIT=${CELERY_TASK_TIME_LIMIT:-1800}
       - CELERY_TASK_SOFT_TIME_LIMIT=${CELERY_TASK_SOFT_TIME_LIMIT:-1500}
       - ORCH_KB_SERVICE_URL=http://kb-service:8002
       - ORCH_LLM_ROUTER_URL=http://llm-router:8004
       - ORCH_CITATION_SERVICE_URL=http://citation-service:8005
       - ORCH_OUTPUT_SERVICE_URL=http://output-service:8006
-      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
+      - API_GATEWAY_REDIS_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0
       - PROMPT_TEMPLATES_DIR=${PROMPT_TEMPLATES_DIR:-templates/prompts}
       - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_DB=${POSTGRES_DB:-econai}
-      - POSTGRES_USER=${POSTGRES_USER:-econai}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-econai_secret_change_me}
+      - POSTGRES_DB=${POSTGRES_DB:-policyai}
+      - POSTGRES_USER=${POSTGRES_USER:-policyai}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-policyai_secret_change_me}
     depends_on:
       postgres:
         condition: service_healthy
@@ -566,7 +566,7 @@ services:
 
   celery-beat:
     <<: *microservice
-    container_name: econai-celery-beat
+    container_name: policyai-celery-beat
     build:
       context: .
       dockerfile: ./services/orchestration-service/Dockerfile
@@ -577,13 +577,13 @@ services:
       --loglevel=${LOG_LEVEL:-INFO}
       --schedule=/var/run/celery/celerybeat-schedule
     environment:
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-econai_redis_change_me}@redis:6379/1
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-policyai_redis_change_me}@redis:6379/1
       - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_DB=${POSTGRES_DB:-econai}
-      - POSTGRES_USER=${POSTGRES_USER:-econai}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-econai_secret_change_me}
+      - POSTGRES_DB=${POSTGRES_DB:-policyai}
+      - POSTGRES_USER=${POSTGRES_USER:-policyai}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-policyai_secret_change_me}
     volumes:
       - celery-beat-data:/var/run/celery
     depends_on:
@@ -605,7 +605,7 @@ services:
   nginx:
     <<: *common-service
     image: nginx:alpine
-    container_name: econai-nginx
+    container_name: policyai-nginx
     ports:
       - "${NGINX_PORT:-80}:80"
       - "${NGINX_SSL_PORT:-443}:443"
@@ -631,7 +631,7 @@ services:
   prometheus:
     <<: *common-service
     image: prom/prometheus:latest
-    container_name: econai-prometheus
+    container_name: policyai-prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=30d
@@ -649,7 +649,7 @@ services:
   grafana:
     <<: *common-service
     image: grafana/grafana:latest
-    container_name: econai-grafana
+    container_name: policyai-grafana
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin_change_me}
@@ -669,9 +669,9 @@ services:
 # =============================================================================
 
 networks:
-  econai-network:
+  policyai-network:
     driver: bridge
-    name: econai-network
+    name: policyai-network
 
 # =============================================================================
 # Volumes
@@ -679,18 +679,18 @@ networks:
 
 volumes:
   postgres-data:
-    name: econai-postgres-data
+    name: policyai-postgres-data
   redis-data:
-    name: econai-redis-data
+    name: policyai-redis-data
   milvus-data:
-    name: econai-milvus-data
+    name: policyai-milvus-data
   etcd-data:
-    name: econai-etcd-data
+    name: policyai-etcd-data
   minio-data:
-    name: econai-minio-data
+    name: policyai-minio-data
   prometheus-data:
-    name: econai-prometheus-data
+    name: policyai-prometheus-data
   grafana-data:
-    name: econai-grafana-data
+    name: policyai-grafana-data
   celery-beat-data:
-    name: econai-celery-beat-data
+    name: policyai-celery-beat-data

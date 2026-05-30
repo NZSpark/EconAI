@@ -2,10 +2,10 @@
 # 用于 output-service 的 python-pptx 生成器
 
 metadata:
-  template_name: "EconAI 分析简报"
+  template_name: "PolicyAI 分析简报"
   version: "1.0"
   description: >
-    EconAI 分析任务的结果简报模版。适用于向决策者快速呈现关键发现。
+    PolicyAI 分析任务的结果简报模版。适用于向决策者快速呈现关键发现。
     默认 16:9 宽屏比例。
 
 # ============================================================
@@ -245,7 +245,7 @@ global:
 
   footer_line:
     enabled: true
-    text: "EconAI 分析简报 | {{ organization }} | {{ date }}"
+    text: "PolicyAI 分析简报 | {{ organization }} | {{ date }}"
     position: [1.5, 18.0, 14.0, 0.8]
     font: "citation_text"
 

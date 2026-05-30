@@ -89,7 +89,7 @@ class DocxGenerator:
     """Generates GB/T 9704 compliant .docx files."""
 
     def __init__(self, institution_name: str | None = None) -> None:
-        self._institution_name = institution_name or "EconAI 分析中心"
+        self._institution_name = institution_name or "PolicyAI 分析中心"
         self._template = get_template_loader().load_docx_template()
 
     def generate(

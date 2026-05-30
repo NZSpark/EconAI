@@ -71,7 +71,7 @@ describe('Documents API (Integrated)', () => {
   it('should upload a document', async () => {
     if (!projectId) return;
 
-    const content = 'This is a test document for EconAI integration testing.\n贸易政策分析测试文档。\n\n## 第一章\n这是关于贸易壁垒的分析内容。';
+    const content = 'This is a test document for PolicyAI integration testing.\n贸易政策分析测试文档。\n\n## 第一章\n这是关于贸易壁垒的分析内容。';
     const filepath = createTempFile(content, `itest-doc-${Date.now()}.txt`);
     tempFiles.push(filepath);
 

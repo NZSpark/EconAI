@@ -1,4 +1,4 @@
-# EconAI Detailed Design Document
+# PolicyAI Detailed Design Document
 
 > Version: v1.4 | Date: 2026-05-30 | Based on High-Level Design Document v1.0
 
@@ -8,7 +8,7 @@
 
 ### 1.1 Purpose and Scope
 
-This document provides interface-level detailed design for all service modules of the EconAI system, specifying for each module:
+This document provides interface-level detailed design for all service modules of the PolicyAI system, specifying for each module:
 - External API interfaces (RESTful endpoints + request/response models)
 - Internal inter-service call interfaces (synchronous RPC + asynchronous messages)
 - Data model definitions (logical model + physical table mapping)
@@ -411,7 +411,7 @@ Message:
 | Configuration Item | Default Value | Description |
 |--------------------|---------------|-------------|
 | `MINIO_ENDPOINT` | `localhost:9000` | MinIO address |
-| `MINIO_BUCKET` | `econai-documents` | Document storage bucket |
+| `MINIO_BUCKET` | `policyai-documents` | Document storage bucket |
 | `CHUNK_PARAGRAPH_TARGET_TOKENS` | 300 | Paragraph-level target token count |
 | `CHUNK_PARAGRAPH_MIN_TOKENS` | 100 | Paragraph-level minimum token count |
 | `CHUNK_PARAGRAPH_MAX_TOKENS` | 500 | Paragraph-level maximum token count |
@@ -522,7 +522,7 @@ Listen Redis pub/sub: kb:index:request
     │     Each chunk → 768d or 1024d vector
     │
     ├──→ Write to vector database (Milvus / Qdrant)
-    │     collection: econai_chunks
+    │     collection: policyai_chunks
     │     Fields: chunk_id, vector, project_id, document_id, chunk_type
     │
     ├──→ Update BM25 index (PostgreSQL FTS)
@@ -1364,7 +1364,7 @@ POST /internal/output/generate
     }
   ],
   "metadata": {
-    "author": "EconAI",
+    "author": "PolicyAI",
     "date": "2026-05-17",
     "keywords": ["数字贸易", "发展中国家", "政策分析"]
   },
@@ -1641,7 +1641,7 @@ User login (provider=ldap)
 
 The audit log table ensures integrity through the following mechanisms:
 - INSERT only, no UPDATE/DELETE permissions (application layer + database layer)
-- Dedicated database user `econai_audit` for writes, application user only has SELECT
+- Dedicated database user `policyai_audit` for writes, application user only has SELECT
 - Periodic archiving (export to cold storage after 6 months)
 
 ### 9.6 GDPR Data Subject Rights

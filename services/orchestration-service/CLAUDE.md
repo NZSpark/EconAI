@@ -57,7 +57,7 @@ services/orchestration-service/
 - httpx (calls LLM Router, KB, Citation, Output services)
 - Jinja2 (prompt templates)
 - redis + celery (production task queue)
-- `econai-shared`
+- `policyai-shared`
 
 ## Run / test
 

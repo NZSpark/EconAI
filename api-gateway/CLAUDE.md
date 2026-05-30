@@ -40,7 +40,7 @@ Request → RequestID → CORS → RateLimit → JWT Auth → RBAC → Audit →
 - python-jose (JWT)
 - redis (rate limit, token blacklist, audit pub/sub)
 - structlog (structured logging)
-- `econai-shared` (local path `../shared`)
+- `policyai-shared` (local path `../shared`)
 
 ## Configuration
 
@@ -60,7 +60,7 @@ API_GATEWAY_REDIS_URL="redis://:<pass>@localhost:6379/0" ... \
   uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Docker build:
-docker build --build-arg SERVICE_DIR=api-gateway -t econai-api-gateway:latest -f api-gateway/Dockerfile .
+docker build --build-arg SERVICE_DIR=api-gateway -t policyai-api-gateway:latest -f api-gateway/Dockerfile .
 
 # Tests
 pytest --tb=short

@@ -1,4 +1,4 @@
-# EconAI 开发环境手动启动指南
+# PolicyAI 开发环境手动启动指南
 
 > 版本：v1.2 | 日期：2026-05-23
 
@@ -28,7 +28,7 @@
 ### 安装依赖
 
 ```bash
-cd /Users/onetreehill/EconAI
+cd /Users/onetreehill/PolicyAI
 
 # 为每个后端服务安装 Python 依赖
 for dir in api-gateway services/*/; do
@@ -74,7 +74,7 @@ cd frontend && npm install
 #### 步骤1：基础设施（终端1）
 
 ```bash
-cd /Users/onetreehill/EconAI
+cd /Users/onetreehill/PolicyAI
 docker compose up -d postgres redis etcd minio minio-init milvus
 
 # 等待所有基础设施就绪（Milvus 在 ARM 上可能需要 90s+）
@@ -88,15 +88,15 @@ docker compose ps | grep -E "postgres|redis|milvus|minio" | grep -v "minio-init"
 
 ```bash
 # 终端2：user-service
-cd /Users/onetreehill/EconAI/services/user-service
+cd /Users/onetreehill/PolicyAI/services/user-service
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload
 
 # 终端3：llm-router
-cd /Users/onetreehill/EconAI/services/llm-router
+cd /Users/onetreehill/PolicyAI/services/llm-router
 uv run uvicorn llm_router.app:app --host 0.0.0.0 --port 8004 --reload
 
 # 终端4：citation-service
-cd /Users/onetreehill/EconAI/services/citation-service
+cd /Users/onetreehill/PolicyAI/services/citation-service
 uv run uvicorn citation_service.app:app --host 0.0.0.0 --port 8005 --reload
 ```
 
@@ -104,31 +104,31 @@ uv run uvicorn citation_service.app:app --host 0.0.0.0 --port 8005 --reload
 
 ```bash
 # 终端5：document-service + Celery worker
-cd /Users/onetreehill/EconAI/services/document-service
+cd /Users/onetreehill/PolicyAI/services/document-service
 uv run uvicorn document_service.app:app --host 0.0.0.0 --port 8001 --reload
 # 另开一个终端tab启动 Celery worker：
-cd /Users/onetreehill/EconAI/services/document-service
+cd /Users/onetreehill/PolicyAI/services/document-service
 uv run celery -A document_service.celery_app worker --loglevel=INFO --concurrency=2 --queues=document
 
 # 终端6：output-service
-cd /Users/onetreehill/EconAI/services/output-service
+cd /Users/onetreehill/PolicyAI/services/output-service
 uv run uvicorn output_service.app:app --host 0.0.0.0 --port 8006 --reload
 ```
 
 #### 步骤4：知识库服务（终端7）
 
 ```bash
-cd /Users/onetreehill/EconAI/services/kb-service
+cd /Users/onetreehill/PolicyAI/services/kb-service
 uv run uvicorn kb_service.app:app --host 0.0.0.0 --port 8002 --reload
 ```
 
 #### 步骤5：编排服务（终端8）
 
 ```bash
-cd /Users/onetreehill/EconAI/services/orchestration-service
+cd /Users/onetreehill/PolicyAI/services/orchestration-service
 uv run uvicorn orchestration_service.app:app --host 0.0.0.0 --port 8003 --reload
 # Celery Agent worker（另开tab）：
-cd /Users/onetreehill/EconAI/services/orchestration-service
+cd /Users/onetreehill/PolicyAI/services/orchestration-service
 uv run celery -A orchestration_service.celery_app worker --loglevel=INFO --concurrency=4 --queues=orchestration
 ```
 
@@ -137,8 +137,8 @@ uv run celery -A orchestration_service.celery_app worker --loglevel=INFO --concu
 **重要**：手动启动 api-gateway 时必须显式传入 Redis 密码和各后端服务的 localhost 地址。默认配置中的 Docker 容器名（如 `http://user-service:8007`）仅适用于 Docker Compose 环境。
 
 ```bash
-cd /Users/onetreehill/EconAI/api-gateway
-API_GATEWAY_REDIS_URL="redis://:econai_redis_change_me@localhost:6379/0" \
+cd /Users/onetreehill/PolicyAI/api-gateway
+API_GATEWAY_REDIS_URL="redis://:policyai_redis_change_me@localhost:6379/0" \
   API_GATEWAY_USER_SERVICE_URL="http://localhost:8007" \
   API_GATEWAY_DOCUMENT_SERVICE_URL="http://localhost:8001" \
   API_GATEWAY_KB_SERVICE_URL="http://localhost:8002" \
@@ -148,12 +148,12 @@ API_GATEWAY_REDIS_URL="redis://:econai_redis_change_me@localhost:6379/0" \
   uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-> 如果你修改过 `.env` 中的 `REDIS_PASSWORD`，请相应替换上面 URL 中的密码部分 `econai_redis_change_me`。
+> 如果你修改过 `.env` 中的 `REDIS_PASSWORD`，请相应替换上面 URL 中的密码部分 `policyai_redis_change_me`。
 
 #### 步骤7：前端（终端10）
 
 ```bash
-cd /Users/onetreehill/EconAI/frontend
+cd /Users/onetreehill/PolicyAI/frontend
 npm run dev
 ```
 
@@ -206,13 +206,13 @@ lsof -ti:8000 | xargs kill -9   # 替换端口号
 确认 PostgreSQL 已启动并健康：
 ```bash
 docker compose ps postgres
-docker exec econai-postgres pg_isready -U econai
+docker exec policyai-postgres pg_isready -U policyai
 ```
 
 ### Celery worker 无法连接 Redis
 
 ```bash
-docker exec econai-redis redis-cli -a $(grep REDIS_PASSWORD .env | cut -d= -f2) ping
+docker exec policyai-redis redis-cli -a $(grep REDIS_PASSWORD .env | cut -d= -f2) ping
 ```
 
 ### Claude API 未配置
@@ -255,7 +255,7 @@ lsof -ti:19530 | xargs kill -9
 # 重建 Milvus
 docker compose stop milvus
 docker compose rm -f milvus
-docker volume rm econai_milvus-data   # 清空旧数据（可选）
+docker volume rm policyai_milvus-data   # 清空旧数据（可选）
 docker compose up -d milvus
 # 等待约 90s
 docker compose ps milvus
@@ -296,11 +296,11 @@ API_GATEWAY_REDIS_URL="redis://:${REDIS_PASSWORD}:<your-password>@localhost:6379
 
 3. **审计日志写入失败**——用户看到 `HTTP 500` 且日志有 `DatatypeMismatchError` 或 `UndefinedColumnError`：
    - 如果报 `column "resource_id" is of type uuid`：确认 `audit_log` 模型和 DB schema 均已修复（已在代码中生效）
-   - 如果报 `column users.ldap_dn does not exist`：执行 `docker exec econai-postgres psql -U econai -d econai -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS ldap_dn VARCHAR(255);"`
+   - 如果报 `column users.ldap_dn does not exist`：执行 `docker exec policyai-postgres psql -U policyai -d policyai -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS ldap_dn VARCHAR(255);"`
 
 4. **密码哈希不匹配**——用户看到 `AUTH_INVALID_CREDENTIALS`：
    - 重新生成 admin 密码：在 `services/user-service` 目录执行 `uv run python3 -c "import bcrypt; print(bcrypt.hashpw(b'Admin@123456', bcrypt.gensalt(rounds=12)).decode())"`
-   - 更新数据库：`docker exec econai-postgres psql -U econai -d econai -c "UPDATE users SET hashed_password = '<新哈希>' WHERE username = 'admin';"`
+   - 更新数据库：`docker exec policyai-postgres psql -U policyai -d policyai -c "UPDATE users SET hashed_password = '<新哈希>' WHERE username = 'admin';"`
 
 ---
 

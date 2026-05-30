@@ -17,7 +17,7 @@ MARKDOWN_TEMPLATE = """---
 title: "{{ title }}"
 date: "{{ date }}"
 {% if keywords %}keywords: [{{ keywords|join(', ') }}]{% endif %}
-generated_by: EconAI
+generated_by: PolicyAI
 ---
 
 {% for section in sections %}

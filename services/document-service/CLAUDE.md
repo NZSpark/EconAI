@@ -61,7 +61,7 @@ services/document-service/
 - Pillow + Tesseract (OCR)
 - MinIO (object storage)
 - Celery[redis] (async tasks)
-- `econai-shared`
+- `policyai-shared`
 
 ## Run / test
 

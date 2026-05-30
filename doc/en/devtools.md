@@ -1,4 +1,4 @@
-# EconAI Development Environment Software Checklist
+# PolicyAI Development Environment Software Checklist
 
 > Version: v2.0 | Date: 2026-05-21
 
@@ -116,7 +116,7 @@ Based on `pyproject.toml`, `package.json` of all 10 modules and the actual runti
 
 | Package | Version | Used By | Purpose |
 |---------|---------|---------|---------|
-| econai-shared | 0.1.0 (local) | M2, M3, M4 | Pydantic models + config loader + structured logging |
+| policyai-shared | 0.1.0 (local) | M2, M3, M4 | Pydantic models + config loader + structured logging |
 
 ### 2.10 Dev Tools
 
@@ -219,7 +219,7 @@ tesseract --list-langs | grep chi_sim  # Verify Chinese language pack
 brew install node  # Node 26.x
 
 # === Start Infrastructure ===
-cd /path/to/EconAI
+cd /path/to/PolicyAI
 docker compose up -d
 docker compose ps
 

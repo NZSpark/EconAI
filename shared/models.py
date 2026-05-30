@@ -1,4 +1,4 @@
-"""Shared Pydantic models used across all EconAI services."""
+"""Shared Pydantic models used across all PolicyAI services."""
 
 from __future__ import annotations
 

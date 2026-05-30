@@ -55,7 +55,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="EconAI Document Service",
+    title="PolicyAI Document Service",
     version="0.1.0",
     description="Document upload, parsing, chunking, and management (M2).",
 )

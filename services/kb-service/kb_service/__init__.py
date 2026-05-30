@@ -1,1 +1,1 @@
-"""EconAI Knowledge Base Service (M3)."""
+"""PolicyAI Knowledge Base Service (M3)."""

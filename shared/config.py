@@ -28,17 +28,17 @@ class AppSettings(BaseSettings):
     # PostgreSQL
     postgres_host: str = "localhost"
     postgres_port: int = 5432
-    postgres_db: str = "econai"
-    postgres_user: str = "econai"
-    postgres_password: str = "econai_secret_change_me"
+    postgres_db: str = "policyai"
+    postgres_user: str = "policyai"
+    postgres_password: str = "policyai_secret_change_me"
 
     # Redis
     redis_host: str = "localhost"
     redis_port: int = 6379
-    redis_password: str = "econai_redis_change_me"
+    redis_password: str = "policyai_redis_change_me"
 
     # JWT
-    jwt_secret: str = "econai_jwt_secret_change_me_min_32_chars"
+    jwt_secret: str = "policyai_jwt_secret_change_me_min_32_chars"
     jwt_algorithm: str = "HS256"
 
     @property

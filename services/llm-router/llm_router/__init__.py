@@ -1,3 +1,3 @@
-"""EconAI LLM Router Service."""
+"""PolicyAI LLM Router Service."""
 
 __version__ = "0.1.0"

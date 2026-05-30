@@ -1,4 +1,4 @@
-"""EconAI User & Permission Service (M8) — FastAPI application."""
+"""PolicyAI User & Permission Service (M8) — FastAPI application."""
 
 from __future__ import annotations
 

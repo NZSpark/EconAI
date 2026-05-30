@@ -44,7 +44,7 @@ services/user-service/
 
 - SQLAlchemy[asyncio] + asyncpg (DB)
 - bcrypt + pyjwt + python-ldap (auth)
-- `econai-shared` (local path `../../shared`)
+- `policyai-shared` (local path `../../shared`)
 
 ## Audit flow
 

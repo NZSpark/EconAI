@@ -1,7 +1,7 @@
 [project]
 name = "citation-service"
 version = "0.1.0"
-description = "EconAI Citation and Provenance Service (M6)"
+description = "PolicyAI Citation and Provenance Service (M6)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -12,7 +12,7 @@ dependencies = [
     "pydantic-settings>=2.0",
     "redis>=5.0",
     "numpy>=1.26",
-    "econai-shared",
+    "policyai-shared",
 ]
 
 [project.optional-dependencies]
@@ -26,7 +26,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-econai-shared = { path = "../../shared" }
+policyai-shared = { path = "../../shared" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

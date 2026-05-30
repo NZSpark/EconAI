@@ -1,4 +1,4 @@
-"""EconAI User & Permission Service (M8) — configuration management.
+"""PolicyAI User & Permission Service (M8) — configuration management.
 
 Inherits common DB/Redis/JWT defaults from shared.config.AppSettings.
 """
@@ -17,7 +17,7 @@ class Settings(AppSettings):
     )
 
     # ——— Application ———
-    app_name: str = "EconAI User Service"
+    app_name: str = "PolicyAI User Service"
     debug: bool = False
     host: str = "0.0.0.0"
     port: int = 8007

@@ -1,15 +1,15 @@
 # =============================================================================
-# EconAI Prometheus Alert Rules
+# PolicyAI Prometheus Alert Rules
 # =============================================================================
 
 groups:
-  - name: econai_alerts
+  - name: policyai_alerts
     rules:
       # Task failure rate exceeds 10%
       - alert: HighTaskFailureRate
         expr: |
-          rate(econai_task_failures_total[5m]) /
-          rate(econai_tasks_total[5m]) > 0.10
+          rate(policyai_task_failures_total[5m]) /
+          rate(policyai_tasks_total[5m]) > 0.10
         for: 5m
         labels:
           severity: warning

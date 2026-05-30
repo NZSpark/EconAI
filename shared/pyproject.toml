@@ -1,7 +1,7 @@
 [project]
-name = "econai-shared"
+name = "policyai-shared"
 version = "0.1.0"
-description = "EconAI shared Python package (models, config, logging)"
+description = "PolicyAI shared Python package (models, config, logging)"
 requires-python = ">=3.12"
 dependencies = [
     "minio>=7.0.0",
