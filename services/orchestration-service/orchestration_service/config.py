@@ -19,7 +19,7 @@ class OrchestrationSettings(AppSettings):
 
     # Agent limits
     agent_max_iterations: int = 5
-    agent_tool_timeout_s: int = 60
+    agent_tool_timeout_s: int = 120
     agent_max_retrieved_chunks: int = 30
     task_timeout_minutes: int = 30
 

@@ -96,7 +96,7 @@ async def _run_with_timeout_and_retry(
     tool_func: ToolFunc,
     args: dict[str, Any],
     state: AgentState,
-    timeout_s: float = 60.0,
+    timeout_s: float = 120.0,
     max_retries: int = 1,
 ) -> dict[str, Any]:
     """Execute a tool with timeout and retry logic (M4-26, M4-41)."""
