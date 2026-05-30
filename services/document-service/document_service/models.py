@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from shared.models import DocumentFormat, ErrorDetail, ErrorResponse, HealthResponse, IndexEvent, PaginatedResponse
 
 # ---------------------------------------------------------------------------
-# Allowed file extensions and MIME types for validation
+# 允许 file extensions and MIME types for validation
 # ---------------------------------------------------------------------------
 
 ALLOWED_EXTENSIONS: set[str] = {

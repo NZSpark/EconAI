@@ -13,7 +13,7 @@ __all__ = ["get_db"]
 
 
 async def get_current_user_id(request: Request) -> str:
-    """Extract user_id from request state (set by auth middleware in API Gateway).
+    """提取 user_id from request state (set by auth middleware in API Gateway).
 
     In production, the API Gateway injects a validated JWT payload into the
     request headers. For development/testing, we accept X-User-ID header.
@@ -36,7 +36,7 @@ async def get_current_user_id(request: Request) -> str:
 
 
 async def get_current_user_role(request: Request) -> str:
-    """Extract user role from request state."""
+    """提取 user role from request state."""
     role = request.headers.get("X-User-Role")
     if role is None:
         role = getattr(request.state, "user_role", None)

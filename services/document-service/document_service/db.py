@@ -52,7 +52,7 @@ _document_chunks_tbl: Table | None = None
 
 
 async def init_db() -> None:
-    """Initialize database connection or fall back to in-memory store. Called at startup."""
+    """初始化 database connection or fall back to in-memory store. Called at startup."""
     global db_available, engine, async_session_factory
 
     try:
@@ -150,7 +150,7 @@ async def insert_document(
     is_internal: bool,
     title: str | None = None,
 ) -> None:
-    """Insert a new document record with parse_status='pending'."""
+    """插入 a new document record with parse_status='pending'."""
     now = datetime.now(UTC)
     if db_available and session is not None:
         docs, _ = await _tbls_async()
@@ -201,7 +201,7 @@ async def update_document_status(
     title: str | None = None,
     author: str | None = None,
 ) -> None:
-    """Update parse_status and optionally error / page_count / metadata."""
+    """更新 parse_status and optionally error / page_count / metadata."""
     now = datetime.now(UTC)
     if db_available and session is not None:
         docs, _ = await _tbls_async()
@@ -319,7 +319,7 @@ async def list_project_documents(
 
 
 async def delete_document_db(session: AsyncSession | None, doc_id: str) -> None:
-    """Delete document and cascade chunks."""
+    """删除 document and cascade chunks."""
     if db_available and session is not None:
         docs, chunks_tbl = await _tbls_async()
         await session.execute(delete(chunks_tbl).where(chunks_tbl.c.document_id == doc_id))
@@ -336,7 +336,7 @@ async def delete_document_db(session: AsyncSession | None, doc_id: str) -> None:
 
 
 async def insert_chunks(session: AsyncSession | None, chunks: list[dict[str, Any]]) -> None:
-    """Insert processed chunks."""
+    """插入 processed chunks."""
     if not chunks:
         return
     if db_available and session is not None:
@@ -394,7 +394,7 @@ async def get_chunks(session: AsyncSession | None, doc_id: str) -> list[dict[str
 
 
 async def delete_chunks(session: AsyncSession | None, doc_id: str) -> None:
-    """Delete all chunks for a document."""
+    """删除 all chunks for a document."""
     if db_available and session is not None:
         _, chunks_tbl = await _tbls_async()
         await session.execute(delete(chunks_tbl).where(chunks_tbl.c.document_id == doc_id))

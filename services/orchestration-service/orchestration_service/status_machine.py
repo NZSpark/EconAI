@@ -22,7 +22,7 @@ _ALLOWED_TRANSITIONS: dict[TaskStatus, set[TaskStatus]] = {
 
 
 def validate_transition(current: TaskStatus | str, target: TaskStatus | str) -> bool:
-    """Check whether transitioning from *current* to *target* is valid."""
+    """检查 whether transitioning from *current* to *target* is valid."""
     cur = TaskStatus(current)
     tgt = TaskStatus(target)
     return tgt in _ALLOWED_TRANSITIONS.get(cur, set())
@@ -40,7 +40,7 @@ def assert_valid_transition(current: TaskStatus | str, target: TaskStatus | str)
 
 
 def is_terminal(status: TaskStatus | str) -> bool:
-    """Check whether a status is terminal (no further transitions allowed)."""
+    """检查 whether a status is terminal (no further transitions allowed)."""
     s = TaskStatus(status)
     return len(_ALLOWED_TRANSITIONS.get(s, set())) == 0
 
@@ -49,5 +49,5 @@ _VALID_STATUSES: frozenset[str] = frozenset(s.value for s in TaskStatus)
 
 
 def is_valid_status(status: str) -> bool:
-    """Check whether the string is a valid TaskStatus."""
+    """检查 whether the string is a valid TaskStatus."""
     return status in _VALID_STATUSES

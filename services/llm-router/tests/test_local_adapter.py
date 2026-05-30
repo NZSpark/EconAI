@@ -30,7 +30,7 @@ from llm_router.models.schemas import ChatRequest
 
 
 class TestPayloadConstruction:
-    """Tests for OpenAI-compatible payload construction."""
+    """测试辅助函数。"""
 
     def test_basic_payload(self, basic_request: ChatRequest) -> None:
         """Basic request is correctly converted to OpenAI payload."""
@@ -80,7 +80,7 @@ class TestPayloadConstruction:
 
 
 class TestResponseParsing:
-    """Tests for OpenAI response parsing."""
+    """测试辅助函数。"""
 
     @pytest.mark.asyncio
     async def test_successful_chat(self, basic_request: ChatRequest, mock_local_response: dict[str, Any]) -> None:
@@ -123,7 +123,7 @@ class TestResponseParsing:
 
 
 class TestErrorMapping:
-    """Tests for HTTP error → adapter exception mapping."""
+    """测试辅助函数。"""
 
     def test_rate_limit_429(self) -> None:
         """429 → AdapterRateLimitError."""

@@ -22,25 +22,25 @@ class LifecycleManager:
         self.pipeline = pipeline
 
     async def archive_project(self, project_id: str) -> dict[str, str]:
-        """Archive project: mark all its document indices as archived."""
+        """归档 project: mark all its document indices as archived."""
         _archived_projects.add(project_id)
         logger.info("Project %s archived", project_id)
         return {"status": "archived", "message": f"Project {project_id} archived"}
 
     async def restore_project(self, project_id: str) -> dict[str, str]:
-        """Restore project: restore its indices from archived to active."""
+        """恢复 project: restore its indices from archived to active."""
         _archived_projects.discard(project_id)
         logger.info("Project %s restored", project_id)
         return {"status": "active", "message": f"Project {project_id} restored"}
 
     async def archive_document(self, document_id: str) -> dict[str, str]:
-        """Archive a single document's indices."""
+        """归档 a single document's indices."""
         _archived_documents.add(document_id)
         logger.info("Document %s archived", document_id)
         return {"status": "archived", "message": f"Document {document_id} archived"}
 
     async def restore_document(self, document_id: str) -> dict[str, str]:
-        """Restore a single document's indices."""
+        """恢复 a single document's indices."""
         _archived_documents.discard(document_id)
         logger.info("Document %s restored", document_id)
         return {"status": "active", "message": f"Document {document_id} restored"}

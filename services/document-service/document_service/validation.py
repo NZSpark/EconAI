@@ -21,7 +21,7 @@ class FileValidationError(ValueError):
 
 
 def validate_extension(filename: str) -> str:
-    """Validate file extension against whitelist.
+    """验证 file extension against whitelist.
 
     Returns the lowercase extension (including dot).
     Raises FileValidationError if the extension is not allowed.
@@ -42,7 +42,7 @@ def validate_extension(filename: str) -> str:
 
 
 def validate_mime_type(mime_type: str | None) -> None:
-    """Validate MIME type against whitelist.
+    """验证 MIME type against whitelist.
 
     Raises FileValidationError if the MIME type is not allowed.
     If mime_type is None, skip MIME check (extension check already passed).
@@ -67,7 +67,7 @@ def validate_mime_type(mime_type: str | None) -> None:
 
 
 def validate_file_size(file_size: int, max_size_mb: int = 100) -> None:
-    """Validate file size is within limits.
+    """验证 file size is within limits.
 
     Raises FileValidationError if the file exceeds the maximum size.
     """
@@ -96,7 +96,7 @@ def read_magic_bytes(file_obj: IO[bytes], num_bytes: int = 8) -> bytes:
 
 
 def validate_magic_bytes(magic: bytes, extension: str) -> None:
-    """Validate magic bytes match expected format for the extension.
+    """验证 magic bytes match expected format for the extension.
 
     Checks magic bytes against known signatures. If magic doesn't match
     any known format, falls back to extension-based identification.
@@ -128,7 +128,7 @@ def validate_magic_bytes(magic: bytes, extension: str) -> None:
 
 
 def validate_file(filename: str, mime_type: str | None, file_size: int, magic: bytes, max_size_mb: int = 100) -> str:
-    """Run all file validations.
+    """运行 all file validations.
 
     Returns the validated (lowercase) extension.
     Raises FileValidationError on any validation failure.

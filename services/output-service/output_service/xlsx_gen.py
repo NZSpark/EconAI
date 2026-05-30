@@ -41,7 +41,7 @@ class XlsxGenerator:
         citations: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> bytes:
-        """Generate an XLSX file with comparison matrix, citation list, and data summary.
+        """生成 an XLSX file with comparison matrix, citation list, and data summary.
 
         Args:
             title: Report title.

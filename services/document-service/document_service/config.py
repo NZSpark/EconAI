@@ -1,4 +1,4 @@
-"""Configuration management for the Document Service (M2-02).
+"""配置 management for the Document Service (M2-02).
 
 Configures: MinIO, chunk parameters, OCR language, file size limits, Celery queue.
 """
@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings
 
 
 class DocumentServiceConfig(BaseSettings):
-    """Configuration for the Document Parsing Service."""
+    """配置 for the Document Parsing Service."""
 
     # Service identity
     SERVICE_NAME: str = "document-service"
@@ -60,5 +60,5 @@ def get_config() -> DocumentServiceConfig:
     return DocumentServiceConfig()
 
 
-# Singleton instance
+# 单例 instance
 config = get_config()

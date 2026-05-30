@@ -1,4 +1,4 @@
-"""Audit log model."""
+""" 模型。"""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from app.database import Base
 
 
 class AuditLog(Base):
-    """INSERT-only audit trail. No UPDATE/DELETE allowed at application level."""
+    """仅插入的审计追踪。应用层不允许 UPDATE/DELETE。"""
 
     __tablename__ = "audit_logs"
 

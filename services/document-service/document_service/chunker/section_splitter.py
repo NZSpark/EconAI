@@ -1,7 +1,13 @@
-"""Section structure detector and section-level chunker (M2-25, M2-26).
+"""章节结构检测器和章节级切分器（M2-25, M2-26）。
 
-Handles: heading hierarchy detection (PDF bookmarks / Word styles / Markdown headings).
-Section-level: target 2000 tokens, min 500, max 3000, overlap 100 tokens.
+支持的文档结构检测：
+- PDF 书签层级
+- Word 标题样式（Heading 1-6）
+- Markdown 标题（# ~ ######）
+- 中文章节模式（第X章、第X节、一、二、三等）
+- 编号标题（1.1, 2.3.1 等）
+
+切分参数：目标 2000 tokens/块，最小 500，最大 3000，重叠 100 tokens。
 """
 
 from __future__ import annotations
@@ -15,7 +21,7 @@ from document_service.models import SectionInfo
 
 logger = logging.getLogger(__name__)
 
-# Heading patterns
+# 标题检测正则：Markdown 标题、中文章节、编号标题、大写英文标题
 HEADING_LINE = re.compile(r"^(#{1,6}\s|第[一二三四五六七八九十百千万\d]+[章节条]|[\d]+\.[\d]*\s|[A-Z][A-Z\s]{5,}$)")
 
 
@@ -54,7 +60,7 @@ def detect_sections(text: str, existing_sections: list[SectionInfo] | None = Non
         if sections_with_positions:
             return sections_with_positions
 
-    # Fallback: detect headings from text
+    # 回退: detect headings from text
     return _detect_headings_from_text(text)
 
 
@@ -218,7 +224,7 @@ def chunk_section_level(
 
 
 def _split_by_sections(text: str, sections: list[SectionInfo]) -> list[tuple[str, str]]:
-    """Split text at detected section boundaries.
+    """分割 text at detected section boundaries.
 
     Returns list of (section_title, section_text).
     """
@@ -247,7 +253,7 @@ def _split_by_sections(text: str, sections: list[SectionInfo]) -> list[tuple[str
 
 
 def _split_large_section(section_text: str, max_tokens: int, title: str) -> list[tuple[str, str]]:
-    """Split a section that exceeds max tokens into smaller chunks."""
+    """分割 a section that exceeds max tokens into smaller chunks."""
     paragraphs = section_text.split("\n\n")
     chunks: list[tuple[str, str]] = []
     current: list[str] = []
@@ -271,7 +277,7 @@ def _split_large_section(section_text: str, max_tokens: int, title: str) -> list
 
 
 def _get_text_end(text: str, token_count: int) -> str:
-    """Get approximately token_count tokens from end of text."""
+    """获取 approximately token_count tokens from end of text."""
     if not text:
         return ""
 

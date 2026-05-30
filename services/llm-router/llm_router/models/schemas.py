@@ -1,4 +1,4 @@
-"""Pydantic schemas for the LLM Router unified request/response format."""
+"""Pydantic 数据模式。"""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ class ChatRequest(BaseModel):
     tools: list[ToolDef] | None = None
     sensitivity: str = "low"  # high | low
 
-    # Optional metadata for tracking
+    # 可选类型 metadata for tracking
     user_id: str | None = None
     task_id: str | None = None
 
@@ -133,7 +133,7 @@ class EmbedResponse(BaseModel):
     embeddings: list[list[float]]
 
 
-# ErrorResponse, ErrorDetail, Message — imported from shared.models
+# 错误Response, ErrorDetail, Message — imported from shared.models
 
 __all__ = [
     "FunctionDef",

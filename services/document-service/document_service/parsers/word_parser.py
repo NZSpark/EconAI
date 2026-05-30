@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class WordParser(BaseParser):
-    """Parse .docx files using python-docx."""
+    """解析 .docx files using python-docx."""
 
     def supported_format(self) -> str:
         return "docx"
@@ -89,7 +89,7 @@ class WordParser(BaseParser):
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:
-        """Extract Word document properties (M2-21)."""
+        """提取 Word document properties (M2-21)."""
         try:
             from docx import Document
             doc = Document(io.BytesIO(file_data))

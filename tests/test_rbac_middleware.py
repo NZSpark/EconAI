@@ -116,7 +116,7 @@ def check_permission(
     user_group_ids: list[str],
     resource_group_id: str | None = None,
 ) -> bool:
-    """Check if a role has permission for an operation."""
+    """检查 if a role has permission for an operation."""
     try:
         r = Role(role)
     except ValueError:
@@ -273,7 +273,7 @@ class TestPermissionMatrix:
 
 
 class TestCheckPermission:
-    """Test the check_permission function with group scoping."""
+    """测试 the check_permission function with group scoping."""
 
     def test_system_admin_always_allowed(self) -> None:
         assert check_permission("system_admin", Operation.view_all_audit, []) is True

@@ -21,7 +21,7 @@ if config.config_file_name is not None:
 
 # Import all models here for autogenerate
 # Each service sets target_metadata in its own alembic/env.py
-target_metadata = None  # Set by importing service
+target_metadata = None  # 集合 by importing service
 
 
 def run_migrations_offline() -> None:

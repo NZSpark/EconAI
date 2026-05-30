@@ -1,4 +1,4 @@
-"""Tests for auth router endpoints — M8-04 through M8-07."""
+"""测试辅助函数。"""
 
 from __future__ import annotations
 
@@ -80,7 +80,7 @@ class TestMe:
             "app.routers.auth._get_groups", new_callable=AsyncMock
         ) as mock_groups:
             mock_groups.return_value = []
-            # Configure mock to return a user (use MagicMock — scalar_one_or_none is sync)
+            # 配置 mock to return a user (use MagicMock — scalar_one_or_none is sync)
             mock_result = MagicMock()
             mock_result.scalar_one_or_none.return_value = _make_mock_user()
             mock_db.execute.return_value = mock_result

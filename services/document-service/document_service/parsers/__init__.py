@@ -1,1 +1,1 @@
-"""Document format parsers for the Document Parsing Service (M2)."""
+"""文档处理服务（M2）的文档格式解析器。"""

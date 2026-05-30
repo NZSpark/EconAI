@@ -1,4 +1,4 @@
-"""M1-26: RBAC permission matrix tests (each role x each operation's allow/deny)."""
+"""M1-26: RBAC 权限矩阵测试（每个角色 x 每个操作的允许/拒绝）。"""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from app.middleware.rbac import (
 
 
 class TestPermissionMatrix:
-    """Verify the static permission matrix is correctly configured."""
+    """验证静态权限矩阵是否正确配置。"""
 
     def test_analyst_permissions(self) -> None:
         ops, scope = PERMISSION_MATRIX[Role.analyst]
@@ -59,36 +59,36 @@ class TestPermissionMatrix:
 
 
 class TestCheckPermission:
-    """Test the check_permission function for various role-operation combinations."""
+    """测试各种角色-操作组合下的 check_permission 函数。"""
 
     @pytest.mark.parametrize(
         "role,operation,group_ids,resource_group_id,expected",
         [
-            # analyst: view_project(self group)
+            # analyst: view_project（本组）
             ("analyst", Operation.view_project, ["g-001"], "g-001", True),
             ("analyst", Operation.view_project, ["g-001"], "g-002", False),
             ("analyst", Operation.view_project, [], None, True),
-            # analyst: upload_document(self group)
+            # analyst: upload_document（本组）
             ("analyst", Operation.upload_document, ["g-001"], "g-001", True),
             ("analyst", Operation.upload_document, ["g-001"], "g-002", False),
-            # analyst: create_task(self group)
+            # analyst: create_task（本组）
             ("analyst", Operation.create_task, ["g-001"], "g-001", True),
             ("analyst", Operation.create_task, ["g-001"], "g-002", False),
-            # analyst: denied operations
+            # analyst: 被拒绝的操作
             ("analyst", Operation.create_project, ["g-001"], "g-001", False),
             ("analyst", Operation.manage_users, ["g-001"], "g-001", False),
             ("analyst", Operation.view_audit, ["g-001"], "g-001", False),
-            # senior_researcher: create_project(self group)
+            # senior_researcher: create_project（本组）
             ("senior_researcher", Operation.create_project, ["g-001"], "g-001", True),
             ("senior_researcher", Operation.create_project, ["g-001"], "g-002", False),
-            # senior_researcher: still can't manage_users
+            # senior_researcher: 仍然不能 manage_users
             ("senior_researcher", Operation.manage_users, ["g-001"], "g-001", False),
-            # project_admin: manage_users(self group)
+            # project_admin: manage_users（本组）
             ("project_admin", Operation.manage_users, ["g-001"], "g-001", True),
             ("project_admin", Operation.manage_users, ["g-001"], "g-002", False),
-            # project_admin: still can't view_audit
+            # project_admin: 仍然不能 view_audit
             ("project_admin", Operation.view_audit, ["g-001"], "g-001", False),
-            # system_admin: ALL operations across ALL groups
+            # system_admin: 跨所有组的所有操作
             ("system_admin", Operation.view_project, ["g-001"], "g-999", True),
             ("system_admin", Operation.manage_users, ["g-001"], "g-999", True),
             ("system_admin", Operation.view_audit, ["g-001"], "g-999", True),
@@ -109,34 +109,34 @@ class TestCheckPermission:
 
 
 class TestGetRequiredOperation:
-    """Test the route-to-operation mapping function."""
+    """测试路由到操作的映射函数。"""
 
     @pytest.mark.parametrize(
         "path,method,expected",
         [
-            # Auth — no operation needed
+            # Auth — 无需操作
             ("/api/auth/login", "POST", None),
             ("/api/auth/refresh", "POST", None),
             ("/api/auth/logout", "POST", None),
             ("/api/auth/me", "GET", None),
-            # Health — no check needed
+            # Health — 无需检查
             ("/health", "GET", None),
-            # Project operations
+            # 项目操作
             ("/api/projects", "GET", Operation.view_project),
             ("/api/projects", "POST", Operation.create_project),
             ("/api/projects/123", "GET", Operation.view_project),
             ("/api/projects/123", "PUT", Operation.view_project),
-            # Document operations
+            # 文档操作
             ("/api/projects/123/documents", "POST", Operation.upload_document),
             ("/api/projects/123/documents/456", "GET", Operation.upload_document),
-            # Task operations
+            # 任务操作
             ("/api/projects/123/tasks", "POST", Operation.create_task),
             ("/api/projects/123/tasks/456", "GET", Operation.view_project),
-            # Admin operations
+            # 管理员操作
             ("/api/admin/users", "GET", Operation.manage_users),
             ("/api/admin/users", "POST", Operation.manage_users),
             ("/api/admin/audit-logs", "GET", Operation.view_audit),
-            # Institutional search
+            # 机构搜索
             ("/api/institutional/search", "POST", Operation.view_project),
         ],
     )
@@ -147,12 +147,12 @@ class TestGetRequiredOperation:
 
 
 class TestRBACIntegration:
-    """Integration-level RBAC tests via the test app."""
+    """通过测试应用进行的集成级 RBAC 测试。"""
 
     def test_analyst_cannot_create_project(
         self, client: TestClient, analyst_token: str
     ) -> None:
-        """Analyst should not be able to create projects."""
+        """分析师不应该能创建项目。"""
         response = client.post(
             "/api/projects",
             json={"name": "new project"},
@@ -165,18 +165,18 @@ class TestRBACIntegration:
     def test_admin_can_manage_users(
         self, client: TestClient, admin_token: str
     ) -> None:
-        """System admin should be able to access admin endpoints."""
+        """系统管理员应该能访问管理端点。"""
         response = client.get(
             "/api/admin/users",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        # Should proxy through (mock returns 200)
+        # 应该代理通过（mock 返回 200）
         assert response.status_code == 200
 
     def test_analyst_cannot_access_admin(
         self, client: TestClient, analyst_token: str
     ) -> None:
-        """Analyst should be denied on admin endpoints."""
+        """分析师应该被拒绝访问管理端点。"""
         response = client.get(
             "/api/admin/users",
             headers={"Authorization": f"Bearer {analyst_token}"},
@@ -186,19 +186,19 @@ class TestRBACIntegration:
     def test_researcher_can_create_task(
         self, client: TestClient, access_token: str
     ) -> None:
-        """Senior researcher should be able to create tasks."""
+        """高级研究员应该能创建任务。"""
         response = client.post(
             "/api/projects/g-001/tasks",
             json={"type": "literature_review", "title": "Test"},
             headers={"Authorization": f"Bearer {access_token}"},
         )
-        # Should proxy through (mock returns 200)
+        # 应该代理通过（mock 返回 200）
         assert response.status_code == 200
 
     def test_analyst_cannot_view_audit(
         self, client: TestClient, analyst_token: str
     ) -> None:
-        """Analyst should be denied on audit log access."""
+        """分析师应该被拒绝访问审计日志。"""
         response = client.get(
             "/api/admin/audit-logs",
             headers={"Authorization": f"Bearer {analyst_token}"},

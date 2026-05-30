@@ -25,7 +25,7 @@ def _get_caller_id(request: Request) -> str:
 
 
 async def _get_caller_group_ids(request: Request, db: AsyncSession) -> list[str]:
-    """Get group IDs the caller belongs to."""
+    """获取 group IDs the caller belongs to."""
     role = _get_caller_role(request)
     if role == "system_admin":
         return []
@@ -70,7 +70,7 @@ async def list_audit_logs(
     to_date: str | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> AuditLogListResponse:
-    """List audit logs — system_admin sees all; project_admin sees only their groups."""
+    """列出 audit logs — system_admin sees all; project_admin sees only their groups."""
     _require_audit_access(request)
 
     caller_role = _get_caller_role(request)

@@ -1,13 +1,13 @@
-"""Sensitivity analyzer (M4-36, M4-37).
+"""敏感度分析器（M4-36, M4-37）。
 
-Determines LLM routing direction based on document sensitivity.
+根据文档敏感度确定 LLM 路由方向。
 
-Rules (in order):
-    1. User explicitly sets sensitivity → use directly
-    2. User explicitly sets llm_preference → override based on preference
-    3. Internal documents → high
-    4. policy_draft task type → high
-    5. Default → low
+规则（按优先级）:
+    1. 用户显式设置敏感度 → 直接使用
+    2. 用户显式设置 llm_preference → 根据偏好覆盖
+    3. 内部文档 → high
+    4. policy_draft 任务类型 → high
+    5. 默认 → low
 """
 
 from __future__ import annotations
@@ -16,38 +16,38 @@ from orchestration_service.schemas import CreateTaskRequest, SensitivityResult
 
 
 def determine_sensitivity(request: CreateTaskRequest, is_internal: bool = False) -> SensitivityResult:
-    """Analyze task parameters and return sensitivity level + reason."""
+    """分析任务参数，返回敏感度级别 + 原因。"""
 
-    # Rule 1: User explicitly set sensitivity — direct override
+    # 规则 1: 用户显式设置敏感度 — 直接覆盖
     if request.sensitivity and request.sensitivity in ("high", "low"):
         return SensitivityResult(
             level=request.sensitivity,
-            reason=f"User explicitly set sensitivity to '{request.sensitivity}'",
+            reason=f"用户显式设置敏感度为 '{request.sensitivity}'",
         )
 
-    # Rule 2: User llm_preference overrides auto-detection
+    # 规则 2: 用户 llm_preference 覆盖自动检测
     if request.llm_preference and request.llm_preference.value != "auto":
         return SensitivityResult(
             level="high" if request.llm_preference.value == "local" else "low",
-            reason=f"User explicitly set llm_preference to '{request.llm_preference.value}'",
+            reason=f"用户显式设置 llm_preference 为 '{request.llm_preference.value}'",
         )
 
-    # Rule 3: Internal documents
+    # 规则 3: 内部文档
     if is_internal:
         return SensitivityResult(
             level="high",
-            reason="Task uses internal/confidential documents — routing to local LLM",
+            reason="任务使用内部/机密文档 — 路由到本地 LLM",
         )
 
-    # Rule 4: policy_draft is always treated as sensitive
+    # 规则 4: policy_draft 始终视为敏感
     if request.type.value == "policy_draft":
         return SensitivityResult(
             level="high",
-            reason="Policy draft tasks contain sensitive internal policy analysis",
+            reason="政策起草任务包含敏感的内部政策分析",
         )
 
-    # Rule 5: Default
+    # 规则 5: 默认
     return SensitivityResult(
         level="low",
-        reason="No sensitive documents detected; defaulting to cloud LLM",
+        reason="未检测到敏感文档；默认使用云端 LLM",
     )

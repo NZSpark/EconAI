@@ -37,7 +37,7 @@ class TestDocumentList:
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
         """Listing documents for a project returns empty or valid response."""
-        # Create a project first
+        # 创建 a project first
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
             json={"name": "Doc Test Group"},
@@ -47,7 +47,7 @@ class TestDocumentList:
         if resp.status_code != 201:
             pytest.skip("Cannot create group")
         group_id = resp.json()["group_id"]
-        # Add admin to group so project create passes _verify_project_access
+        # 添加 admin to group so project create passes _verify_project_access
         httpx.post(
             f"{base_url}/api/admin/groups/{group_id}/members",
             json={"user_id": admin_user_id, "role": "system_admin"},

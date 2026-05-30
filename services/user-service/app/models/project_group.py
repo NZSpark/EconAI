@@ -13,7 +13,7 @@ from app.database import Base
 
 
 class ProjectGroup(Base):
-    """Project group — organizational unit for access control."""
+    """项目组织 — 用于访问控制的管理单元。"""
 
     __tablename__ = "project_groups"
 
@@ -37,7 +37,7 @@ class ProjectGroup(Base):
 
 
 class ProjectGroupMember(Base):
-    """Membership of a user in a project group with a specific role."""
+    """用户在项目组织中的成员关系（含特定角色）。"""
 
     __tablename__ = "project_group_members"
     __table_args__ = (UniqueConstraint("group_id", "user_id", name="uq_group_user"),)

@@ -1,4 +1,4 @@
-"""Index pipeline — consumes Redis pub/sub events and runs full indexing flow."""
+"""索引 pipeline — consumes Redis pub/sub events and runs full indexing flow."""
 
 from __future__ import annotations
 
@@ -16,9 +16,17 @@ logger = logging.getLogger(__name__)
 
 
 class IndexPipeline:
-    """Runs the full indexing flow for document chunks.
-
-    Flow: read chunks → generate embeddings → write vector DB → update BM25.
+    """文档索引管线 —— 将文档块写入向量数据库和 BM25 索引。
+    
+    处理流程：
+    1. 读取文档块列表（来自 document-service 的切分结果）
+    2. 调用 embedding 服务生成每个块的向量表示
+    3. 将 (chunk_id, vector, metadata) 批量写入向量数据库
+    4. 更新 BM25 内存索引（测试模式）或等待 PostgreSQL FTS 自动更新
+    
+    触发方式：
+    - 通过 Redis pub/sub 频道 kb:index:request 接收索引事件
+    - 由 RedisIndexConsumer 异步消费并调用本管线
     """
 
     def __init__(
@@ -35,21 +43,23 @@ class IndexPipeline:
         self,
         chunks: list[dict[str, Any]],
     ) -> int:
-        """Index a batch of chunks.
+        """索引一批文档块。
 
         Args:
-            chunks: List of chunk dicts with keys: chunk_id, document_id,
-                    project_id, content, chunk_type, page_start, page_end.
+            chunks: 块字典列表，每块包含: chunk_id, document_id,
+                    project_id, content, chunk_type, page_start, page_end。
 
         Returns:
-            Number of chunks indexed.
+            成功索引的块数量。
         """
         if not chunks:
             return 0
 
+        # 第一步：批量生成 embedding 向量
         texts = [c["content"] for c in chunks]
         embeddings = await self.embedding_client.embed_batch(texts)
 
+        # 第二步：组装写入条目（chunk_id, vector, metadata）
         entries: list[tuple[str, list[float], dict[str, Any]]] = []
         for chunk, vec in zip(chunks, embeddings, strict=False):
             metadata = {
@@ -62,8 +72,12 @@ class IndexPipeline:
             }
             entries.append((chunk["chunk_id"], vec, metadata))
 
+        # 第三步：批量写入向量数据库
         await self.vector_store.insert_batch(entries)
 
+        # 第四步：更新 BM25 内存索引（仅测试/开发模式）
+        # 生产环境中 PostgreSQL 的 document_chunks 表已有 FTS 索引，
+        # BM25Searcher 直接查询数据库，无需手动更新
         if isinstance(self.bm25, InMemoryBM25Searcher):
             self.bm25.add_chunks(chunks)
 
@@ -74,7 +88,7 @@ class IndexPipeline:
         self,
         chunks: list[dict[str, Any]],
     ) -> int:
-        """Reindex chunks (delete existing then insert)."""
+        """重建索引 chunks (delete existing then insert)."""
         if not chunks:
             return 0
         doc_id = chunks[0].get("document_id", "")
@@ -85,7 +99,7 @@ class IndexPipeline:
         return await self.index_chunks(chunks)
 
     async def delete_document(self, document_id: str) -> int:
-        """Delete all index entries for a document."""
+        """删除 all index entries for a document."""
         vec_count = await self.vector_store.delete_by_document(document_id)
         bm25_count = 0
         if isinstance(self.bm25, InMemoryBM25Searcher):
@@ -94,7 +108,7 @@ class IndexPipeline:
         return vec_count
 
     async def delete_project(self, project_id: str) -> int:
-        """Delete all index entries for a project."""
+        """删除 all index entries for a project."""
         vec_count = await self.vector_store.delete_by_project(project_id)
         bm25_count = 0
         if isinstance(self.bm25, InMemoryBM25Searcher):
@@ -119,7 +133,7 @@ class RedisIndexConsumer:
         self._running = False
 
     async def start(self) -> None:
-        """Start listening for index events on kb:index:request."""
+        """启动 listening for index events on kb:index:request."""
         self._running = True
         pubsub = self._redis.pubsub()
         await pubsub.subscribe("kb:index:request")
@@ -144,7 +158,7 @@ class RedisIndexConsumer:
         self._running = False
 
     async def _handle_message(self, data: dict[str, Any]) -> None:
-        """Handle a single index event."""
+        """处理 a single index event."""
         try:
             event = IndexEvent(**data)
             logger.info("Received index event: %s for document %s", event.event_id, event.document_id)

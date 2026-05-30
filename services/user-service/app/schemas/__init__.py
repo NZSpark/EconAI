@@ -1,1 +1,1 @@
-"""Pydantic schemas for the User Service."""
+"""Pydantic 数据模式。"""

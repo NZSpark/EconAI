@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_vector_store() -> VectorStore | InMemoryVectorStore:
-    """Create the configured VectorStore.
+    """创建 the configured VectorStore.
 
     Returns a Milvus client when vector_db_type='milvus', Qdrant when 'qdrant',
     or InMemoryVectorStore for development/testing.
@@ -67,7 +67,7 @@ def create_vector_store() -> VectorStore | InMemoryVectorStore:
 
 
 def create_embedding_client() -> EmbeddingClient | MockEmbeddingClient:
-    """Create the configured embedding client.
+    """创建 the configured embedding client.
 
     Uses the real EmbeddingClient (delegates to LLM Router) in production,
     MockEmbeddingClient for development/testing when LLM Router is unavailable.
@@ -87,7 +87,7 @@ def create_embedding_client() -> EmbeddingClient | MockEmbeddingClient:
 
 
 def create_bm25_searcher() -> BM25Searcher | InMemoryBM25Searcher:
-    """Create the configured BM25 searcher.
+    """创建 the configured BM25 searcher.
 
     Uses PostgreSQL FTS BM25Searcher when a database_url is configured,
     InMemoryBM25Searcher for development/testing.

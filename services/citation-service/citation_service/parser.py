@@ -17,8 +17,8 @@ from dataclasses import dataclass, field
 # M6-03: Sentence splitter - Chinese and English punctuation
 # ---------------------------------------------------------------------------
 
-# Split after 。！？! ? (but NOT after "." preceded by a digit, to avoid
-# splitting on decimal points like "3.5%").
+# 句子分隔符：匹配 。！？! ? 等句末标点
+# 特殊处理：数字后的 "." 不算句末（避免 "3.5%" 被拆开）
 _SENTENCE_END_RE = re.compile(r"(?<=[。！？!?]|(?<!\d)\.(?=\s|$))\s*")
 
 # Note: This simplistic approach handles Chinese/English sentence-ending punctuation.
@@ -27,7 +27,7 @@ _SENTENCE_END_RE = re.compile(r"(?<=[。！？!?]|(?<!\d)\.(?=\s|$))\s*")
 
 
 def split_sentences(text: str) -> list[str]:
-    """Split text into sentences using Chinese/English punctuation boundaries.
+    """分割 text into sentences using Chinese/English punctuation boundaries.
 
     Args:
         text: Raw LLM output text, possibly containing [ref:...] markers.
@@ -87,33 +87,34 @@ class SentenceCitation:
 
 
 def parse_ref_mark(raw_mark: str) -> CitationRef:
-    """Parse a single [ref:...] marker content.
-
-    Handles:
-      - "doc_123:p45-48"           -> single reference
-      - "doc_456:p12|doc_789:p33"  -> multi-reference
-      - "uncertain"                -> uncertain declaration
-      - Malformed marks            -> parse_error set
+    """解析单个 [ref:...] 标记的内容。
+    
+    支持的格式（M6-05）：
+      - "doc_123:p45-48"           → 单文档引用
+      - "doc_456:p12|doc_789:p33"  → 多文档引用（用 | 分隔）
+      - "uncertain"                → 不确定引用声明
+      - 格式错误的标记              → parse_error 设置
 
     Args:
-        raw_mark: The text content inside [ref:...].
+        raw_mark: [ref:...] 内部的文本内容。
 
     Returns:
-        A CitationRef with parsed doc_refs or parse_error.
+        包含解析出的 doc_refs 或 parse_error 的 CitationRef。
     """
     ref = CitationRef(raw_mark=raw_mark.strip())
 
-    # Special case: uncertain
+    # 特殊情况：LLM 显式标记为不确定引用
     if ref.raw_mark.lower() == "uncertain":
         ref.is_uncertain = True
         return ref
 
-    # Split multi-references by |
+    # 按 | 分割多个文档引用（支持一句引用多个文档）
     parts = ref.raw_mark.split("|")
     for part in parts:
         part = part.strip()
         if not part:
             continue
+        # 匹配格式: doc_id:page_range（如 doc_123:p45-48）
         m = _DOC_REF_PATTERN.match(part)
         if not m:
             ref.parse_error = f"Malformed ref marker: '{part}' in '{ref.raw_mark}'"
@@ -132,7 +133,7 @@ def parse_ref_mark(raw_mark: str) -> CitationRef:
 
 
 def extract_refs_from_sentence(sentence: str) -> list[CitationRef]:
-    """Extract all [ref:...] markers from a sentence and parse them.
+    """提取 all [ref:...] markers from a sentence and parse them.
 
     Args:
         sentence: A single sentence that may contain [ref:...] markers.
@@ -170,7 +171,7 @@ class CitationParser:
     """
 
     def parse(self, text: str) -> CitationParserResult:
-        """Parse inline citations from the full output text.
+        """解析 inline citations from the full output text.
 
         Args:
             text: LLM output containing [ref:...] markers.

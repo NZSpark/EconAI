@@ -31,7 +31,7 @@ class TestOutputGenerate:
     """POST /internal/output/generate — Section 8.2.1."""
 
     def test_generate_minimal(self) -> None:
-        """Generate markdown output with minimal sections."""
+        """生成 markdown output with minimal sections."""
         resp = httpx.post(
             f"{OUT_SVC}/internal/output/generate",
             json={
@@ -53,7 +53,7 @@ class TestOutputGenerate:
             assert "outputs" in body
 
     def test_generate_multiple_formats(self) -> None:
-        """Generate in multiple formats at once."""
+        """生成 in multiple formats at once."""
         resp = httpx.post(
             f"{OUT_SVC}/internal/output/generate",
             json={

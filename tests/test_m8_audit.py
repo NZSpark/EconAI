@@ -26,7 +26,7 @@ class TestAuditLogList:
         assert body["page"] == 1
         # page_size may be overridden by server
         assert body["page_size"] >= 1
-        # Verify item structure matches AuditLogResponse schema
+        # 验证 item structure matches AuditLogResponse schema
         for item in body["items"]:
             assert "audit_id" in item
             assert "action" in item
@@ -43,7 +43,7 @@ class TestAuditLogList:
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
-        # Filter acceptance verified: endpoint returns without error
+        # 过滤 acceptance verified: endpoint returns without error
         assert "items" in body
 
     def test_list_audit_logs_filter_by_resource_type(self, base_url: str, auth_headers: dict[str, str]) -> None:
@@ -55,7 +55,7 @@ class TestAuditLogList:
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
-        # Filter acceptance verified: endpoint returns without error
+        # 过滤 acceptance verified: endpoint returns without error
         assert "items" in body
 
     def test_list_audit_logs_pagination(self, base_url: str, auth_headers: dict[str, str]) -> None:
@@ -82,7 +82,7 @@ class TestAuditLogRBAC:
 
     def test_non_admin_cannot_view_audit_logs(self, base_url: str, auth_headers: dict[str, str]) -> None:
         """Users without system_admin role get 403 or 401."""
-        # Create analyst user
+        # 创建 analyst user
         resp = httpx.post(
             f"{base_url}/api/admin/users",
             json={
@@ -111,5 +111,5 @@ class TestAuditLogRBAC:
             headers={"Authorization": f"Bearer {token}"},
             timeout=10,
         )
-        # Gateway RBAC should block
+        # 网关 RBAC should block
         assert resp3.status_code in (401, 403), f"Expected 401/403 got {resp3.status_code}: {resp3.text}"

@@ -1,4 +1,4 @@
-"""PolicyAI integration test suite.
+"""PolicyAI 集成测试套件。
 
-Tests cover all 8 modules (M1-M8) per detailed-design.md.
+测试覆盖所有 8 个模块（M1-M8），参见 detailed-design.md。
 """

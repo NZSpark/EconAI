@@ -1,4 +1,4 @@
-"""M4-52: Sensitivity determination tests."""
+"""M4-52: 敏感度判定测试 tests."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from orchestration_service.sensitivity import determine_sensitivity
 
 
 class TestDetermineSensitivity:
-    """Test the 4 sensitivity rules."""
+    """测试 4 条敏感度规则。"""
 
     def test_default_is_low(self) -> None:
         """Rule 4: Default is low."""

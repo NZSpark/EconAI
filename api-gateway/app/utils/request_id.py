@@ -1,4 +1,4 @@
-"""X-Request-ID handling — inject and propagate request IDs."""
+"""X-Request-ID 处理 — 注入并传播请求 ID。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from starlette.responses import Response
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
-    """Inject X-Request-ID header if not present; propagate to response."""
+    """如果不存在则注入 X-Request-ID 头部；传播到响应中。"""
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint

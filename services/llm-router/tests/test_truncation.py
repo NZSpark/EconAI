@@ -16,7 +16,7 @@ from llm_router.models.schemas import ChatRequest, Message
 
 
 class TestTokenEstimation:
-    """Tests for _estimate_tokens helper."""
+    """测试辅助函数。"""
 
     def test_short_message(self) -> None:
         """A short message has a reasonable token estimate."""
@@ -66,7 +66,7 @@ class TestTokenEstimation:
 
 
 class TestMessageTruncation:
-    """Tests for _truncate_messages."""
+    """测试辅助函数。"""
 
     def test_no_truncation_when_under_limit(self, basic_request: ChatRequest) -> None:
         """Messages under the token limit are not truncated."""
@@ -79,7 +79,7 @@ class TestMessageTruncation:
         """System messages are always kept during truncation."""
         from llm_router.app import _truncate_messages
 
-        # Create a request that would trigger truncation
+        # 创建 a request that would trigger truncation
         long_content = "x" * (settings.llm_max_context_tokens * 5)  # way over limit
         many_messages = []
         many_messages.append(Message(role="system", content="You are a helpful analyst."))

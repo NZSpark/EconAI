@@ -1,4 +1,4 @@
-"""Tests for RRF (Reciprocal Rank Fusion) algorithm (M3-32)."""
+"""测试辅助函数。"""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from kb_service.hybrid_search import HybridSearcher
 
 
 class TestRRFFusion:
-    """Tests for Reciprocal Rank Fusion algorithm."""
+    """测试辅助函数。"""
 
     def test_rrf_empty_inputs(self) -> None:
         result = HybridSearcher._rrf_fusion([], [])

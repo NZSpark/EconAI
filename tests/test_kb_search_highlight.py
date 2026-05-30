@@ -22,7 +22,7 @@ class TestKBSearchHighlighting:
     def test_search_results_contain_keyword(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Search results should contain the query keyword in content or title."""
+        """搜索 results should contain the query keyword in content or title."""
         # First create a project
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
@@ -71,7 +71,7 @@ class TestKBSearchHighlighting:
     def test_search_different_modes(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Search in hybrid, vector, and bm25 modes."""
+        """搜索 in hybrid, vector, and bm25 modes."""
         # Create a project first
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
@@ -116,7 +116,7 @@ class TestKBSearchHighlighting:
     def test_search_with_document_filter(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Search with document_ids filter."""
+        """搜索 with document_ids filter."""
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
             json={"name": _unique_name("FilterGroup")},
@@ -178,7 +178,7 @@ class TestKBSearchHighlighting:
             assert "results" in body
 
     def test_search_unauthenticated(self, base_url: str) -> None:
-        """Search without token returns 401."""
+        """搜索 without token returns 401."""
         resp = httpx.post(
             f"{base_url}/api/projects/00000000-0000-0000-0000-000000000001/search",
             json={

@@ -18,7 +18,7 @@ HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
 
 class MarkdownParser(BaseParser):
-    """Parse Markdown and plain text files."""
+    """解析 Markdown and plain text files."""
 
     def supported_format(self) -> str:
         return "markdown"
@@ -54,7 +54,7 @@ class MarkdownParser(BaseParser):
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:
-        """Extract hints from Markdown front matter if present."""
+        """提取 hints from Markdown front matter if present."""
         try:
             text = file_data.decode("utf-8")
         except UnicodeDecodeError:

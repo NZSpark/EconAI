@@ -1,4 +1,4 @@
-"""Tests for shared Pydantic models."""
+"""共享 Pydantic 模型的测试。"""
 
 from __future__ import annotations
 

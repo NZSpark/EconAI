@@ -1,4 +1,4 @@
-"""Qdrant vector store — production implementation using qdrant-client."""
+""" 向量存储。"""
 
 from __future__ import annotations
 

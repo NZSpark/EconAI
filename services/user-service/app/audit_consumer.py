@@ -18,7 +18,7 @@ async def audit_consumer(
     redis: Redis,
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
-    """Run indefinitely, consuming audit events from Redis pub/sub."""
+    """运行 indefinitely, consuming audit events from Redis pub/sub."""
     pubsub = redis.pubsub()
     await pubsub.subscribe("audit:log")
     logger.info("Audit consumer started, listening on audit:log")

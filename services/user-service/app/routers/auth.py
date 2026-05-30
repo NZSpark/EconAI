@@ -1,4 +1,4 @@
-"""Auth router: login, logout, me, change-password, refresh."""
+"""认证。"""
 
 from __future__ import annotations
 
@@ -184,7 +184,7 @@ async def change_password(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    """Self-service password change. Required when force_password_change is set."""
+    """自助密码修改。当 force_password_change 设置时必需。"""
     user_id = request.headers.get("X-User-ID") or getattr(
         request.state, "user_id", None
     )
@@ -220,7 +220,7 @@ async def change_password(
             },
         )
 
-    # Verify current password
+    # 验证 current password
     if not verify_password(body.old_password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -232,7 +232,7 @@ async def change_password(
             },
         )
 
-    # Ensure new password is different
+    # 确保 new password is different
     if verify_password(body.new_password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -278,7 +278,7 @@ async def refresh(
             },
         )
 
-    # Look up user from database to get current role and group memberships.
+    # 查找 user from database to get current role and group memberships.
     # We cannot trust refresh-token payload: it only carries "sub" and "type",
     # so reading username/role/group_ids from it would silently downgrade the
     # user (e.g. project_admin → analyst) after every refresh.

@@ -1,4 +1,4 @@
-"""Audit logging middleware — captures and publishes audit events via Redis pub/sub."""
+"""审计日志中间件 — 通过 Redis pub/sub 捕获并发布审计事件。"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 AUDIT_CHANNEL = "audit:log"
 
-# Actions whose request bodies should be partially logged
+# 应部分记录请求体的操作
 SENSITIVE_ACTIONS: set[str] = {
     "POST",
     "PUT",
@@ -26,15 +26,15 @@ SENSITIVE_ACTIONS: set[str] = {
     "DELETE",
 }
 
-# Maximum bytes of request body to log for sensitive operations
+# 敏感操作请求体的最大记录字节数
 MAX_BODY_SUMMARY_BYTES = 1024
 
 
 def _derive_action(method: str, path: str) -> str:
-    """Derive a human-readable action name from HTTP method and path."""
+    """根据 HTTP 方法和路径派生出可读的操作名称。"""
     method = method.upper()
 
-    # Auth (check before projects to handle /api/auth/*)
+    # 认证（在 projects 之前检查，处理 /api/auth/*）
     if "/auth/login" in path:
         return "login"
     if "/auth/logout" in path:
@@ -42,7 +42,7 @@ def _derive_action(method: str, path: str) -> str:
     if "/auth/refresh" in path:
         return "refresh_token"
 
-    # Documents (check before projects)
+    # 文档（在 projects 之前检查）
     if "/documents" in path:
         if method == "POST":
             return "upload_document"
@@ -50,7 +50,7 @@ def _derive_action(method: str, path: str) -> str:
             return "delete_document"
         return "view_document"
 
-    # Tasks (check before projects)
+    # 任务（在 projects 之前检查）
     if "/tasks" in path:
         if method == "POST":
             return "create_task"
@@ -58,11 +58,11 @@ def _derive_action(method: str, path: str) -> str:
             return "cancel_task"
         return "view_task"
 
-    # Search (check before projects)
+    # 搜索（在 projects 之前检查）
     if "/search" in path:
         return "search"
 
-    # Projects (generic)
+    # 项目（通用）
     if "/projects" in path:
         if method == "POST":
             return "create_project"
@@ -72,7 +72,7 @@ def _derive_action(method: str, path: str) -> str:
             return "delete_project"
         return "view_project"
 
-    # Admin
+    # 管理
     if "/admin" in path:
         if "users" in path:
             if method == "POST":
@@ -92,7 +92,7 @@ def _derive_action(method: str, path: str) -> str:
 
 
 def _derive_resource_type(path: str) -> str:
-    """Derive resource type from the URL path."""
+    """从 URL 路径中派生出资源类型。"""
     if "/auth" in path:
         return "auth"
     if "/documents" in path:
@@ -115,9 +115,9 @@ def _derive_resource_type(path: str) -> str:
 
 
 def _extract_resource_id(path: str) -> str:
-    """Attempt to extract a resource ID from the URL path."""
+    """尝试从 URL 路径中提取资源 ID。"""
     parts = [p for p in path.strip("/").split("/") if p]
-    # Look for UUID-like segments
+    # 查找类似 UUID 的段
     for part in parts:
         if len(part) >= 32 and "-" in part:
             return part
@@ -125,7 +125,7 @@ def _extract_resource_id(path: str) -> str:
 
 
 async def _read_body_summary(request: Request) -> str | None:
-    """Read a truncated summary of the request body for sensitive operations."""
+    """读取敏感操作请求体的截断摘要。"""
     if request.method not in SENSITIVE_ACTIONS:
         return None
     try:
@@ -134,8 +134,8 @@ async def _read_body_summary(request: Request) -> str | None:
             return None
         body_str = body_bytes.decode("utf-8", errors="replace")
         if len(body_str) > MAX_BODY_SUMMARY_BYTES:
-            body_str = body_str[:MAX_BODY_SUMMARY_BYTES] + "...[truncated]"
-        # Parse as JSON if possible for structured logging
+            body_str = body_str[:MAX_BODY_SUMMARY_BYTES] + "...[已截断]"
+        # 如果可能，解析为 JSON 以进行结构化日志记录
         try:
             return json.dumps(json.loads(body_str))
         except (json.JSONDecodeError, ValueError):
@@ -145,10 +145,10 @@ async def _read_body_summary(request: Request) -> str | None:
 
 
 class AuditMiddleware(BaseHTTPMiddleware):
-    """Middleware that publishes audit events to Redis pub/sub channel audit:log.
+    """将审计事件发布到 Redis pub/sub 频道 audit:log 的中间件。
 
-    Captures: user_id, action, resource_type, resource_id, ip, user_agent.
-    For sensitive operations (POST/PUT/DELETE), captures request body summary.
+    捕获: user_id, action, resource_type, resource_id, ip, user_agent。
+    对于敏感操作（POST/PUT/DELETE），捕获请求体摘要。
     """
 
     async def dispatch(
@@ -157,25 +157,25 @@ class AuditMiddleware(BaseHTTPMiddleware):
         if not settings.audit_log_enabled:
             return await call_next(request)
 
-        # Capture body summary BEFORE calling next (body can only be read once)
+        # 在调用 next 之前捕获请求体摘要（请求体只能读取一次）
         body_summary = None
         if request.method in SENSITIVE_ACTIONS:
             body_summary = await _read_body_summary(request)
 
         response = await call_next(request)
 
-        # Publish audit event asynchronously (fire-and-forget)
+        # 异步发布审计事件（发射后不管）
         await self._publish_audit(request, response, body_summary)
         return response
 
     async def _publish_audit(
         self, request: Request, response: Response, body_summary: str | None = None
     ) -> None:
-        """Publish an audit event to Redis pub/sub."""
+        """将审计事件发布到 Redis pub/sub。"""
         try:
             redis = cast("Redis[Any]", request.app.state.redis)
         except Exception:
-            # Redis not available — audit is best-effort
+            # Redis 不可用 — 审计为尽力而为模式
             return
 
         user_id = None
@@ -199,12 +199,12 @@ class AuditMiddleware(BaseHTTPMiddleware):
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        # Include body summary for sensitive operations
+        # 对敏感操作包含请求体摘要
         if body_summary is not None:
             event["details"] = {"body_summary": body_summary}
 
         try:
             await redis.publish(AUDIT_CHANNEL, json.dumps(event))
         except Exception:
-            # Audit is best-effort; suppress errors
-            logger.warning("Failed to publish audit event to Redis", exc_info=True)
+            # 审计为尽力而为；抑制错误
+            logger.warning("无法将审计事件发布到 Redis", exc_info=True)

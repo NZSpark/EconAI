@@ -1,4 +1,4 @@
-"""M4-51: Tool call timeout and retry logic tests."""
+"""M4-51: 工具调用超时与重试逻辑测试 tests."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from orchestration_service.tools import (
 
 
 class TestToolRegistry:
-    """M4-19: ToolRegistry tests."""
+    """M4-19: ToolRegistry 测试。"""
 
     def test_register_and_get(self) -> None:
         reg = ToolRegistry()
@@ -68,7 +68,7 @@ class TestToolRegistry:
 
 
 class TestToolTimeoutAndRetry:
-    """M4-51: Timeout and retry behaviour."""
+    """M4-51: 超时与重试行为。"""
 
     @pytest.mark.asyncio
     async def test_successful_call_no_retry(self) -> None:
@@ -158,7 +158,7 @@ class TestToolTimeoutAndRetry:
 
 
 class TestSearchKB:
-    """M4-20: search_kb tool tests."""
+    """M4-20: search_kb 工具测试。"""
 
     @pytest.mark.asyncio
     async def test_search_adds_chunks_to_state(self, agent_state: AgentState) -> None:
@@ -197,7 +197,7 @@ class TestSearchKB:
 
 
 class TestGenerateSection:
-    """M4-21: generate_section tool tests."""
+    """M4-21: generate_section 工具测试。"""
 
     @pytest.mark.asyncio
     async def test_generates_and_stores_section(self, agent_state: AgentState) -> None:
@@ -221,7 +221,7 @@ class TestGenerateSection:
 
 
 class TestVerifyCitations:
-    """M4-22: verify_citations tool tests."""
+    """M4-22: verify_citations 工具测试。"""
 
     @pytest.mark.asyncio
     async def test_verifies_and_updates_citations(self, agent_state: AgentState) -> None:
@@ -250,7 +250,7 @@ class TestVerifyCitations:
 
 
 class TestExtractClaims:
-    """M4-23: extract_key_claims tool tests."""
+    """M4-23: extract_key_claims 工具测试。"""
 
     @pytest.mark.asyncio
     async def test_extracts_claims(self, agent_state: AgentState) -> None:
@@ -287,7 +287,7 @@ class TestExtractClaims:
 
 
 class TestComparePolicies:
-    """M4-24: compare_policies tool tests."""
+    """M4-24: compare_policies 工具测试。"""
 
     @pytest.mark.asyncio
     async def test_compares_policies(self, agent_state: AgentState) -> None:
@@ -316,7 +316,7 @@ class TestComparePolicies:
 
 
 class TestFormatOutput:
-    """M4-25: format_output tool tests."""
+    """M4-25: format_output 工具测试。"""
 
     @pytest.mark.asyncio
     async def test_formats_output(self, agent_state: AgentState) -> None:
@@ -339,7 +339,7 @@ class TestFormatOutput:
 
 
 class TestParseClaims:
-    """Test JSON claim parsing."""
+    """测试 JSON 声明解析。"""
 
     def test_parse_valid_json_array(self) -> None:
         from orchestration_service.tools import _parse_claims

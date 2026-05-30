@@ -19,7 +19,7 @@ def _unique_name(name: str) -> str:
 def _setup_project(
     base_url: str, auth_headers: dict[str, str], admin_user_id: str
 ) -> str | None:
-    """Create a group + project and return project_id."""
+    """创建 a group + project and return project_id."""
     resp = httpx.post(
         f"{base_url}/api/admin/groups",
         json={"name": _unique_name("ReindexTestGroup")},
@@ -55,7 +55,7 @@ def _upload_document(
     filename: str = "test_reindex.txt",
     content: str = "This is a test document for reindex testing.",
 ) -> dict | None:
-    """Upload a text document and return response JSON."""
+    """上传 a text document and return response JSON."""
     file_content = io.BytesIO(content.encode("utf-8"))
     resp = httpx.post(
         f"{base_url}/api/projects/{project_id}/documents",
@@ -122,7 +122,7 @@ class TestDocumentReindex:
     def test_reindex_document_that_was_uploaded(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Upload a document and immediately reindex it — full flow test."""
+        """上传 a document and immediately reindex it — full flow test."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
         if not project_id:
             pytest.skip("Cannot create project")

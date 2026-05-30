@@ -1,4 +1,4 @@
-"""Configuration management for the Citation Service (M6-02).
+"""配置 management for the Citation Service (M6-02).
 
 Configures: similarity threshold (0.85), batch verify size, footnote/endnote default settings.
 """
@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 
 
 class CitationConfig(BaseSettings):
-    """Configuration for the Citation Service."""
+    """配置 for the Citation Service."""
 
     # Service identity
     SERVICE_NAME: str = "citation-service"
@@ -29,5 +29,5 @@ class CitationConfig(BaseSettings):
     model_config = {"env_prefix": "CITATION_", "case_sensitive": True}
 
 
-# Singleton instance
+# 单例 instance
 config = CitationConfig()

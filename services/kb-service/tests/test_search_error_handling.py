@@ -34,7 +34,7 @@ def _setup_searcher_with_failing_embedding() -> HybridSearcher:
     vs = InMemoryVectorStore(dim=768)
     bm25 = InMemoryBM25Searcher()
 
-    # Create a MockEmbeddingClient but patch embed_single to fail
+    # 创建 a MockEmbeddingClient but patch embed_single to fail
     failing_emb = MockEmbeddingClient(dim=768)
     failing_emb.embed_single = AsyncMock(
         side_effect=httpx.ConnectError("All connection attempts failed")
@@ -156,7 +156,7 @@ class TestSearchWithEmbeddingFailure:
 
         asyncio.run(index())
 
-        # Then: swap to failing embedding searcher (but keep the indexed data in BM25/VS)
+        # 当时: swap to failing embedding searcher (but keep the indexed data in BM25/VS)
         # Actually, BM25-only mode doesn't call embed_single at all, so we can keep the
         # working searcher and just test bm25 mode works independently.
         resp = client.post(
@@ -244,7 +244,7 @@ class TestSearchWithWorkingEmbedding:
             "/api/projects/proj-1/search",
             json={"query": "", "top_k": 5},
         )
-        # Empty query is technically valid input; the search engine handles it
+        # 空 query is technically valid input; the search engine handles it
         assert resp.status_code == 200
 
     def test_search_with_top_k_out_of_range(self, client: TestClient) -> None:
@@ -271,7 +271,7 @@ class TestSearchWithWorkingEmbedding:
             "/api/projects/proj-1/search",
             json={"query": "test", "search_mode": "invalid_mode"},
         )
-        # String field without enum validation — accepted but should fall through
+        # 字符串 field without enum validation — accepted but should fall through
         # or be rejected by the service. In current implementation, hybrid is default.
         assert resp.status_code == 200
 

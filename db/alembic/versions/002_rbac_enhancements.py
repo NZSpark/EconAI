@@ -27,7 +27,7 @@ def upgrade() -> None:
     )
 
     # ── 2. Fix projects schema drift: owner_id → created_by ──
-    # Check if column exists with old name
+    # 检查 if column exists with old name
     conn = op.get_bind()
     result = conn.exec_driver_sql(
         "SELECT column_name FROM information_schema.columns "

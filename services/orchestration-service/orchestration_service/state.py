@@ -118,7 +118,7 @@ class AgentState:
     # ── Citation management ───────────────────────────────────────────────
 
     def update_citations(self, verified: list[dict[str, object]]) -> None:
-        """Merge verified citation results into state."""
+        """合并 verified citation results into state."""
         for cit in verified:
             ref_id = str(cit.get("ref_id", ""))
             if ref_id:

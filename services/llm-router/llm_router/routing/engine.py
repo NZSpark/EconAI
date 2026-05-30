@@ -27,12 +27,18 @@ class RoutingDecision:
 
 
 class RoutingEngine:
-    """Decides which adapter/model to use for each request.
-
-    Algorithm:
-        1. If model != "auto": use the specified model directly.
-        2. If sensitivity == "high": route to default local model.
-        3. Otherwise: route to default cloud model.
+    """LLM 路由决策引擎 —— 根据敏感度和模型选择决定使用哪个 LLM。
+    
+    决策算法（优先级从高到低）：
+        1. 显式指定 model != "auto" → 使用指定模型
+        2. sensitivity == "high"  → 路由到本地 LLM（数据不出内网）
+        3. 默认（sensitivity == "low"） → 路由到云端 Claude API
+    
+    为什么需要路由引擎？
+    - 政策研究涉及敏感文档，不能随便发送到外部 API
+    - 敏感度分析器（orchestration-service）标记文档敏感级别
+    - 高敏感度文档 → 本地部署的 LLM（如 ChatGLM、Qwen）
+    - 低敏感度公开文档 → Claude API（能力更强）
     """
 
     def __init__(self, registry: ModelRegistry) -> None:
@@ -45,18 +51,18 @@ class RoutingEngine:
         *,
         fallback_to_local: bool = False,
     ) -> RoutingDecision:
-        """Determine the routing target and adapter for a request.
+        """决定请求应该路由到哪个 LLM 适配器。
 
         Args:
-            model: Requested model ID (or "auto").
-            sensitivity: "high" or "low".
-            fallback_to_local: If True, force routing to local (used for
-                Claude failure fallback).
+            model: 请求的模型 ID（"auto" 表示自动选择）。
+            sensitivity: "high"（敏感，必须本地）或 "low"（可用云端）。
+            fallback_to_local: True 表示 Claude 不可用，强制回退到本地 LLM。
 
         Returns:
-            A RoutingDecision with target, reason, model_id, and adapter_type.
+            路由决策，包含 target、reason、model_id 和 adapter_type。
         """
-        # Explicit fallback request
+        # 场景 1：Claude API 熔断 → 强制回退到本地 LLM
+        # 仅对低敏感度请求做回退（高敏感度本来就在本地）
         if fallback_to_local and sensitivity == "low":
             local_model = self._registry.default_local
             logger.info(
@@ -70,7 +76,7 @@ class RoutingEngine:
                 adapter_type="local",
             )
 
-        # Non-auto model: use as specified
+        # 场景 2：用户显式指定了模型名称
         if model != "auto":
             model_info = self._registry.get_model(model)
             if model_info is None:
@@ -89,11 +95,11 @@ class RoutingEngine:
                 adapter_type=adapter_type,
             )
 
-        # Auto routing
+        # 场景 3：自动路由（默认模式）
         return self._decide_auto(sensitivity)
 
     def _decide_auto(self, sensitivity: str) -> RoutingDecision:
-        """Auto-route based on sensitivity level."""
+        """根据敏感度级别自动选择路由。"""
         if sensitivity == "high":
             local_model = self._registry.default_local
             return RoutingDecision(
@@ -112,9 +118,9 @@ class RoutingEngine:
             )
 
     def can_fallback_to_local(self, sensitivity: str) -> bool:
-        """Check if falling back to local is allowed.
-
-        Fallback is allowed for 'low' sensitivity (cloud→local).
-        For 'high' sensitivity, we are already on local so no fallback needed.
+        """检查是否允许从云端回退到本地 LLM。
+        
+        只有低敏感度请求允许回退（cloud→local）。
+        高敏感度请求已经在本地，无需回退。
         """
         return sensitivity == "low"

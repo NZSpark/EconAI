@@ -1,4 +1,4 @@
-"""PolicyAI User & Permission Service (M8) — configuration management.
+"""PolicyAI 用户与权限服务（M8）— 配置管理。
 
 Inherits common DB/Redis/JWT defaults from shared.config.AppSettings.
 """
@@ -10,7 +10,7 @@ from shared.config import AppSettings
 
 
 class Settings(AppSettings):
-    """Application settings loaded from environment variables and .env file."""
+    """应用配置（从环境变量加载）。"""
 
     model_config = SettingsConfigDict(
         env_prefix="USER_SERVICE_", env_file=".env", extra="ignore"
@@ -23,7 +23,7 @@ class Settings(AppSettings):
     port: int = 8007
 
     # ——— Database ———
-    # Inherit database_url @property from AppSettings (computed from postgres_* fields)
+    # 继承自 database_url @property from AppSettings (computed from postgres_* fields)
     # Use env vars: USER_SERVICE_POSTGRES_HOST, USER_SERVICE_POSTGRES_PORT, etc.
 
     # ——— JWT (jwt_secret, jwt_algorithm inherited from AppSettings) ———
@@ -31,7 +31,7 @@ class Settings(AppSettings):
     jwt_refresh_expire_hours: int = 24
 
     # ——— Redis ———
-    # Inherit redis_url @property from AppSettings (computed from redis_* fields)
+    # 继承自 redis_url @property from AppSettings (computed from redis_* fields)
     # Use env vars: USER_SERVICE_REDIS_HOST, USER_SERVICE_REDIS_PORT, etc.
     token_blacklist_enabled: bool = True
 

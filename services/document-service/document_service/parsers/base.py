@@ -13,7 +13,7 @@ class BaseParser(ABC):
 
     @abstractmethod
     def parse(self, file_data: bytes, filename: str) -> ParsedContent:
-        """Parse file bytes and return structured content.
+        """解析 file bytes and return structured content.
 
         Args:
             file_data: Raw file bytes.
@@ -30,5 +30,5 @@ class BaseParser(ABC):
         ...
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:
-        """Extract hints for metadata extraction. Override in subclasses."""
+        """提取 hints for metadata extraction. Override in subclasses."""
         return {}

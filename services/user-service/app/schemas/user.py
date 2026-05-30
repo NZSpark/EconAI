@@ -1,4 +1,4 @@
-"""User management schemas."""
+"""用户管理数据模式。"""
 
 from __future__ import annotations
 
@@ -12,20 +12,20 @@ class UserCreate(BaseModel):
     display_name: str | None = Field(None, max_length=256)
     password: str = Field(..., min_length=8)
     role: UserRole = Field(default=UserRole.analyst)
-    # Group binding for project_admin (pick exactly one)
-    group_id: str | None = Field(None, description="UUID of an existing group")
-    group_name: str | None = Field(None, min_length=1, max_length=256, description="Name for a new group to create inline")
+    # project_admin 的组织绑定（二选一）
+    group_id: str | None = Field(None, description="已有组织的 UUID")
+    group_name: str | None = Field(None, min_length=1, max_length=256, description="要内联创建的新组织名称")
 
     @model_validator(mode="after")
     def _require_group_for_project_admin(self) -> "UserCreate":
         if self.role == UserRole.project_admin:
             if not self.group_id and not self.group_name:
                 raise ValueError(
-                    "project_admin role requires either 'group_id' (existing group) or 'group_name' (new group)"
+                    "project_admin 角色需要 'group_id'（已有组织）或 'group_name'（新组织）"
                 )
             if self.group_id and self.group_name:
                 raise ValueError(
-                    "Provide only one of 'group_id' or 'group_name', not both"
+                    "仅提供 'group_id' 或 'group_name' 之一，不要同时提供"
                 )
         return self
 

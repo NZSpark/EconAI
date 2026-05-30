@@ -22,14 +22,14 @@ import zipfile
 
 
 class TestOCRImageBytes:
-    """Tests for the shared ocr_image_bytes() function."""
+    """测试辅助函数。"""
 
     def test_ocr_returns_string(self) -> None:
         from PIL import Image
 
         from document_service.parsers.image_extractor import ocr_image_bytes
 
-        # Create a 1x1 image (will return empty or error string)
+        # 创建 a 1x1 image (will return empty or error string)
         img = Image.new("RGB", (1, 1), color="white")
         buf = io.BytesIO()
         img.save(buf, "PNG")
@@ -64,7 +64,7 @@ class TestOCRImageBytes:
 
 
 class TestPDFImageExtraction:
-    """Tests for extract_images_from_pdf()."""
+    """测试辅助函数。"""
 
     def test_extract_from_pdf_no_images(self) -> None:
         """PDF without embedded images returns empty list."""
@@ -112,7 +112,7 @@ class TestPDFImageExtraction:
 
 
 class TestDOCXImageExtraction:
-    """Tests for extract_images_from_docx()."""
+    """测试辅助函数。"""
 
     def test_extract_from_docx_no_images(self) -> None:
         from document_service.parsers.image_extractor import extract_images_from_docx
@@ -144,7 +144,7 @@ class TestDOCXImageExtraction:
 
 
 class TestPPTXImageExtraction:
-    """Tests for extract_images_from_pptx()."""
+    """测试辅助函数。"""
 
     def test_extract_from_pptx_no_images(self) -> None:
         from document_service.parsers.image_extractor import extract_images_from_pptx
@@ -176,7 +176,7 @@ class TestPPTXImageExtraction:
 
 
 class TestHTMLImageExtraction:
-    """Tests for extract_images_from_html()."""
+    """测试辅助函数。"""
 
     def test_extract_from_html_no_images(self) -> None:
         from document_service.parsers.image_extractor import extract_images_from_html
@@ -191,7 +191,7 @@ class TestHTMLImageExtraction:
 
         from document_service.parsers.image_extractor import extract_images_from_html
 
-        # Create a small image and encode as data URI
+        # 创建 a small image and encode as data URI
         img = Image.new("RGB", (100, 100), color=(255, 0, 0))
         buf = io.BytesIO()
         img.save(buf, "PNG")
@@ -333,7 +333,7 @@ class TestPPTXContentEnrichment:
 
 
 # ===========================================================================
-# Test Fixtures: Generate minimal documents with embedded images
+# 测试 Fixtures: Generate minimal documents with embedded images
 # ===========================================================================
 
 
@@ -362,7 +362,7 @@ def _create_pdf_with_embedded_image() -> bytes:
     Even minimal PDFs with images are complex, so we test parsing
     with a valid structure that PyMuPDF can open.
     """
-    # Create a small 1x1 JPEG image first
+    # 创建 a small 1x1 JPEG image first
     from PIL import Image
 
     img = Image.new("RGB", (50, 50), color=(128, 128, 128))
@@ -370,13 +370,13 @@ def _create_pdf_with_embedded_image() -> bytes:
     img.save(img_buf, "JPEG")
     jpeg_data = img_buf.getvalue()
 
-    # Build a PDF using PyMuPDF to include the image properly
+    # 构建 a PDF using PyMuPDF to include the image properly
     try:
         import fitz
 
         doc = fitz.open()
         page = doc.new_page(width=612, height=792)
-        # Insert a small image
+        # 插入 a small image
         rect = fitz.Rect(100, 600, 200, 700)
         page.insert_image(rect, stream=jpeg_data)
         # Also add some text
@@ -386,7 +386,7 @@ def _create_pdf_with_embedded_image() -> bytes:
         doc.close()
         return pdf_bytes
     except ImportError:
-        # Fallback: minimal PDF with text only
+        # 回退: minimal PDF with text only
         return _create_minimal_pdf_with_text()
 
 

@@ -1,4 +1,4 @@
-"""Base configuration via pydantic-settings, shared across all services."""
+"""基于 pydantic-settings 的基础配置，在所有服务间共享。"""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AppSettings(BaseSettings):
-    """Base settings all microservices inherit from.
+    """所有微服务继承的基础设置。
 
-    Each service can subclass and add its own env-prefixed settings.
+    每个服务可以子类化并添加自己的环境变量前缀设置。
     """
 
     model_config = SettingsConfigDict(
@@ -20,7 +20,7 @@ class AppSettings(BaseSettings):
         extra="allow",
     )
 
-    # General
+    # 通用
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"

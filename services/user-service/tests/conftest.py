@@ -1,4 +1,4 @@
-"""Test fixtures for user-service."""
+"""测试辅助函数。"""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from app.main import app
 
 @pytest.fixture
 def mock_db() -> AsyncMock:
-    """Mock async SQLAlchemy session, also usable as an async context manager."""
+    """模拟异步 。"""
     session = AsyncMock()
     session.commit = AsyncMock()
     session.rollback = AsyncMock()
@@ -28,7 +28,7 @@ def mock_db() -> AsyncMock:
 
 @pytest.fixture
 def mock_redis() -> AsyncMock:
-    """Mock async Redis client."""
+    """模拟异步 。"""
     redis = AsyncMock()
     redis.exists = AsyncMock(return_value=0)
     redis.setex = AsyncMock()
@@ -39,7 +39,7 @@ def mock_redis() -> AsyncMock:
 
 @pytest.fixture
 def client(mock_db: AsyncMock, mock_redis: AsyncMock) -> TestClient:
-    """TestClient with mocked DB and Redis dependencies."""
+    """带模拟依赖的 TestClient。"""
     from app.database import get_db
     from app.routers.auth import get_redis
 

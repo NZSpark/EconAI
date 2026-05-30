@@ -35,7 +35,7 @@ CHAT_TIMEOUT = int(os.environ.get("POLICYAI_TEST_LLM_TIMEOUT_S", "120"))
 
 
 def _is_llm_router_ready() -> bool:
-    """Check LLM Router health."""
+    """检查 LLM Router health."""
     try:
         r = httpx.get(f"{LLM_ROUTER_URL}/health", timeout=5)
         return bool(r.status_code == 200)
@@ -44,7 +44,7 @@ def _is_llm_router_ready() -> bool:
 
 
 def _is_ollama_ready() -> bool:
-    """Check Ollama is reachable and model is pulled."""
+    """检查 Ollama is reachable and model is pulled."""
     try:
         r = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=5)
         if r.status_code != 200:

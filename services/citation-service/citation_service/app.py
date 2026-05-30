@@ -60,7 +60,7 @@ _EMBEDDING_MODEL = os.getenv("CITATION_EMBEDDING_MODEL", "text2vec-large-chinese
 
 
 async def _embed_batch(texts: list[str]) -> list[list[float]]:
-    """Generate embeddings via LLM Router's /internal/llm/embed endpoint."""
+    """生成 embeddings via LLM Router's /internal/llm/embed endpoint."""
     if not texts:
         return []
     try:
@@ -89,7 +89,7 @@ _citations_tbl: Table | None = None
 
 
 async def _init_db() -> None:
-    """Initialize PostgreSQL connection for citation persistence."""
+    """初始化 PostgreSQL connection for citation persistence."""
     global _db_engine, _db_session_factory, _db_available, _citations_tbl
 
     db_url = os.getenv("CITATION_DATABASE_URL", cfg.DATABASE_URL)
@@ -261,7 +261,7 @@ class CitationDetailResponse(BaseModel):
 
 
 def _to_verified_response(vc: VerifiedCitation, citation_id: str = "") -> VerifiedCitationResponse:
-    """Convert internal VerifiedCitation to API response model."""
+    """转换 internal VerifiedCitation to API response model."""
     return VerifiedCitationResponse(
         id=citation_id,
         ref_id=vc.ref_id,
@@ -283,7 +283,7 @@ def _to_verified_response(vc: VerifiedCitation, citation_id: str = "") -> Verifi
 
 
 def _verification_result_to_citations(result: VerificationResult) -> list[dict[str, Any]]:
-    """Convert VerificationResult to storable citation dicts for in-memory store."""
+    """转换 VerificationResult to storable citation dicts for in-memory store."""
     now = datetime.now(UTC)
     records: list[dict[str, Any]] = []
     for vc in result.citations:
@@ -313,13 +313,13 @@ def _verification_result_to_citations(result: VerificationResult) -> list[dict[s
 
 
 # ---------------------------------------------------------------------------
-# Health check
+# 健康检查
 # ---------------------------------------------------------------------------
 
 
 @app.get("/health")
 async def health() -> dict[str, object]:
-    """Health check endpoint."""
+    """健康检查 endpoint."""
     return {
         "status": "ok",
         "service": cfg.SERVICE_NAME,
@@ -396,7 +396,7 @@ async def list_citations(
     task_id: str,
     confidence: Annotated[str | None, Query(description="Filter by confidence level")] = None,
 ) -> CitationListResponse:
-    """List verified citations for a task output.
+    """列出 verified citations for a task output.
 
     Optionally filter by confidence level (direct/fuzzy/uncertain).
     Returns citations array + summary with per-confidence counts (per User Manual §6.3).
@@ -449,7 +449,7 @@ async def get_citation_detail(
     task_id: str,
     citation_id: str,
 ) -> CitationDetailResponse:
-    """Get a single citation detail including source information.
+    """获取 a single citation detail including source information.
 
     Returns: ref_id, sentence, confidence, source (document_id, pages, excerpt),
              verified_at, verified_by.

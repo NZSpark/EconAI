@@ -1,4 +1,4 @@
-"""Milvus vector store — production implementation using pymilvus."""
+""" 向量存储。"""
 
 from __future__ import annotations
 
@@ -138,15 +138,14 @@ class MilvusVectorStore(VectorStore):
         if not results or not results[0]:
             return []
         return [
-            entity = hit.get("entity", {})
             {
                 "chunk_id": hit["id"],
                 "score": hit["distance"],
                 "metadata": {
-                    "document_id": entity.get("document_id", ""),
-                    "project_id": entity.get("project_id", ""),
-                    "chunk_type": entity.get("chunk_type", ""),
-                    "content": entity.get("content", ""),
+                    "document_id": hit.get("entity", {}).get("document_id", ""),
+                    "project_id": hit.get("entity", {}).get("project_id", ""),
+                    "chunk_type": hit.get("entity", {}).get("chunk_type", ""),
+                    "content": hit.get("entity", {}).get("content", ""),
                 },
             }
             for hit in results[0]

@@ -1,1 +1,1 @@
-"""PolicyAI Knowledge Base Service (M3)."""
+"""PolicyAI 知识库服务（M3）。"""

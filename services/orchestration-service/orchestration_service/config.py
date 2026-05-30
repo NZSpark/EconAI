@@ -32,7 +32,7 @@ class OrchestrationSettings(AppSettings):
     # Prompt templates (canonical location: repo root templates/prompts/)
     prompt_templates_dir: str = "templates/prompts"
 
-    # Default output formats
+    # 默认 output formats
     default_output_formats: list[str] = ["md", "docx"]
 
     model_config = {"case_sensitive": False, "env_prefix": "ORCH_"}

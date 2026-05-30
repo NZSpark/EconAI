@@ -44,7 +44,7 @@ async def create_output(
     minio_path: str | None = None,
     citation_count: int = 0,
 ) -> TaskOutput:
-    """Create a new task_output record."""
+    """创建 a new task_output record."""
     output = TaskOutput(
         task_id=task_id,
         format=format_name,
@@ -62,7 +62,7 @@ async def get_outputs_by_task(
     session: AsyncSession,
     task_id: str,
 ) -> list[TaskOutput]:
-    """Get all outputs for a given task."""
+    """获取 all outputs for a given task."""
     stmt = select(TaskOutput).where(TaskOutput.task_id == task_id)
     result = await session.execute(stmt)
     return list(result.scalars().all())
@@ -72,7 +72,7 @@ async def get_output_by_id(
     session: AsyncSession,
     output_id: uuid.UUID,
 ) -> TaskOutput | None:
-    """Get a single output by its ID."""
+    """获取 a single output by its ID."""
     stmt = select(TaskOutput).where(TaskOutput.id == output_id)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -82,7 +82,7 @@ async def delete_outputs_by_task(
     session: AsyncSession,
     task_id: str,
 ) -> int:
-    """Delete all outputs for a given task. Returns count of deleted rows."""
+    """删除 all outputs for a given task. Returns count of deleted rows."""
     from sqlalchemy import delete
 
     stmt = delete(TaskOutput).where(TaskOutput.task_id == task_id)

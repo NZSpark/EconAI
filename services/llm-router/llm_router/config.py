@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # Model registry config file path
     model_registry_path: str = "models.yaml"
 
-    # Default generation parameters
+    # 默认 generation parameters
     llm_default_temperature: float = 0.3
     llm_default_max_tokens: int = 4096
     llm_max_context_tokens: int = 200000
@@ -66,5 +66,5 @@ class Settings(BaseSettings):
     token_tracking_enabled: bool = True
 
 
-# Singleton
+# 单例
 settings = Settings()

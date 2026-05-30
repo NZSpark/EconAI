@@ -19,7 +19,7 @@ def _unique_name(name: str) -> str:
 def _setup_project_and_task(
     base_url: str, auth_headers: dict[str, str], admin_user_id: str
 ) -> tuple[str | None, str | None, str | None]:
-    """Create group + project + task. Returns (group_id, project_id, task_id)."""
+    """创建 group + project + task. Returns (group_id, project_id, task_id)."""
     # Create group
     resp = httpx.post(
         f"{base_url}/api/admin/groups",

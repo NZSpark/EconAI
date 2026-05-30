@@ -66,7 +66,7 @@ def model_registry(sample_models: list[ModelInfo]) -> Any:
     """Return a mock ModelRegistry pre-populated with sample models."""
     from llm_router.models.registry import ModelRegistry
 
-    # Create a real registry but override _load to use sample models
+    # 创建 a real registry but override _load to use sample models
     registry = ModelRegistry.__new__(ModelRegistry)
     registry._models = {m.id: m for m in sample_models}
     registry._default_local = "local:qwen3-72b"

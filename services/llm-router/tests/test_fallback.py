@@ -12,7 +12,7 @@ from llm_router.routing.engine import RoutingEngine
 
 
 class TestFallbackDecision:
-    """Tests for the fallback-to-local routing decision."""
+    """测试辅助函数。"""
 
     def test_fallback_returns_local_target(self, routing_engine: RoutingEngine) -> None:
         """When fallback_to_local=True, routing returns local target."""
@@ -40,7 +40,7 @@ class TestFallbackDecision:
 
 
 class TestFallbackEligibility:
-    """Tests for which sensitivity levels allow fallback."""
+    """测试辅助函数。"""
 
     def test_low_sensitivity_allows_fallback(self, routing_engine: RoutingEngine) -> None:
         """sensitivity=low means cloud→local fallback is allowed."""
@@ -85,7 +85,7 @@ class TestFallbackIntegration:
         initial = routing_engine.decide(model="auto", sensitivity="low")
         assert initial.target == "cloud"
 
-        # After Claude fails, check eligibility
+        # 之后 Claude fails, check eligibility
         assert routing_engine.can_fallback_to_local("low") is True
 
         # Make fallback decision

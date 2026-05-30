@@ -18,7 +18,7 @@ _CJK_RE = re.compile(r"[一-鿿㐀-䶿豈-﫿]")
 
 
 def contains_cjk(text: str) -> bool:
-    """Check whether *text* contains any CJK characters."""
+    """检查 whether *text* contains any CJK characters."""
     return bool(_CJK_RE.search(text))
 
 
@@ -46,7 +46,7 @@ def _ensure_jieba() -> None:
 
 
 def tokenize(text: str) -> list[str]:
-    """Split *text* into a list of tokens.
+    """分割 *text* into a list of tokens.
 
     - If the text contains CJK characters and jieba is available, use
       jieba.lcut for Chinese word segmentation.
@@ -143,7 +143,7 @@ def apply_highlight(text: str, spans: list[HighlightSpan], tag: str = "em") -> s
 
 
 def extract_matched_terms(query: str) -> list[str]:
-    """Extract the list of unique tokens from *query* after tokenization.
+    """提取 the list of unique tokens from *query* after tokenization.
 
     This is useful for returning a 'matched_terms' list alongside each
     search result, so the frontend can highlight without re-tokenizing.

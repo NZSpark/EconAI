@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from orchestration_service.schemas import ProgressDetails, TaskProgress
 
-# Default steps estimate per task type
+# 默认 steps estimate per task type
 _PRESET_ESTIMATES: dict[str, int] = {
     "literature_review": 8,
     "policy_draft": 7,

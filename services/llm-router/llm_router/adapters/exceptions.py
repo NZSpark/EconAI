@@ -1,31 +1,31 @@
-"""Adapter exception hierarchy for standardized error handling."""
+"""适配器异常层次结构，用于标准化的错误处理。"""
 
 from __future__ import annotations
 
 
 class AdapterError(Exception):
-    """Base adapter error."""
+    """适配器基础错误。"""
 
 
 class AdapterRateLimitError(AdapterError):
-    """Rate limit (429) error — retryable with exponential backoff."""
+    """频率限制（429）错误 — 可通过指数退避重试。"""
 
 
 class AdapterServerError(AdapterError):
-    """5xx server error — retryable with linear backoff."""
+    """5xx 服务器错误 — 可通过线性退避重试。"""
 
 
 class AdapterTimeoutError(AdapterError):
-    """Request timeout — retryable once, then 504."""
+    """请求超时 — 可重试一次，然后返回 504。"""
 
 
 class AdapterConnectionError(AdapterError):
-    """Connection failure — may trigger circuit breaker."""
+    """连接失败 — 可能触发熔断器。"""
 
 
 class AdapterAuthError(AdapterError):
-    """Authentication / authorization error — not retryable."""
+    """认证/授权错误 — 不可重试。"""
 
 
 class AdapterModelUnavailableError(AdapterError):
-    """Model unavailable (e.g., OOM) — 503."""
+    """模型不可用（例如 OOM）— 503。"""

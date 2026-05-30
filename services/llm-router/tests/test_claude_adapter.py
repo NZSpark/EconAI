@@ -27,7 +27,7 @@ from llm_router.models.schemas import FunctionDef, Message, ToolDef
 
 
 class TestSystemMessageExtraction:
-    """Tests for system message extraction from unified format."""
+    """测试辅助函数。"""
 
     def test_single_system_message(self) -> None:
         """A single system message is extracted correctly."""
@@ -64,7 +64,7 @@ class TestSystemMessageExtraction:
 
 
 class TestMessageConversion:
-    """Tests for unified → Anthropic message conversion."""
+    """测试辅助函数。"""
 
     def test_basic_user_message(self) -> None:
         """A basic user message passes through."""
@@ -164,7 +164,7 @@ class TestMessageConversion:
 
 
 class TestToolConversion:
-    """Tests for unified tool → Anthropic tool conversion."""
+    """测试辅助函数。"""
 
     def test_basic_tool_conversion(self) -> None:
         """Tool definitions are correctly converted."""
@@ -200,7 +200,7 @@ class TestToolConversion:
 
 
 class TestResponseParsing:
-    """Tests for Anthropic response → unified format parsing."""
+    """测试辅助函数。"""
 
     def test_text_response(self, mock_claude_response: Any) -> None:
         """Text-only response from Claude is correctly parsed."""
@@ -222,7 +222,7 @@ class TestResponseParsing:
 
 
 class TestStopReasonMapping:
-    """Tests for Anthropic stop_reason → unified finish_reason."""
+    """测试辅助函数。"""
 
     def test_end_turn_maps_to_stop(self) -> None:
         adapter = ClaudeAdapter(api_key="test-key")
@@ -242,7 +242,7 @@ class TestStopReasonMapping:
 
 
 class TestErrorMapping:
-    """Tests for Anthropic error → adapter exception mapping."""
+    """测试辅助函数。"""
 
     def test_rate_limit_error(self) -> None:
         adapter = ClaudeAdapter(api_key="test-key")

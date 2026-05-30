@@ -21,7 +21,7 @@ _client = MinIOClient(_cfg)
 
 
 def get_minio_client() -> MinIOClient:
-    """Get the output-service MinIO client."""
+    """获取 the output-service MinIO client."""
     return _client
 
 
@@ -31,7 +31,7 @@ def reset_minio_client() -> None:
 
 
 def upload_file(file_data: bytes, object_path: str, content_type: str = "application/octet-stream") -> str:
-    """Upload file bytes to MinIO. Returns the object_path."""
+    """上传 file bytes to MinIO. Returns the object_path."""
     return _client.upload_file(file_data, object_path, content_type)
 
 
@@ -41,12 +41,12 @@ def download_file(object_path: str) -> bytes:
 
 
 def get_presigned_url(object_path: str, expires: int = 3600) -> str:
-    """Generate a presigned URL for temporary access."""
+    """生成 a presigned URL for temporary access."""
     return _client.get_presigned_url(object_path, expires)
 
 
 def generate_output_path(task_id: str, format_name: str) -> str:
-    """Generate a deterministic storage path for an output file."""
+    """生成 a deterministic storage path for an output file."""
     prefix = config.OUTPUT_STORAGE_PATH.rstrip("/")
     ext_map = {"md": "md", "markdown": "md", "docx": "docx", "xlsx": "xlsx", "pptx": "pptx"}
     ext = ext_map.get(format_name, format_name)

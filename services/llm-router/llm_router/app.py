@@ -133,7 +133,7 @@ app.add_middleware(
 
 @app.get("/health")
 async def health() -> dict[str, object]:
-    """Health check — reports router configuration."""
+    """健康检查 — reports router configuration."""
     return {
         "status": "ok",
         "service": "llm-router",
@@ -205,7 +205,7 @@ async def chat_completion(request: ChatRequest) -> ChatResponse:
 
 @app.post("/internal/llm/embed", response_model=EmbedResponse)
 async def embed(request: EmbedRequest) -> EmbedResponse:
-    """Generate embeddings for texts via local LLM.
+    """生成 embeddings for texts via local LLM.
 
     Embedding does not route through Claude (Anthropic doesn't offer
     an embedding API), so it always uses the local adapter.
@@ -237,7 +237,7 @@ async def usage_stats(
 
 
 def _validate_request(request: ChatRequest) -> None:
-    """Validate the chat request parameters."""
+    """验证 the chat request parameters."""
     if not request.messages:
         raise HTTPException(status_code=400, detail="messages must not be empty")
 
@@ -326,7 +326,7 @@ async def _execute_with_retry(
     request: ChatRequest,
     decision: RoutingDecision,
 ) -> tuple[ChatResponse, float]:
-    """Execute the adapter call with retry and circuit breaker logic.
+    """执行 the adapter call with retry and circuit breaker logic.
 
     Retry strategy:
       - 429: Exponential backoff, base=2s, max 3 retries

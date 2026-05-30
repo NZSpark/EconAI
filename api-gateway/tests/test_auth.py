@@ -1,4 +1,4 @@
-"""M1-25: JWT authentication flow tests (login success/failure, token expiry, refresh)."""
+"""M1-25: JWT 认证流程测试（登录成功/失败、令牌过期、刷新）。"""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 
 class TestJWTHealthCheck:
-    """Health check should not require authentication."""
+    """健康检查不应要求认证。"""
 
     def test_health_check_is_public(self, client: TestClient) -> None:
         response = client.get("/health")
@@ -19,7 +19,7 @@ class TestJWTHealthCheck:
 
 
 class TestJWTAuthMiddleware:
-    """JWT authentication middleware tests."""
+    """JWT 认证中间件测试。"""
 
     def test_missing_token_returns_401(self, client: TestClient) -> None:
         response = client.get("/api/projects")
@@ -50,13 +50,13 @@ class TestJWTAuthMiddleware:
             "/api/projects",
             headers={"Authorization": f"Bearer {access_token}"},
         )
-        # Should be proxied (mock httpx returns 200)
+        # 应被代理（模拟 httpx 返回 200）
         assert response.status_code == 200
 
     def test_refresh_token_rejected_for_api_access(
         self, client: TestClient, refresh_token: str
     ) -> None:
-        """Refresh tokens should not be usable as access tokens for API endpoints."""
+        """刷新令牌不应被用作 API 端点的访问令牌。"""
         response = client.get(
             "/api/projects",
             headers={"Authorization": f"Bearer {refresh_token}"},
@@ -75,7 +75,7 @@ class TestJWTAuthMiddleware:
     def test_valid_token_sets_user_state(
         self, client: TestClient, access_token: str, mock_redis: AsyncMock
     ) -> None:
-        """Verify that a valid token causes the user info to be injected."""
+        """验证有效令牌会导致用户信息被注入。"""
         response = client.get(
             "/api/projects",
             headers={"Authorization": f"Bearer {access_token}"},
@@ -85,7 +85,7 @@ class TestJWTAuthMiddleware:
     def test_blacklisted_token_returns_401(
         self, client: TestClient, access_token: str, mock_redis: AsyncMock
     ) -> None:
-        """When token JTI is blacklisted, return 401."""
+        """当令牌 JTI 被列入黑名单时，返回 401。"""
         mock_redis.exists = AsyncMock(return_value=1)
         response = client.get(
             "/api/projects",
@@ -97,19 +97,19 @@ class TestJWTAuthMiddleware:
 
 
 class TestLoginProxy:
-    """Login endpoint should be public and proxied to user-service."""
+    """登录端点应是公开的并代理到 user-service。"""
 
     def test_login_endpoint_is_public(self, client: TestClient) -> None:
-        """Login endpoint should be accessible without token."""
+        """登录端点应无需令牌即可访问。"""
         response = client.post(
             "/api/auth/login",
             json={"username": "testuser", "password": "password"},
         )
-        # Proxied to user-service mock — returns 200
+        # 代理到 user-service 模拟 — 返回 200
         assert response.status_code == 200
 
     def test_auth_paths_bypass_auth_middleware(self, client: TestClient) -> None:
-        """All /api/auth/* paths should work without authentication."""
+        """所有 /api/auth/* 路径应无需认证即可工作。"""
         response = client.post("/api/auth/refresh", json={"refresh_token": "test"})
         assert response.status_code == 200
 
@@ -118,7 +118,7 @@ class TestLoginProxy:
 
 
 class TestRequestID:
-    """X-Request-ID header should be added to all responses."""
+    """X-Request-ID 头应添加到所有响应中。"""
 
     def test_request_id_added_to_response(self, client: TestClient, access_token: str) -> None:
         response = client.get(
@@ -129,7 +129,7 @@ class TestRequestID:
         assert "X-Request-ID" in response.headers
 
     def test_request_id_propagated(self, client: TestClient, access_token: str) -> None:
-        """When client sends X-Request-ID, it should be propagated."""
+        """当客户端发送 X-Request-ID 时，应将其传播。"""
         response = client.get(
             "/api/projects",
             headers={
@@ -142,11 +142,11 @@ class TestRequestID:
 
 
 class TestRequestSizeLimit:
-    """Request body size limit tests."""
+    """请求体大小限制测试。"""
 
     def test_large_body_rejected(self, client: TestClient, access_token: str) -> None:
-        """Request with body exceeding 100MB should be rejected."""
-        # Use content-length header to simulate a large body
+        """请求体超过 100MB 的请求应被拒绝。"""
+        # 使用 content-length 头模拟大请求体
         response = client.post(
             "/api/projects/test-id/documents",
             headers={

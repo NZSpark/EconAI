@@ -1,4 +1,4 @@
-"""Auth request/response schemas."""
+"""认证。"""
 
 from __future__ import annotations
 

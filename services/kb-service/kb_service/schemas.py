@@ -17,7 +17,7 @@ class SearchFilters(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    """Search request body for both project and institutional search."""
+    """搜索 request body for both project and institutional search."""
 
     query: str
     top_k: int = Field(default=10, ge=1, le=100)

@@ -17,7 +17,7 @@ _LOGIN_PACE = float(os.environ.get("POLICYAI_TEST_AUTH_PACE", "0.5"))
 
 
 def _unique_username(name: str) -> str:
-    """Generate a unique username to avoid collision with previous test runs."""
+    """生成 a unique username to avoid collision with previous test runs."""
     return f"{name}_{int(time.time() * 1000) % 1000000}"
 
 

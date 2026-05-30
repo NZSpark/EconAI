@@ -25,7 +25,7 @@ class TestKBSearchResultStructure:
     """KB search results have expected fields — Section 4.5."""
 
     def test_search_result_fields(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Search results contain chunk_id, document_id, content, score, metadata."""
+        """搜索 results contain chunk_id, document_id, content, score, metadata."""
         resp = httpx.post(
             f"{base_url}/api/projects/00000000-0000-0000-0000-000000000001/search",
             json={"query": "经济政策", "top_k": 5},
@@ -42,7 +42,7 @@ class TestKBSearchResultStructure:
                 assert "score" in r
 
     def test_search_scores_in_range(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Search result scores are between 0 and 1."""
+        """搜索 result scores are between 0 and 1."""
         resp = httpx.post(
             f"{base_url}/api/projects/00000000-0000-0000-0000-000000000001/search",
             json={"query": "贸易政策分析", "top_k": 5},
@@ -56,7 +56,7 @@ class TestKBSearchResultStructure:
                 assert 0.0 <= r["score"] <= 1.0, f"Score {r['score']} out of range"
 
     def test_search_returns_total_hits(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Search response includes total_hits and search_time_ms."""
+        """搜索 response includes total_hits and search_time_ms."""
         resp = httpx.post(
             f"{base_url}/api/projects/00000000-0000-0000-0000-000000000001/search",
             json={"query": "test", "top_k": 3},
@@ -98,7 +98,7 @@ class TestKBSearchEdgeCases:
             assert len(body.get("results", [])) <= 100
 
     def test_search_results_are_deduplicated(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Search results should not have duplicate chunk_ids."""
+        """搜索 results should not have duplicate chunk_ids."""
         resp = httpx.post(
             f"{base_url}/api/projects/00000000-0000-0000-0000-000000000001/search",
             json={"query": "数字经济", "top_k": 10},

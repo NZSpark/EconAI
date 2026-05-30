@@ -1,4 +1,4 @@
-"""Tests for citation verifier and confidence logic (M6-27, M6-28)."""
+"""测试辅助函数。"""
 
 import pytest
 

@@ -1,4 +1,4 @@
-"""Shared test fixtures — mock Redis, mock httpx, test app factory."""
+"""共享测试夹具 — 模拟 Redis、模拟 httpx、测试应用工厂。"""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from app.utils.jwt_utils import create_access_token, create_refresh_token
 
 @pytest.fixture
 def mock_settings() -> Settings:
-    """Create test settings with fixed values."""
+    """创建带有固定值的测试设置。"""
     return Settings(
         jwt_secret="test-secret-key-for-testing",
         jwt_algorithm="HS256",
@@ -43,7 +43,7 @@ def mock_settings() -> Settings:
 
 @pytest.fixture
 def mock_redis() -> AsyncMock:
-    """Create a mock async Redis client."""
+    """创建模拟的异步 Redis 客户端。"""
     redis = AsyncMock()
     redis.ping = AsyncMock(return_value=True)
     redis.get = AsyncMock(return_value=None)
@@ -58,7 +58,7 @@ def mock_redis() -> AsyncMock:
 
 
 def _make_mock_proxy_response() -> MagicMock:
-    """Create a mock httpx response."""
+    """创建模拟的 httpx 响应。"""
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = b'{"status": "ok"}'
@@ -67,7 +67,7 @@ def _make_mock_proxy_response() -> MagicMock:
 
 
 def _make_mock_proxy() -> MagicMock:
-    """Create a mock ServiceProxy that returns success responses."""
+    """创建返回成功响应的模拟 ServiceProxy。"""
     mock_proxy = MagicMock()
 
     async def forward(service_url: str, path: str, request: Any) -> Any:
@@ -86,10 +86,10 @@ def _make_mock_proxy() -> MagicMock:
 
 @pytest.fixture
 def test_app(mock_settings: Settings, mock_redis: AsyncMock) -> Generator[FastAPI, None, None]:
-    """Create a FastAPI test app with all middleware and mock dependencies.
+    """创建带有所有中间件和模拟依赖的 FastAPI 测试应用。
 
-    Patches settings in all modules that cache their own reference to
-    app.config.settings at import time (via ``from app.config import settings``).
+    在导入时修补所有缓存了自己对 app.config.settings 引用的模块中的设置
+    （通过 ``from app.config import settings``）。
     """
     from app.main import create_app
     from app.routing.registry import get_route_registry
@@ -109,7 +109,7 @@ def test_app(mock_settings: Settings, mock_redis: AsyncMock) -> Generator[FastAP
     ):
         app = create_app()
         app.state.redis = mock_redis
-        # Initialize route registry (normally done by lifespan)
+        # 初始化路由注册表（通常由 lifespan 完成）
         app.state.registry = get_route_registry({
             "user_service_url": mock_settings.user_service_url,
             "document_service_url": mock_settings.document_service_url,
@@ -124,13 +124,13 @@ def test_app(mock_settings: Settings, mock_redis: AsyncMock) -> Generator[FastAP
 
 @pytest.fixture
 def client(test_app: FastAPI) -> TestClient:
-    """Create a TestClient for the test app."""
+    """为测试应用创建 TestClient。"""
     return TestClient(test_app)
 
 
 @pytest.fixture
 def access_token(mock_settings: Settings) -> str:
-    """Create a valid access token for testing."""
+    """创建用于测试的有效访问令牌。"""
     with patch("app.utils.jwt_utils.settings", mock_settings):
         return create_access_token(
             user_id="test-user-001",
@@ -142,7 +142,7 @@ def access_token(mock_settings: Settings) -> str:
 
 @pytest.fixture
 def admin_token(mock_settings: Settings) -> str:
-    """Create a valid admin access token for testing."""
+    """创建用于测试的有效管理员访问令牌。"""
     with patch("app.utils.jwt_utils.settings", mock_settings):
         return create_access_token(
             user_id="admin-001",
@@ -154,7 +154,7 @@ def admin_token(mock_settings: Settings) -> str:
 
 @pytest.fixture
 def analyst_token(mock_settings: Settings) -> str:
-    """Create a valid analyst access token for testing."""
+    """创建用于测试的有效分析师访问令牌。"""
     with patch("app.utils.jwt_utils.settings", mock_settings):
         return create_access_token(
             user_id="analyst-001",
@@ -166,14 +166,14 @@ def analyst_token(mock_settings: Settings) -> str:
 
 @pytest.fixture
 def refresh_token(mock_settings: Settings) -> str:
-    """Create a valid refresh token for testing."""
+    """创建用于测试的有效刷新令牌。"""
     with patch("app.utils.jwt_utils.settings", mock_settings):
         return create_refresh_token("test-user-001")
 
 
 @pytest.fixture
 def expired_token(mock_settings: Settings) -> str:
-    """Create an expired access token for testing."""
+    """创建用于测试的已过期访问令牌。"""
     from datetime import UTC, datetime, timedelta
 
     from jose import jwt

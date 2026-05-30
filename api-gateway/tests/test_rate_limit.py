@@ -1,4 +1,4 @@
-"""M1-27: Rate limiting tests (429 on exceeded limits, recovery)."""
+"""M1-27: 速率限制测试（超出限制返回429，以及恢复测试）。"""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from app.config import Settings
 
 
 class TestTokenBucketRateLimiter:
-    """Unit tests for the TokenBucketRateLimiter class."""
+    """TokenBucketRateLimiter 类的单元测试。"""
 
     @pytest.mark.asyncio
     async def test_first_request_allowed(self) -> None:
@@ -53,13 +53,13 @@ class TestTokenBucketRateLimiter:
 
 
 class TestRateLimitIntegration:
-    """Integration-level tests for rate limiting via the API."""
+    """通过 API 进行速率限制的集成级测试。"""
 
     def test_rate_limit_not_exceeded(
         self, client: TestClient, access_token: str, mock_redis: AsyncMock
     ) -> None:
-        """Normal requests under the limit should pass through."""
-        mock_redis.get.return_value = 50  # Under limit
+        """未超出限制的正常请求应该能通过。"""
+        mock_redis.get.return_value = 50  # 未达到限制
         mock_redis.incr.return_value = 51
 
         response = client.get(
@@ -71,10 +71,10 @@ class TestRateLimitIntegration:
     def test_rate_limit_exceeded_returns_429(
         self, client: TestClient, access_token: str, mock_redis: AsyncMock
     ) -> None:
-        """When the user limit is exceeded, return 429 with Retry-After."""
-        # Set return_value on the existing AsyncMock, don't replace it
-        mock_redis.get.return_value = 100  # At limit
-        mock_redis.incr.return_value = 101  # What incr would return
+        """当用户超出限制时，返回429并附带 Retry-After 头。"""
+        # 在现有的 AsyncMock 上设置 return_value，不要替换它
+        mock_redis.get.return_value = 100  # 已达到限制
+        mock_redis.incr.return_value = 101  # incr 将返回的值
         mock_redis.ttl.return_value = 25
 
         response = client.get(
@@ -89,12 +89,12 @@ class TestRateLimitIntegration:
     def test_rate_limit_ip_returns_429(
         self, client: TestClient, access_token: str, mock_redis: AsyncMock
     ) -> None:
-        """When the IP limit is exceeded, return 429."""
+        """当 IP 超出限制时，返回429。"""
         async def get_side_effect(key: str) -> int | None:
             if key.startswith("ratelimit:") and "ip:" not in key:
-                return 10  # User limit fine
+                return 10  # 用户限制正常
             if key.startswith("ratelimit:ip:"):
-                return 301  # IP over 300
+                return 301  # IP 超过 300
             return None
 
         mock_redis.get.side_effect = get_side_effect
@@ -110,8 +110,8 @@ class TestRateLimitIntegration:
     def test_rate_limit_recovery(
         self, client: TestClient, access_token: str, mock_redis: AsyncMock
     ) -> None:
-        """After the rate limit window resets, requests should succeed again."""
-        # Simulate recovery: first request finds count at 50, incr to 51
+        """在速率限制窗口重置后，请求应该能再次成功。"""
+        # 模拟恢复：第一个请求发现计数为 50，incr 后变为 51
         mock_redis.get.return_value = 50
         mock_redis.incr.return_value = 51
 
@@ -123,7 +123,7 @@ class TestRateLimitIntegration:
 
 
 class TestEndpointGroupClassification:
-    """Test that different endpoints get correct rate limit groups."""
+    """测试不同端点是否能获得正确的速率限制分组。"""
 
     def test_general_endpoint(self) -> None:
         from app.middleware.rate_limit import _get_endpoint_group
@@ -143,12 +143,12 @@ class TestEndpointGroupClassification:
 
 
 class TestRateLimitDisabled:
-    """When rate limiting is disabled, all requests should pass through."""
+    """当速率限制被禁用时，所有请求都应该能通过。"""
 
     def test_rate_limit_disabled_allows_all(
         self, client: TestClient, access_token: str, mock_redis: AsyncMock, mock_settings: Settings
     ) -> None:
-        """With rate limiting disabled, requests should not be checked."""
+        """当速率限制被禁用时，请求不应该被检查。"""
         mock_settings.rate_limit_enabled = False
         response = client.get(
             "/api/projects",

@@ -1,4 +1,4 @@
-"""Project group schemas."""
+"""项目组织数据模式。"""
 
 from __future__ import annotations
 

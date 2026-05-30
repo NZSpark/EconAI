@@ -58,7 +58,7 @@ def _require_system_admin(request: Request) -> None:
 
 
 async def _get_caller_group_ids(request: Request, db: AsyncSession) -> list[str]:
-    """Get group IDs visible to the caller. Returns all groups for system_admin."""
+    """获取 group IDs visible to the caller. Returns all groups for system_admin."""
     role = _get_caller_role(request)
     if role == "system_admin":
         return []  # Empty = no filter (see all)
@@ -97,7 +97,7 @@ async def create_group(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> GroupResponse:
-    """Create a project group — project_admin or system_admin."""
+    """创建 a project group — project_admin or system_admin."""
     _require_project_admin(request)
 
     group = ProjectGroup(
@@ -124,7 +124,7 @@ async def list_groups(
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
 ) -> GroupListResponse:
-    """List groups — system_admin sees all; project_admin sees only their groups."""
+    """列出 groups — system_admin sees all; project_admin sees only their groups."""
     _require_project_admin(request)
 
     role = _get_caller_role(request)
@@ -223,7 +223,7 @@ async def list_members(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> list[GroupMemberResponse]:
-    """List members of a project group."""
+    """列出 members of a project group."""
     _require_project_admin(request)
 
     role = _get_caller_role(request)
@@ -258,7 +258,7 @@ async def list_non_members(
     limit: int = Query(20, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ) -> list[GroupMemberResponse]:
-    """List users NOT in the group — for the add-member select."""
+    """列出 users NOT in the group — for the add-member select."""
     _require_project_admin(request)
 
     role = _get_caller_role(request)

@@ -10,7 +10,7 @@ import io
 from document_service.models import ParsedContent
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# 夹具s
 # ---------------------------------------------------------------------------
 
 
@@ -211,7 +211,7 @@ class TestMarkdownParser:
     def test_front_matter_detection(self) -> None:
         from document_service.parsers.markdown_parser import MarkdownParser
         parser = MarkdownParser()
-        md_bytes = b"---\ntitle: Test\n---\n\n# Content"
+        md_bytes = "---\ntitle: Test\n---\n\n# 内容".encode("utf-8")
         hints = parser.extract_metadata_hints(md_bytes, "test.md")
         assert hints.get("title") == "Test"
 
@@ -242,7 +242,7 @@ class TestExcelParser:
     def test_parse_xlsx_basic(self) -> None:
         from document_service.parsers.excel_parser import ExcelParser
         parser = ExcelParser()
-        # Create a minimal xlsx file
+        # 创建 a minimal xlsx file
         from openpyxl import Workbook
         wb = Workbook()
         ws = wb.active
@@ -268,7 +268,7 @@ class TestExcelParser:
 
 
 # ---------------------------------------------------------------------------
-# PowerPoint Parser Tests
+# 功效Point Parser Tests
 # ---------------------------------------------------------------------------
 
 
@@ -318,7 +318,7 @@ class TestPPTParser:
 
 
 # ---------------------------------------------------------------------------
-# Email Parser Tests
+# 邮箱 Parser Tests
 # ---------------------------------------------------------------------------
 
 

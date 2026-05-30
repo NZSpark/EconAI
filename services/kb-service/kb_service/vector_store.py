@@ -16,7 +16,7 @@ class VectorStore(ABC):
 
     @abstractmethod
     async def create_collection(self) -> None:
-        """Create collection if it doesn't exist."""
+        """创建 collection if it doesn't exist."""
         ...
 
     @abstractmethod
@@ -26,7 +26,7 @@ class VectorStore(ABC):
         vector: list[float],
         metadata: dict[str, Any],
     ) -> None:
-        """Insert a single vector with metadata."""
+        """插入 a single vector with metadata."""
         ...
 
     @abstractmethod
@@ -34,7 +34,7 @@ class VectorStore(ABC):
         self,
         entries: list[tuple[str, list[float], dict[str, Any]]],
     ) -> None:
-        """Insert multiple vectors with metadata."""
+        """插入 multiple vectors with metadata."""
         ...
 
     @abstractmethod
@@ -44,17 +44,17 @@ class VectorStore(ABC):
         top_k: int = 50,
         filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        """Search for nearest neighbors."""
+        """搜索 for nearest neighbors."""
         ...
 
     @abstractmethod
     async def delete_by_document(self, document_id: str) -> int:
-        """Delete all vectors for a document. Returns count deleted."""
+        """删除 all vectors for a document. Returns count deleted."""
         ...
 
     @abstractmethod
     async def delete_by_project(self, project_id: str) -> int:
-        """Delete all vectors for a project. Returns count deleted."""
+        """删除 all vectors for a project. Returns count deleted."""
         ...
 
 

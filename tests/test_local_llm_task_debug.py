@@ -55,7 +55,7 @@ CHAT_TIMEOUT = int(os.environ.get("POLICYAI_TEST_LLM_TIMEOUT_S", "300"))
 
 
 def _is_llm_router_ready() -> bool:
-    """Check LLM Router health."""
+    """检查 LLM Router health."""
     try:
         r = httpx.get(f"{LLM_ROUTER_URL}/health", timeout=5)
         return bool(r.status_code == 200)
@@ -64,7 +64,7 @@ def _is_llm_router_ready() -> bool:
 
 
 def _is_ollama_ready() -> bool:
-    """Check Ollama is reachable and model is available."""
+    """检查 Ollama is reachable and model is available."""
     try:
         r = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=5)
         if r.status_code != 200:
@@ -79,7 +79,7 @@ def _is_ollama_ready() -> bool:
 
 
 def _is_orch_ready() -> bool:
-    """Check Orchestration Service health."""
+    """检查 Orchestration Service health."""
     try:
         r = httpx.get(f"{ORCH_URL}/health", timeout=5)
         return bool(r.status_code == 200)
@@ -365,7 +365,7 @@ class TestContextSizeImpact:
     reason="LLM Router, Ollama, or Orchestration Service not available",
 )
 class TestTaskTypesLocalLLM:
-    """Create and monitor tasks of each type with sensitivity=high (local LLM).
+    """创建 and monitor tasks of each type with sensitivity=high (local LLM).
 
     These are end-to-end tests that create real tasks and monitor their progress.
     They help identify which task types succeed and which fail with local LLM.
@@ -383,7 +383,7 @@ class TestTaskTypesLocalLLM:
     @pytest.mark.slow
     @pytest.mark.parametrize("task_type", TASK_TYPES)
     def test_create_and_monitor_local_llm_task(self, task_type: str) -> None:
-        """Create a task with sensitivity=high and monitor until completion or timeout.
+        """创建 a task with sensitivity=high and monitor until completion or timeout.
 
         Tracks:
           - Whether the task reaches 'completed' or 'failed'
@@ -512,7 +512,7 @@ class TestTaskTypesLocalLLM:
     reason="LLM Router or Ollama not available",
 )
 class TestToolTimeoutBoundary:
-    """Test the exact timeout boundaries that the orchestration service uses.
+    """测试 the exact timeout boundaries that the orchestration service uses.
 
     Key finding: _run_with_timeout_and_retry uses:
       - timeout_s=agent_tool_timeout_s (120s, updated from 60s)
@@ -708,7 +708,7 @@ class TestRecommendedFix:
     reason="LLM Router or Ollama not available",
 )
 class TestConcurrentToolCalls:
-    """Test if concurrent local LLM calls cause additional slowdown.
+    """测试 if concurrent local LLM calls cause additional slowdown.
 
     In the Agent loop, tool calls are sequential, but understanding
     the throughput helps set expectations.

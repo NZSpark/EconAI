@@ -1,7 +1,7 @@
-"""Shared MinIO client — configurable wrapper used by document and output services.
+"""共享 MinIO 客户端 — 文档和输出服务使用的可配置包装器。
 
-Provides a parameter-based factory so each service passes its own MinIO connection
-settings. Avoids the ~200 lines of duplicate code previously in two services.
+提供基于参数的工厂函数，使每个服务可以传入自己的 MinIO 连接设置。
+避免了之前两个服务中约 200 行的重复代码。
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class MinIOConfig:
-    """Connection parameters for a MinIO bucket."""
+    """MinIO 存储桶的连接参数。"""
 
     endpoint: str
     access_key: str
@@ -29,9 +29,9 @@ class MinIOConfig:
 
 
 class MinIOClient:
-    """Encapsulates MinIO operations for a single bucket.
+    """封装单个存储桶的 MinIO 操作。
 
-    Thread-safe via a lazily-created singleton instance.
+    通过延迟创建的单例实例实现线程安全。
     """
 
     def __init__(self, cfg: MinIOConfig) -> None:
@@ -40,7 +40,7 @@ class MinIOClient:
 
     @property
     def client(self) -> Minio:
-        """Lazily create and cache the Minio connection."""
+        """延迟创建并缓存 Minio 连接。"""
         if self._client is None:
             self._client = Minio(
                 endpoint=self._cfg.endpoint,
@@ -52,11 +52,11 @@ class MinIOClient:
         return self._client
 
     def reset(self) -> None:
-        """Reset the cached client (useful for testing)."""
+        """重置缓存的客户端（用于测试）。"""
         self._client = None
 
     def _ensure_bucket(self) -> None:
-        """Ensure the configured bucket exists, creating it if needed."""
+        """确保配置的存储桶存在，必要时创建。"""
         try:
             found = self.client.bucket_exists(self._cfg.bucket)
             if not found:
@@ -66,12 +66,12 @@ class MinIOClient:
             logger.error("Failed to check/create MinIO bucket %s: %s", self._cfg.bucket, e)
             raise
 
-    # ---- core operations ----
+    # ---- 核心操作 ----
 
     def upload_file(
         self, file_data: bytes, object_path: str, content_type: str = "application/octet-stream"
     ) -> str:
-        """Upload file bytes to MinIO. Returns the object_path."""
+        """将文件字节上传到 MinIO。返回 object_path。"""
         try:
             self.client.put_object(
                 bucket_name=self._cfg.bucket,
@@ -87,7 +87,7 @@ class MinIOClient:
             raise
 
     def download_file(self, object_path: str) -> bytes:
-        """Download file bytes from MinIO."""
+        """从 MinIO 下载文件字节。"""
         try:
             response = self.client.get_object(
                 bucket_name=self._cfg.bucket,
@@ -102,7 +102,7 @@ class MinIOClient:
             raise
 
     def delete_file(self, object_path: str) -> None:
-        """Delete an object from MinIO (idempotent — logs warning if not found)."""
+        """从 MinIO 删除对象（幂等 — 如果未找到则记录警告）。"""
         try:
             self.client.remove_object(
                 bucket_name=self._cfg.bucket,
@@ -117,7 +117,7 @@ class MinIOClient:
                 raise
 
     def get_presigned_url(self, object_path: str, expires: int = 3600) -> str:
-        """Generate a presigned URL for temporary access."""
+        """生成用于临时访问的预签名 URL。"""
         try:
             return self.client.presigned_get_object(  # type: ignore[no-any-return]
                 bucket_name=self._cfg.bucket,

@@ -26,7 +26,7 @@ OUTPUT_SERVICE_URL = os.environ.get("POLICYAI_TEST_OUTPUT_SERVICE_URL", "http://
 ADMIN_USERNAME = os.environ.get("POLICYAI_TEST_ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("POLICYAI_TEST_ADMIN_PASSWORD", "Admin@123456")
 
-# Rate-limit pacing: sleep between requests to avoid 429
+# 频率-limit pacing: sleep between requests to avoid 429
 RATE_LIMIT_DELAY = float(os.environ.get("POLICYAI_TEST_RATE_LIMIT_DELAY", "0.3"))
 
 
@@ -99,7 +99,7 @@ def assert_json_error() -> Callable[[Any, int, str], dict[str, Any]]:
     def _check(resp: Any, expected_status: int, expected_code: str) -> dict[str, Any]:
         assert resp.status_code == expected_status, f"Expected {expected_status}, got {resp.status_code}: {resp.text}"
         body: dict[str, Any] = resp.json()
-        # Gateway errors: {"error": {...}}; service-through errors: {"detail": {"error": {...}}}
+        # 网关 errors: {"error": {...}}; service-through errors: {"detail": {"error": {...}}}
         error_obj = body.get("error") or body.get("detail", {}).get("error", {})
         assert error_obj, f"No 'error' key in response: {body}"
         assert error_obj["code"] == expected_code, f"Expected code {expected_code}, got {error_obj['code']}"

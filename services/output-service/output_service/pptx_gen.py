@@ -27,7 +27,7 @@ class PptxGenerator:
         citations: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> bytes:
-        """Generate .pptx briefing.
+        """生成 .pptx briefing.
 
         Args:
             title: Presentation title.

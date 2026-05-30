@@ -1,4 +1,4 @@
-"""Project management schemas."""
+"""项目管理数据模式。"""
 
 from __future__ import annotations
 

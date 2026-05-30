@@ -1,4 +1,4 @@
-"""Tests for embedding generation and caching (M3-31)."""
+"""测试辅助函数。"""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ class FakeRedis:
 
 
 class TestMockEmbeddingClient:
-    """Tests for the in-memory mock embedding client."""
+    """测试辅助函数。"""
 
     def test_embed_single_returns_correct_dim(self) -> None:
         client = MockEmbeddingClient(dim=1024)
@@ -68,7 +68,7 @@ class TestMockEmbeddingClient:
 
 
 class TestEmbeddingClientWithCache:
-    """Tests for embedding client with Redis caching."""
+    """测试辅助函数。"""
 
     @pytest.mark.asyncio
     async def test_cache_hit_avoids_recompute(self) -> None:
@@ -84,7 +84,7 @@ class TestEmbeddingClientWithCache:
 
     @pytest.mark.asyncio
     async def test_cache_key_hex_format(self) -> None:
-        # Keys should be 64-char hex strings
+        # 密钥s should be 64-char hex strings
         assert True  # format verified in cache_hit test
 
     @pytest.mark.asyncio

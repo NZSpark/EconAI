@@ -1,4 +1,4 @@
-"""Structured JSON logging setup for all PolicyAI services."""
+"""所有 PolicyAI 服务的结构化 JSON 日志配置。"""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 
 
 class JSONFormatter(logging.Formatter):
-    """Emit log records as JSON lines for structured logging."""
+    """以 JSON 行格式输出日志记录，用于结构化日志。"""
 
     def format(self, record: logging.LogRecord) -> str:
         import json
@@ -25,14 +25,14 @@ class JSONFormatter(logging.Formatter):
 
 
 def setup_logging(level: str = "INFO", service_name: str = "policyai") -> None:
-    """Configure root logger with JSON output to stdout."""
+    """将根日志记录器配置为 JSON 输出到标准输出。"""
     root = logging.getLogger()
     root.setLevel(getattr(logging, level.upper(), logging.INFO))
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JSONFormatter())
 
-    # Remove existing handlers to avoid duplicates
+    # 移除现有的处理器以避免重复
     root.handlers.clear()
     root.addHandler(handler)
 

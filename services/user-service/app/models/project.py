@@ -1,4 +1,4 @@
-"""Project model."""
+""" 模型。"""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from app.database import Base
 
 
 class Project(Base):
-    """Research project, owned by a project group."""
+    """研究项目，归属于某个项目组织。"""
 
     __tablename__ = "projects"
 

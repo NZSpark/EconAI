@@ -33,7 +33,15 @@ class FormattedRef:
 
 @dataclass
 class CitationFormatter:
-    """Formats verified citations for various output formats."""
+    """引用格式化器 —— 将验证后的引用转换为各种输出格式。
+    
+    支持的格式：
+    - Markdown (M6-19)：GFM 脚注风格，[ref:...] → [^1] + 末尾参考文献列表
+    - Web JSON (M6-20)：前端 tooltip 友好的 JSON 格式
+    - DOCX 脚注 (M6-21)：python-docx 可用的脚注文本列表
+    - XLSX 表格 (M6-22)：Excel 引文数据行
+    - PPTX (M6-23)：按幻灯片分组的引用 + 末尾全量引用列表
+    """
 
     _ref_counter: int = field(default=0, init=False)
 
@@ -46,20 +54,26 @@ class CitationFormatter:
         text: str,
         citations: list[VerifiedCitationInput],
     ) -> str:
-        """Replace [ref:...] markers with GFM footnotes [^n] and append reference list.
+        """将 [ref:...] 标记替换为 GFM 脚注 [^n]，并追加参考文献列表。
+        
+        处理步骤：
+        1. 提取所有 [ref:...] 标记
+        2. 为每个唯一的引用分配序号
+        3. 替换文本中的标记为脚注编号
+        4. 在文末追加参考文献列表
 
         Args:
-            text: Raw text containing [ref:...] markers.
-            citations: Verified citation results keyed by ref_id.
+            text: 包含 [ref:...] 标记的原始文本。
+            citations: 已验证的引用结果列表。
 
         Returns:
-            Markdown string with footnotes.
+            带脚注的 Markdown 文本。
         """
         self._ref_counter = 0
-        footnote_map: dict[str, tuple[int, str]] = {}  # ref_raw -> (num, label)
+        footnote_map: dict[str, tuple[int, str]] = {}  # raw_mark → (序号, 标签)
         raw_refs = _REF_PATTERN.findall(text)
 
-        # Build a citation lookup by raw_mark
+        # 构建引用查找表
         citation_lookup: dict[str, VerifiedCitationInput] = {}
         for c in citations:
             citation_lookup[c.ref_id] = c
@@ -67,12 +81,11 @@ class CitationFormatter:
         for raw_mark in raw_refs:
             if raw_mark not in footnote_map:
                 self._ref_counter += 1
-                # Build a human-readable label
                 citation = citation_lookup.get(raw_mark)
                 label = f"{citation.ref_id} ({citation.confidence})" if citation else raw_mark
                 footnote_map[raw_mark] = (self._ref_counter, label)
 
-        # Replace markers
+        # 替换标记：[ref:xxx] → [^1]
         def _replace_ref(match: re.Match[str]) -> str:
             raw = match.group(1)
             entry = footnote_map.get(raw)
@@ -82,7 +95,7 @@ class CitationFormatter:
 
         result_text = _REF_PATTERN.sub(_replace_ref, text)
 
-        # Append reference list
+        # 在文末追加参考文献列表
         if footnote_map:
             result_text += "\n"
             for _raw_mark, (num, label) in sorted(
@@ -100,7 +113,7 @@ class CitationFormatter:
         self,
         citations: list[VerifiedCitationInput],
     ) -> list[dict[str, Any]]:
-        """Generate JSON-serializable citation data for frontend rendering.
+        """生成 JSON-serializable citation data for frontend rendering.
 
         Args:
             citations: Verified citation results.
@@ -138,7 +151,7 @@ class CitationFormatter:
         self,
         citations: list[VerifiedCitationInput],
     ) -> list[dict[str, Any]]:
-        """Generate footnote text list for python-docx consumption.
+        """生成 footnote text list for python-docx consumption.
 
         Args:
             citations: Verified citation results.
@@ -170,7 +183,7 @@ class CitationFormatter:
         self,
         citations: list[VerifiedCitationInput],
     ) -> list[dict[str, Any]]:
-        """Generate data rows for "" sheet: ////
+        """生成 data rows for "" sheet: ////
 
         Args:
             citations: Verified citation results.
@@ -207,7 +220,7 @@ class CitationFormatter:
         self,
         citations: list[VerifiedCitationInput],
     ) -> dict[str, Any]:
-        """Generate per-slide citation text + final slide full citation list.
+        """生成 per-slide citation text + final slide full citation list.
 
         Args:
             citations: Verified citation results.

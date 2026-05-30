@@ -1,4 +1,4 @@
-"""Format router (M7-30).
+"""格式化 router (M7-30).
 
 Routes output generation requests to the appropriate generator based on format.
 Supports parallel generation of multiple formats.
@@ -47,7 +47,7 @@ class FormatRouter:
         citations: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> bytes:
-        """Generate output for a single format.
+        """生成 output for a single format.
 
         Args:
             format_name: One of "md", "markdown", "docx", "xlsx", "pptx".
@@ -79,7 +79,7 @@ class FormatRouter:
         citations: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        """Generate all requested formats.
+        """生成 all requested formats.
 
         Returns a list of {"format": str, "data": bytes, "content_type": str, "extension": str} dicts.
         """

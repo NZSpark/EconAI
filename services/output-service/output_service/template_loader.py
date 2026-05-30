@@ -17,7 +17,7 @@ _TEMPLATES_DIR = Path("templates/output")
 
 
 # ---------------------------------------------------------------------------
-# Default template configurations (fallback when YAML files are missing)
+# 默认 template configurations (fallback when YAML files are missing)
 # ---------------------------------------------------------------------------
 
 DEFAULT_DOCX_TEMPLATE: dict[str, Any] = {
@@ -165,7 +165,7 @@ _loader: TemplateLoader | None = None
 
 
 def get_template_loader(templates_dir: str | None = None) -> TemplateLoader:
-    """Get or create the singleton TemplateLoader."""
+    """获取 or create the singleton TemplateLoader."""
     global _loader
     if _loader is None:
         _loader = TemplateLoader(templates_dir=templates_dir)

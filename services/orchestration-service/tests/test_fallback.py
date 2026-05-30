@@ -151,7 +151,7 @@ class TestMaxIterationsFallback:
             "routing": {"target": "cloud", "reason": "low", "model_used": "c"},
         }
 
-        # Second call: also unparseable → fatal_error set
+        # 秒 call: also unparseable → fatal_error set
         with patch("httpx.AsyncClient.post", side_effect=[mock1, mock1, mock1, mock1]):
             runner = AgentLoopRunner(
                 state=state,

@@ -99,7 +99,7 @@ app.add_middleware(
 
 @app.get("/health")
 async def health() -> dict[str, object]:
-    """Health check — reports service status and initialized components."""
+    """健康检查 — reports service status and initialized components."""
     deps_status: dict[str, str] = {}
     deps_status["hybrid_searcher"] = "initialized" if _searcher is not None else "missing"
     deps_status["index_pipeline"] = "initialized" if _pipeline is not None else "missing"
@@ -170,7 +170,7 @@ async def _fetch_document_titles(
         logger.warning("Failed to fetch document titles: %s", exc)
         title_map = {}
 
-    # Fallback: any doc_id not found in DB → use the doc_id itself
+    # 回退: any doc_id not found in DB → use the doc_id itself
     for did in doc_ids:
         if did not in title_map:
             title_map[did] = did
@@ -182,7 +182,7 @@ def _build_result(
     query: str = "",
     document_titles: dict[str, str] | None = None,
 ) -> ChunkResult:
-    """Format a search hit into a ChunkResult.
+    """格式化 a search hit into a ChunkResult.
 
     When *query* is provided, matched_terms and highlighted_content are
     generated via the tokenizer so the frontend can render keyword
@@ -234,7 +234,7 @@ def _build_result(
 
 @app.post("/api/projects/{project_id}/search", response_model=SearchResponse)
 async def search_project(project_id: str, body: SearchRequest) -> SearchResponse:
-    """Search within a project's knowledge base."""
+    """搜索 within a project's knowledge base."""
     _check_project_access(project_id)
 
     results, total_hits, search_time_ms = await _searcher.search(
@@ -265,7 +265,7 @@ async def search_project(project_id: str, body: SearchRequest) -> SearchResponse
 
 @app.post("/api/institutional/search", response_model=SearchResponse)
 async def search_institutional(body: SearchRequest) -> SearchResponse:
-    """Search across the institutional knowledge base (all authorized projects)."""
+    """搜索 across the institutional knowledge base (all authorized projects)."""
     results, total_hits, search_time_ms = await _searcher.search(
         query=body.query,
         top_k=body.top_k,
@@ -334,7 +334,7 @@ async def internal_search(body: InternalSearchRequest) -> SearchResponse:
 
 @app.post("/internal/index", response_model=IndexStatusResponse)
 async def index_chunks(body: dict[str, Any]) -> IndexStatusResponse:
-    """Index a batch of chunks. Called by document-service after parsing."""
+    """索引 a batch of chunks. Called by document-service after parsing."""
     chunks = body.get("chunks", [])
     if not chunks:
         raise HTTPException(status_code=400, detail="No chunks provided")
@@ -345,7 +345,7 @@ async def index_chunks(body: dict[str, Any]) -> IndexStatusResponse:
 
 @app.post("/internal/index/reindex", response_model=IndexStatusResponse)
 async def reindex_chunks(body: dict[str, Any]) -> IndexStatusResponse:
-    """Reindex chunks for a document (delete existing, then index)."""
+    """重建索引 chunks for a document (delete existing, then index)."""
     chunks = body.get("chunks", [])
     if not chunks:
         raise HTTPException(status_code=400, detail="No chunks provided")
@@ -356,14 +356,14 @@ async def reindex_chunks(body: dict[str, Any]) -> IndexStatusResponse:
 
 @app.delete("/internal/index/document/{document_id}")
 async def delete_document_index(document_id: str) -> dict[str, Any]:
-    """Delete all index entries for a document."""
+    """删除 all index entries for a document."""
     count = await _pipeline.delete_document(document_id)
     return {"status": "deleted", "document_id": document_id, "deleted_vectors": count}
 
 
 @app.delete("/internal/index/project/{project_id}")
 async def delete_project_index(project_id: str) -> dict[str, Any]:
-    """Delete all index entries for a project."""
+    """删除 all index entries for a project."""
     count = await _pipeline.delete_project(project_id)
     return {"status": "deleted", "project_id": project_id, "deleted_vectors": count}
 

@@ -32,12 +32,12 @@ class StateTransitionError(ValueError):
 
 
 def can_transition(current: ParseStatus, target: ParseStatus) -> bool:
-    """Check if a state transition is valid."""
+    """检查 if a state transition is valid."""
     return target in VALID_TRANSITIONS.get(current, set())
 
 
 def validate_transition(current: ParseStatus, target: ParseStatus) -> None:
-    """Validate a state transition, raising StateTransitionError if invalid."""
+    """验证 a state transition, raising StateTransitionError if invalid."""
     if not can_transition(current, target):
         raise StateTransitionError(current, target)
 
@@ -52,5 +52,5 @@ def next_state(current: ParseStatus, target: ParseStatus) -> ParseStatus:
 
 
 def is_terminal(status: ParseStatus) -> bool:
-    """Check if a state is terminal (no further transitions)."""
+    """检查 if a state is terminal (no further transitions)."""
     return status in TERMINAL_STATES

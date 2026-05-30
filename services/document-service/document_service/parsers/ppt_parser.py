@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class PPTParser(BaseParser):
-    """Parse .pptx files using python-pptx."""
+    """解析 .pptx files using python-pptx."""
 
     def supported_format(self) -> str:
         return "pptx"
@@ -108,7 +108,7 @@ class PPTParser(BaseParser):
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:
-        """Extract PPT metadata."""
+        """提取 PPT metadata."""
         try:
             from pptx import Presentation
             prs = Presentation(io.BytesIO(file_data))

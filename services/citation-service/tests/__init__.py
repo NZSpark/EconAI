@@ -1,1 +1,1 @@
-"""Tests for the Citation Service (M6)."""
+"""测试辅助函数。"""

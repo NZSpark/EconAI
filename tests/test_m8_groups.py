@@ -11,7 +11,7 @@ import httpx
 
 
 def _unique_name(name: str) -> str:
-    """Generate a unique name to avoid collision with previous test runs."""
+    """生成 a unique name to avoid collision with previous test runs."""
     return f"{name}_{int(time.time() * 1000) % 1000000}"
 
 
@@ -21,7 +21,7 @@ class TestGroupCRUD:
     created_group_ids: list[str] = []
 
     def test_create_group(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Create a project group (system_admin only)."""
+        """创建 a project group (system_admin only)."""
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
             json={"name": "Test Research Group", "description": "Integration test group"},
@@ -35,7 +35,7 @@ class TestGroupCRUD:
         self.created_group_ids.append(body["group_id"])
 
     def test_create_group_minimal(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Create a group with minimal fields."""
+        """创建 a group with minimal fields."""
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
             json={"name": "Minimal Group"},

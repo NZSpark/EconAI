@@ -13,7 +13,7 @@ import pytest
 
 @pytest.fixture  # type: ignore[untyped-decorator]
 def gdpr_headers(auth_headers: dict[str, str], base_url: str) -> dict[str, str]:
-    """Get X-User-ID from /me endpoint for direct user-service calls."""
+    """获取 X-User-ID from /me endpoint for direct user-service calls."""
     resp = httpx.get(f"{base_url}/api/auth/me", headers=auth_headers, timeout=10)
     if resp.status_code != 200:
         pytest.skip("Cannot get user ID from /me")
@@ -68,7 +68,7 @@ class TestGDPRConsent:
     """PUT /api/user/consent — GDPR Article 7 (consent)."""
 
     def test_update_consent(self, user_service_url: str, gdpr_headers: dict[str, str]) -> None:
-        """Update processing and analytics consent."""
+        """更新 processing and analytics consent."""
         resp = httpx.put(
             f"{user_service_url}/api/user/consent?processing_consent=true&analytics_consent=false",
             headers=gdpr_headers,

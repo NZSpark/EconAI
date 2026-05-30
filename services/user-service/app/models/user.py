@@ -1,4 +1,4 @@
-"""User model."""
+""" 模型。"""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from app.database import Base
 
 
 class User(Base):
-    """User account — supports local, LDAP, and SSO auth providers."""
+    """用户账户 — 支持本地、LDAP 和 SSO 认证方式。"""
 
     __tablename__ = "users"
 

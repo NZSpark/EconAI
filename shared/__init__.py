@@ -1,4 +1,4 @@
-"""PolicyAI shared package — common models, config loader, structured logging, and MinIO client."""
+"""PolicyAI 共享包 — 通用模型、配置加载器、结构化日志和 MinIO 客户端。"""
 
 from shared.config import AppSettings, get_settings
 from shared.log_setup import setup_logging

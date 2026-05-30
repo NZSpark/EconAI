@@ -43,7 +43,7 @@ PARSER_REGISTRY: dict[DocumentFormat, BaseParser] = {
 
 
 def get_parser(magic_bytes: bytes, extension: str) -> BaseParser | None:
-    """Get the parser for a given file based on magic bytes and extension.
+    """获取 the parser for a given file based on magic bytes and extension.
 
     Returns None if no parser is registered for the format.
     """
@@ -92,5 +92,5 @@ def parse_document(file_data: bytes, filename: str, extension: str) -> ParsedCon
 
 
 def register_parser(fmt: DocumentFormat, parser: BaseParser) -> None:
-    """Register a custom parser for a format."""
+    """注册 a custom parser for a format."""
     PARSER_REGISTRY[fmt] = parser

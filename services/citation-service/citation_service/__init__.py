@@ -1,1 +1,1 @@
-"""PolicyAI Citation and Provenance Service (M6)."""
+"""PolicyAI 引文溯源服务（M6）。"""

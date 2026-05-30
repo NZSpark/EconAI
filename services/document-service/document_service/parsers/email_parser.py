@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmailParser(BaseParser):
-    """Parse .eml files using Python's email standard library."""
+    """解析 .eml files using Python's email standard library."""
 
     def supported_format(self) -> str:
         return "eml"
@@ -51,7 +51,7 @@ class EmailParser(BaseParser):
                     elif content_type == "text/html" and isinstance(payload, str):
                         html_body += payload + "\n"
                 except Exception:
-                    # Fallback: try decoding payload
+                    # 回退: try decoding payload
                     try:
                         payload_bytes = part.get_payload(decode=True)
                         if isinstance(payload_bytes, bytes):

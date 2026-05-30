@@ -20,7 +20,7 @@ def extract_metadata(
     filename: str,
     custom_metadata: dict[str, Any] | None = None,
 ) -> DocumentMetadata:
-    """Extract document metadata from parsed content.
+    """提取 document metadata from parsed content.
 
     Priority order:
     1. Custom metadata from upload
@@ -89,7 +89,7 @@ def _clean_filename(filename: str) -> str:
 
 
 def _first_meaningful_line(text: str) -> str:
-    """Get the first non-empty line of text as a title fallback."""
+    """获取 the first non-empty line of text as a title fallback."""
     lines = text.strip().split("\n")
     for line in lines:
         stripped = line.strip()

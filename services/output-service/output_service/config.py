@@ -1,10 +1,10 @@
-"""Configuration management for the Output Generation Service (M7-02)."""
+"""配置 management for the Output Generation Service (M7-02)."""
 
 from pydantic_settings import BaseSettings
 
 
 class OutputServiceConfig(BaseSettings):
-    """Configuration for the Output Generation Service."""
+    """配置 for the Output Generation Service."""
 
     # Service identity
     SERVICE_NAME: str = "output-service"

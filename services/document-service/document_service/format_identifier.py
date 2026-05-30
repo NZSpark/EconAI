@@ -1,4 +1,4 @@
-"""Format identification module (M2-08, M2-09).
+"""格式化 identification module (M2-08, M2-09).
 
 Magic bytes detection + extension fallback -> unified format enum.
 PDF text layer detection via PyMuPDF.
@@ -40,7 +40,7 @@ def identify_format(magic_bytes: bytes, extension: str) -> DocumentFormat:
                 if extension in (".pptx", ".ppt"):
                     return DocumentFormat.pptx
                 # CSV is plain text, but if magic bytes match ZIP it's likely an OOXML spreadsheet
-                return DocumentFormat.docx  # Default ZIP -> docx
+                return DocumentFormat.docx  # 默认 ZIP -> docx
 
             # OLE2 format
             if signature == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":

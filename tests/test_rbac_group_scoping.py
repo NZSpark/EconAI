@@ -12,7 +12,7 @@ import pytest
 
 
 def _unique_name(name: str) -> str:
-    """Generate a unique name to avoid collision with previous test runs."""
+    """生成 a unique name to avoid collision with previous test runs."""
     return f"{name}_{int(time.time() * 1000) % 1000000}"
 
 

@@ -168,13 +168,13 @@ async def _startup_db() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Health check
+# 健康检查
 # ---------------------------------------------------------------------------
 
 
 @app.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
-    """Health check endpoint."""
+    """健康检查 endpoint."""
     return HealthResponse(
         status="ok",
         service=config.SERVICE_NAME,
@@ -203,7 +203,7 @@ async def upload_document(
     is_internal: bool = Form(default=False),
     metadata: str | None = Form(default=None),
 ) -> DocumentUploadResponse:
-    """Upload a document for parsing and indexing.
+    """上传 a document for parsing and indexing.
 
     Validates the file, stores in MinIO, creates a DB record (or in-memory),
     and triggers async processing.
@@ -373,7 +373,7 @@ async def _execute_processing_pipeline_async(
     file_bytes: bytes,
     extension: str,
 ) -> None:
-    """Execute the processing pipeline with async DB access.
+    """执行 the processing pipeline with async DB access.
 
     CPU-bound parsing/chunking runs in the default executor pool;
     all DB operations use the async session directly.
@@ -462,7 +462,7 @@ async def list_documents(
     status: str | None = Query(default=None),
     format: str | None = Query(default=None),
 ) -> DocumentListResponse:
-    """List documents for a project with pagination and optional filters."""
+    """列出 documents for a project with pagination and optional filters."""
     async with _get_session() as session:
         items, total = await db.list_project_documents(
             session,
@@ -511,7 +511,7 @@ async def list_documents(
     responses={404: {"description": "Document not found"}},
 )
 async def get_document_endpoint(project_id: str, document_id: str) -> DocumentDetailResponse:
-    """Get full document detail including parse status and storage path."""
+    """获取 full document detail including parse status and storage path."""
     async with _get_session() as session:
         doc = await db.get_document(session, document_id)
     if doc is None or str(doc.get("project_id", "")) != project_id:
@@ -549,7 +549,7 @@ async def get_document_endpoint(project_id: str, document_id: str) -> DocumentDe
     responses={404: {"description": "Document not found"}},
 )
 async def delete_document(project_id: str, document_id: str) -> None:
-    """Delete a document and cascade: MinIO file + chunks + vectors."""
+    """删除 a document and cascade: MinIO file + chunks + vectors."""
     async with _get_session() as session:
         doc = await db.get_document(session, document_id)
         if doc is None or str(doc.get("project_id", "")) != project_id:
@@ -647,7 +647,7 @@ async def reindex_document(project_id: str, document_id: str) -> ReindexResponse
     responses={404: {"description": "Document not found"}, 409: {"description": "Document not parsed yet"}},
 )
 async def get_document_content(project_id: str, document_id: str) -> dict:
-    """Get the full text content of a parsed document.
+    """获取 the full text content of a parsed document.
 
     Assembles all chunks into a single text output, organized by page/section.
     For image files without text chunks, returns an image indicator.

@@ -47,17 +47,17 @@ def _require_system_admin(request: Request) -> None:
 
 
 def _get_caller_role(request: Request) -> str:
-    """Extract the caller's role from the request."""
+    """提取 the caller's role from the request."""
     return request.headers.get("X-User-Role") or getattr(request.state, "user_role", "")
 
 
 def _get_caller_id(request: Request) -> str:
-    """Extract the caller's user ID from the request."""
+    """提取 the caller's user ID from the request."""
     return request.headers.get("X-User-ID") or getattr(request.state, "user_id", "")
 
 
 async def _get_caller_group_ids(request: Request, db: AsyncSession) -> list[str]:
-    """Get group IDs the caller belongs to. Empty = system_admin (no filter)."""
+    """获取 group IDs the caller belongs to. Empty = system_admin (no filter)."""
     role = _get_caller_role(request)
     if role == "system_admin":
         return []
@@ -95,7 +95,7 @@ def _check_role_escalation(caller_role: str, target_role: str) -> None:
 async def _resolve_group_id(
     db: AsyncSession, body: UserCreate
 ) -> uuid.UUID:
-    """Resolve group_id from body: existing group or inline-created group."""
+    """解析 group_id from body: existing group or inline-created group."""
     if body.group_id:
         # Verify the group exists
         result = await db.execute(
@@ -221,7 +221,7 @@ async def list_users(
     is_active: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> UserListResponse:
-    """List users — system_admin sees all; project_admin sees only users in their groups."""
+    """列出 users — system_admin sees all; project_admin sees only users in their groups."""
     _require_admin(request)
 
     caller_role = _get_caller_role(request)

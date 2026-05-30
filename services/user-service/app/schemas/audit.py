@@ -1,4 +1,4 @@
-"""Audit log schemas."""
+"""审计日志数据模式。"""
 
 from __future__ import annotations
 

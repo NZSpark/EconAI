@@ -18,7 +18,7 @@ from output_service.template_loader import get_template_loader
 
 REF_PATTERN = re.compile(r"\[ref:([^\]]+)\]")
 
-# Fallback font mapping when fonts are unavailable
+# 回退 font mapping when fonts are unavailable
 _FONT_FALLBACKS = {
     "小标宋_GB2312": "宋体",
     "仿宋_GB2312": "仿宋",
@@ -99,7 +99,7 @@ class DocxGenerator:
         citations: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> bytes:
-        """Generate a GB/T 9704 formatted .docx file.
+        """生成 a GB/T 9704 formatted .docx file.
 
         Args:
             title: Document title.

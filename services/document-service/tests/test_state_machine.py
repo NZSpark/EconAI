@@ -1,6 +1,6 @@
-"""Tests for document state machine (M2-42).
+"""文档状态机测试 (M2-42).
 
-Tests valid and invalid state transitions.
+测试有效和无效的状态转换。
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from shared.models import ParseStatus
 
 
 class TestStateMachine:
-    """M2-28: State machine transition tests."""
+    """M2-28: 状态机转换测试。"""
 
     def test_valid_transition_pending_to_parsing(self) -> None:
         from document_service.state_machine import can_transition, next_state
@@ -35,7 +35,7 @@ class TestStateMachine:
         assert new_state == ParseStatus.error
 
     def test_valid_transition_error_to_parsing(self) -> None:
-        """Error -> parsing (retry/reindex)."""
+        """Error -> parsing（重试/重建索引）。"""
         from document_service.state_machine import can_transition, next_state
         assert can_transition(ParseStatus.error, ParseStatus.parsing) is True
         new_state = next_state(ParseStatus.error, ParseStatus.parsing)
@@ -51,7 +51,7 @@ class TestStateMachine:
 
     def test_invalid_transition_ready_to_anything(self) -> None:
         from document_service.state_machine import can_transition
-        # ready is terminal - no outgoing transitions
+        # ready 是终态 - 无出边转换
         assert can_transition(ParseStatus.ready, ParseStatus.parsing) is False
         assert can_transition(ParseStatus.ready, ParseStatus.error) is False
         assert can_transition(ParseStatus.ready, ParseStatus.pending) is False
@@ -78,7 +78,7 @@ class TestStateMachine:
             assert "parsing" in str(e)
 
     def test_all_valid_paths(self) -> None:
-        """Test the full happy path flow: pending -> parsing -> ready."""
+        """测试完整快乐路径流程: pending -> parsing -> ready。"""
         from document_service.state_machine import next_state
 
         state = ParseStatus.pending
@@ -89,7 +89,7 @@ class TestStateMachine:
         assert state == ParseStatus.ready
 
     def test_error_recovery_path(self) -> None:
-        """Test error recovery: pending -> parsing -> error -> parsing -> ready."""
+        """测试错误恢复: pending -> parsing -> error -> parsing -> ready。"""
         from document_service.state_machine import next_state
 
         state = ParseStatus.pending
@@ -97,7 +97,7 @@ class TestStateMachine:
         state = next_state(state, ParseStatus.error)
         assert state == ParseStatus.error
 
-        # Recover
+        # 恢复
         state = next_state(state, ParseStatus.parsing)
         state = next_state(state, ParseStatus.ready)
         assert state == ParseStatus.ready

@@ -63,7 +63,7 @@ class MarkdownGenerator:
         citations: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> str:
-        """Generate Markdown output.
+        """生成 Markdown output.
 
         Args:
             title: Document title.

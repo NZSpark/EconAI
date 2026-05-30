@@ -65,7 +65,7 @@ async def bulk_insert(
     session: AsyncSession,
     citations_data: list[dict[str, Any]],
 ) -> list[Citation]:
-    """Insert a batch of citation records.
+    """插入 a batch of citation records.
 
     Args:
         session: An active async SQLAlchemy session.
@@ -133,7 +133,7 @@ _engine: AsyncEngine | None = None
 
 
 async def get_engine(database_url: str | None = None) -> AsyncEngine | None:
-    """Create or retrieve the async engine.
+    """创建 or retrieve the async engine.
 
     Returns None if no DATABASE_URL is configured (in-memory mode).
     """
@@ -147,6 +147,6 @@ async def get_engine(database_url: str | None = None) -> AsyncEngine | None:
 
 
 async def create_tables(engine: AsyncEngine) -> None:
-    """Create all tables if they do not exist."""
+    """创建 all tables if they do not exist."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

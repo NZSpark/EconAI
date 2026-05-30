@@ -20,7 +20,7 @@ def generate_chunks(
     document_id: str,
     project_id: str,
 ) -> list[ChunkRecord]:
-    """Generate all chunks (paragraph + section level) with metadata.
+    """生成 all chunks (paragraph + section level) with metadata.
 
     Args:
         content: ParsedContent from parser.

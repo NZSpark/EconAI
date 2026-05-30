@@ -13,17 +13,17 @@ class KBSettings(AppSettings):
     service_name: str = "kb-service"
     service_port: int = 8002
 
-    # Override parent computed properties with direct defaults for Docker compatibility
+    # 覆盖 parent computed properties with direct defaults for Docker compatibility
     database_url: str = "postgresql+asyncpg://policyai:policyai_secret_change_me@localhost:5432/policyai"
     redis_url: str = "redis://localhost:6379/0"
 
-    # Vector DB
+    # 向量 DB
     vector_db_type: str = "milvus"
     vector_db_host: str = "localhost"
     vector_db_port: int = 19530
     vector_db_collection: str = "policyai_chunks"
 
-    # Embedding
+    # 嵌入
     embedding_model: str = "text2vec-large-chinese"
     embedding_dim: int = 1024
     embedding_batch_size: int = 32
@@ -32,7 +32,7 @@ class KBSettings(AppSettings):
     # LLM Router (for generating embeddings)
     llm_router_url: str = "http://localhost:8004"
 
-    # Hybrid search
+    # 混合 search
     hybrid_vector_top_k: int = 50
     hybrid_bm25_top_k: int = 50
     hybrid_rrf_k: int = 60

@@ -1,4 +1,10 @@
-"""Token usage tracker: record, persist, and aggregate token usage data."""
+"""Token 用量追踪器 —— 记录、持久化和聚合 LLM 调用的 token 消耗数据。
+
+用途：
+- 成本核算：按模型/用户/任务维度统计 token 消耗
+- 性能监控：追踪每个请求的延迟
+- 用量限制：支持按用户做 token 配额管理
+"""
 
 from __future__ import annotations
 
@@ -16,16 +22,15 @@ from llm_router.models.schemas import (
 
 logger = logging.getLogger(__name__)
 
-# Type alias for optional async persistence callback
+# 可选异步持久化回调的类型别名
 PersistCallback = Callable[[UsageLogEntry], Any] | None
 
 
 class TokenUsageTracker:
-    """Tracks token usage per LLM call with optional persistence.
+    """追踪每次 LLM 调用的 token 消耗，支持可选持久化。
 
-    Keeps an in-memory store for quick aggregation queries.
-    Supports an optional async persistence callback for writing to
-    PostgreSQL / Redis pub-sub in production.
+    内存存储用于快速聚合查询。支持通过 persist_callback 
+    在生产环境中写入 PostgreSQL 或 Redis pub-sub。
     """
 
     def __init__(self, persist_callback: PersistCallback = None) -> None:
@@ -42,16 +47,16 @@ class TokenUsageTracker:
         user_id: str | None = None,
         task_id: str | None = None,
     ) -> None:
-        """Record a token usage entry.
+        """记录一条 token 消耗条目。
 
         Args:
-            request_id: Unique request ID (from the ChatResponse).
-            model: Model ID used.
-            routing: Routing target ("cloud" or "local").
-            usage: Token counts.
-            latency_ms: Request latency in milliseconds.
-            user_id: Optional user ID.
-            task_id: Optional task ID.
+            request_id: 唯一请求 ID。
+            model: 使用的模型 ID。
+            routing: 路由目标（"cloud" 或 "local"）。
+            usage: token 计数（prompt_tokens, completion_tokens, total_tokens）。
+            latency_ms: 请求延迟（毫秒）。
+            user_id: 可选的用户 ID。
+            task_id: 可选的任务 ID。
         """
         entry = UsageLogEntry(
             request_id=request_id,
@@ -75,6 +80,7 @@ class TokenUsageTracker:
             latency_ms,
         )
 
+        # 如果有持久化回调，异步写入数据库
         if self._persist_callback:
             try:
                 await self._persist_callback(entry)
@@ -87,16 +93,17 @@ class TokenUsageTracker:
         task_id: str | None = None,
         model: str | None = None,
     ) -> UsageAggregation:
-        """Aggregate usage statistics, optionally filtered by dimensions.
+        """聚合用量统计，支持按维度过滤。
 
         Args:
-            user_id: Filter by user ID.
-            task_id: Filter by task ID.
-            model: Filter by model ID.
+            user_id: 按用户 ID 过滤。
+            task_id: 按任务 ID 过滤。
+            model: 按模型 ID 过滤。
 
         Returns:
-            UsageAggregation with totals and breakdowns.
+            包含总量和分类明细的 UsageAggregation。
         """
+        # 按条件过滤日志
         filtered = self._logs
         if user_id:
             filtered = [log for log in filtered if log.user_id == user_id]
@@ -105,12 +112,14 @@ class TokenUsageTracker:
         if model:
             filtered = [log for log in filtered if log.model == model]
 
+        # 汇总统计
         total_prompt = sum(log.prompt_tokens for log in filtered)
         total_completion = sum(log.completion_tokens for log in filtered)
         total_tokens_sum = sum(log.total_tokens for log in filtered)
         total_requests = len(filtered)
         avg_latency = sum(log.latency_ms for log in filtered) / total_requests if total_requests > 0 else 0.0
 
+        # 按模型和路由维度分组统计
         by_model: dict[str, Usage] = defaultdict(lambda: Usage())
         by_routing: dict[str, Usage] = defaultdict(lambda: Usage())
 
@@ -137,5 +146,5 @@ class TokenUsageTracker:
 
     @property
     def total_entries(self) -> int:
-        """Return the total number of recorded entries."""
+        """返回已记录的总条目数。"""
         return len(self._logs)

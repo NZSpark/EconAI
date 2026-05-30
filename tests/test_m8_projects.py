@@ -29,7 +29,7 @@ class TestProjectCRUD:
     def test_create_project(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Create a project with required fields (POST /api/projects)."""
+        """创建 a project with required fields (POST /api/projects)."""
         # Need a group first
         resp = httpx.post(
             f"{base_url}/api/admin/groups",

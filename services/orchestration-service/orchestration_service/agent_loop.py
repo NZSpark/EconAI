@@ -26,7 +26,16 @@ logger = logging.getLogger(__name__)
 
 
 class AgentLoopRunner:
-    """Executes the Agent loop for a single task (M4-14)."""
+    """Agent 循环执行器（M4-14）—— 核心 ReAct 变体。
+    
+    Agent 循环（最多 5 次迭代）：
+    Plan（规划） → Execute（执行工具） → Observe（观察结果） → 更新进度 → 重复
+    
+    终止条件：
+    - LLM 返回 "finish" 信号
+    - 达到最大迭代次数（max_iter=5）
+    - 发生致命错误（LLM 连续 2 次返回不可解析的输出）
+    """
 
     def __init__(
         self,
@@ -39,16 +48,17 @@ class AgentLoopRunner:
         self.tool_registry = tool_registry
         self.system_prompt = system_prompt
         self.progress = progress
-        self._parse_failure_count = 0
+        self._parse_failure_count = 0  # 连续解析失败计数（2 次后视为致命错误）
 
     async def run(self) -> AgentState:
-        """Execute the full Agent loop (M4-14)."""
+        """执行完整的 Agent 循环（M4-14）。"""
         max_iter = settings.agent_max_iterations or 5
 
-        # Initialize conversation with system prompt
+        # 初始化对话：注入 system prompt + 用户任务描述
         self.state.add_system(self.system_prompt)
         self.state.add_user(self._build_initial_user_message())
 
+        # 主循环：最多 max_iter 次迭代
         while self.state.iteration < max_iter:
             self.state.increment_iteration()
             logger.info(
@@ -59,10 +69,10 @@ class AgentLoopRunner:
                 self.state.remaining_sections,
             )
 
-            # M4-15: Plan step — call LLM to decide next action
+            # M4-15：规划步骤 —— 调用 LLM 决定下一步行动
             action = await self._plan()
 
-            # M4-17: Terminal check — finish signal or error
+            # M4-17：终止检查 —— 收到完成信号或发生致命错误
             if isinstance(action, str) or self.state.fatal_error:
                 if self.state.fatal_error:
                     logger.warning("Task %s: Fatal error — %s", self.state.task_id, self.state.fatal_error)
@@ -72,14 +82,14 @@ class AgentLoopRunner:
                     )
                 break
 
-            # M4-15: Parse tool call from plan result
+            # M4-15：解析 LLM 返回的工具调用
             tool_name, tool_args = action
 
             if tool_name is None:
                 logger.warning("Task %s: No valid action from plan, retrying", self.state.task_id)
                 continue
 
-            # Execute the tool
+            # 执行工具（带超时和重试）
             from orchestration_service.tools import _run_with_timeout_and_retry
 
             tool_func = self.tool_registry.get(tool_name)
@@ -98,15 +108,15 @@ class AgentLoopRunner:
                 timeout_s=settings.agent_tool_timeout_s,
             )
 
-            # M4-16: Observe — add tool result to messages
+            # M4-16：观察 —— 将工具执行结果添加到对话历史
             result_str = json_module.dumps(result, ensure_ascii=False, default=str)
             self.state.add_tool_result(
                 tool_call_id=f"call_{uuid.uuid4().hex[:8]}",
                 tool_name=tool_name,
-                content=result_str[:4000],
+                content=result_str[:4000],  # 截断到 4000 字符，防止 token 超限
             )
 
-            # M4-38: Update progress
+            # M4-38：更新进度（供前端轮询）
             progress_obj = self.progress.update(
                 step=tool_name,
                 message=f"Executed {tool_name}",
@@ -115,10 +125,9 @@ class AgentLoopRunner:
                 generation_tokens=self.state.total_generation_tokens,
             )
 
-            # Store progress on state for external access
             self.state._latest_progress = progress_obj  # type: ignore[attr-defined]
 
-        # M4-18: Max iteration fallback — force format_output with available content
+        # M4-18：达到最大迭代次数后强制格式化输出
         if self.state.iteration >= max_iter and not self._has_finished():
             logger.warning(
                 "Task %s: Reached max iterations (%d). Forcing format_output with %d sections.",
@@ -128,7 +137,7 @@ class AgentLoopRunner:
             )
             await self._force_format_output()
 
-        # Post-loop: always format output if not already done
+        # 循环结束后始终格式化输出
         if not self._has_finished():
             await self._force_format_output()
 
@@ -243,7 +252,7 @@ class AgentLoopRunner:
     # ── Helpers ───────────────────────────────────────────────────────────
 
     def _build_initial_user_message(self) -> str:
-        """Build the initial user message describing the task."""
+        """构建 the initial user message describing the task."""
         parts = [
             f"Task: {self.state.title}",
             f"Type: {self.state.task_type}",
@@ -255,7 +264,7 @@ class AgentLoopRunner:
         return "\n".join(parts)
 
     def _build_planning_message(self) -> str:
-        """Build the planning message for the current iteration."""
+        """构建 the planning message for the current iteration."""
         completed = [s.title for s in self.state.generated_sections]
         remaining = self.state.remaining_sections
 
@@ -276,7 +285,7 @@ class AgentLoopRunner:
         return "\n".join(parts)
 
     def _has_finished(self) -> bool:
-        """Check if format_output has already been called."""
+        """检查 if format_output has already been called."""
         if not self.state.tool_call_history:
             return False
         return any(t.tool_name == "format_output" and t.success for t in self.state.tool_call_history)

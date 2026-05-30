@@ -99,7 +99,7 @@ async def _run_with_timeout_and_retry(
     timeout_s: float = 120.0,
     max_retries: int = 1,
 ) -> dict[str, Any]:
-    """Execute a tool with timeout and retry logic (M4-26, M4-41)."""
+    """执行 a tool with timeout and retry logic (M4-26, M4-41)."""
 
     start = time.monotonic()
     last_error: str | None = None
@@ -149,7 +149,7 @@ async def _run_with_timeout_and_retry(
 
 
 def _summarize_result(tool_name: str, result: dict[str, Any]) -> str:
-    """Create a short human-readable summary of a tool result."""
+    """创建 a short human-readable summary of a tool result."""
     if tool_name == "search_kb":
         n = len(result.get("chunks", result.get("results", [])))
         return f"Retrieved {n} chunks"
@@ -292,7 +292,7 @@ async def _generate_section(args: dict[str, Any], state: AgentState) -> dict[str
 
 
 def _build_context_text(state: AgentState, chunk_ids: list[str] | None) -> str:
-    """Build combined context text from retrieved chunks."""
+    """构建 combined context text from retrieved chunks."""
     if not chunk_ids:
         # Use all retrieved chunks if no specific IDs
         chunks = state.retrieved_chunks
@@ -355,7 +355,7 @@ async def _verify_citations(args: dict[str, Any], state: AgentState) -> dict[str
 
 
 def _build_context_chunks_for_verify(state: AgentState, chunk_ids: list[str]) -> list[dict[str, Any]]:
-    """Build context chunk list for citation verification."""
+    """构建 context chunk list for citation verification."""
     if chunk_ids:
         id_set = set(chunk_ids)
         chunks = [c for c in state.retrieved_chunks if c.chunk_id in id_set]
@@ -428,7 +428,7 @@ async def _extract_key_claims(args: dict[str, Any], state: AgentState) -> dict[s
 
 
 def _parse_claims(raw: str) -> list[dict[str, Any]]:
-    """Parse claim extraction results from LLM response."""
+    """解析 claim extraction results from LLM response."""
     import json as json_module
 
     # Try JSON parse
@@ -441,7 +441,7 @@ def _parse_claims(raw: str) -> list[dict[str, Any]]:
     except (json_module.JSONDecodeError, TypeError):
         pass
 
-    # Fallback: extract JSON array from text
+    # 回退: extract JSON array from text
     import re
 
     match = re.search(r"\[.*\]", raw, re.DOTALL)
@@ -603,7 +603,7 @@ async def _format_output(args: dict[str, Any], state: AgentState) -> dict[str, A
 
 
 def create_tool_registry() -> ToolRegistry:
-    """Create and populate the standard tool registry (M4-19)."""
+    """创建 and populate the standard tool registry (M4-19)."""
     reg = ToolRegistry()
 
     reg.register(

@@ -43,7 +43,7 @@ class ClaudeAdapter:
         self._base_url = base_url or settings.anthropic_api_base_url or None
 
     async def chat(self, request: ChatRequest, model_id: str) -> ChatResponse:
-        """Execute a chat completion via the Anthropic Messages API.
+        """执行 a chat completion via the Anthropic Messages API.
 
         Args:
             request: Unified chat request.
@@ -128,7 +128,7 @@ class ClaudeAdapter:
         tools: list[dict[str, Any]] | None,
         request: ChatRequest,
     ) -> Any:
-        """Execute a streaming call and aggregate the result."""
+        """执行 a streaming call and aggregate the result."""
         kwargs: dict[str, Any] = {
             "model": model_id,
             "max_tokens": request.max_tokens,
@@ -146,7 +146,7 @@ class ClaudeAdapter:
         return final_message
 
     def _extract_system_message(self, messages: list[Message]) -> str | None:
-        """Extract system message content from the message list."""
+        """提取 system message content from the message list."""
         system_parts: list[str] = []
         for msg in messages:
             if msg.role == "system" and msg.content:
@@ -156,7 +156,7 @@ class ClaudeAdapter:
         return "\n\n".join(system_parts)
 
     def _convert_messages(self, messages: list[Message]) -> list[dict[str, Any]]:
-        """Convert unified messages to Anthropic format (excluding system messages).
+        """转换 unified messages to Anthropic format (excluding system messages).
 
         Key conversion rules:
           - system messages → skipped (handled via top-level system field)
@@ -211,7 +211,7 @@ class ClaudeAdapter:
         return result
 
     def _convert_tools(self, tools: list[Any] | None) -> list[dict[str, Any]] | None:
-        """Convert unified tool definitions to Anthropic format."""
+        """转换 unified tool definitions to Anthropic format."""
         if not tools:
             return None
 
@@ -230,7 +230,7 @@ class ClaudeAdapter:
         return result if result else None
 
     def _parse_response_content(self, response: Any) -> tuple[str | None, list[dict[str, Any]]]:
-        """Parse Anthropic response content into text and tool_calls."""
+        """解析 Anthropic response content into text and tool_calls."""
         text_parts: list[str] = []
         tool_calls: list[dict[str, Any]] = []
 

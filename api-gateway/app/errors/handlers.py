@@ -1,4 +1,4 @@
-"""Unified error response formatting and exception handlers."""
+"""统一错误响应格式和异常处理器。"""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from app.routing.proxy import ProxyError
 
 
 class AppError(Exception):
-    """Base application error with error code."""
+    """带错误码的基础应用异常。"""
 
     def __init__(self, code: str, message: str, status_code: int = 500, details: dict[str, Any] | None = None):
         self.code = code
@@ -22,9 +22,9 @@ class AppError(Exception):
 
 
 def to_error_response(code: str, message: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build the standard error response format.
+    """构建标准错误响应格式。
 
-    Returns:
+    返回:
         {"error": {"code": "...", "message": "...", "details": {}}}
     """
     return {
@@ -37,7 +37,7 @@ def to_error_response(code: str, message: str, details: dict[str, Any] | None = 
 
 
 def register_error_handlers(app: FastAPI) -> None:
-    """Register all error handlers on the FastAPI app."""
+    """在 FastAPI 应用上注册所有错误处理器。"""
 
     @app.exception_handler(404)
     async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -45,7 +45,7 @@ def register_error_handlers(app: FastAPI) -> None:
             status_code=404,
             content=to_error_response(
                 "RESOURCE_NOT_FOUND",
-                "The requested resource was not found.",
+                "请求的资源未找到。",
             ),
         )
 
@@ -55,7 +55,7 @@ def register_error_handlers(app: FastAPI) -> None:
             status_code=405,
             content=to_error_response(
                 "METHOD_NOT_ALLOWED",
-                f"Method {request.method} not allowed for {request.url.path}.",
+                f"方法 {request.method} 不允许用于 {request.url.path}。",
             ),
         )
 
@@ -82,6 +82,6 @@ def register_error_handlers(app: FastAPI) -> None:
             status_code=500,
             content=to_error_response(
                 "SYS_INTERNAL_ERROR",
-                "An internal server error occurred.",
+                "服务器内部错误。",
             ),
         )

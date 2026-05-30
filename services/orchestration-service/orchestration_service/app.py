@@ -104,7 +104,7 @@ app.add_middleware(
 
 @app.get("/health")
 async def health() -> dict[str, object]:
-    """Health check — reports agent configuration and defaults."""
+    """健康检查 — reports agent configuration and defaults."""
     return {
         "status": "ok",
         "service": settings.service_name,
@@ -157,14 +157,23 @@ def _build_detail(task_id: str) -> TaskDetailResponse:
 
 @app.post("/api/projects/{project_id}/tasks", status_code=201, response_model=CreateTaskResponse)
 async def create_task(project_id: str, body: CreateTaskRequest) -> CreateTaskResponse:
-    """Create a new analysis task and dispatch it asynchronously."""
+    """创建新的分析任务并异步调度执行。
+    
+    创建流程：
+    1. 生成唯一任务 ID
+    2. 执行敏感度分析（M4-36）：决定使用本地还是云端 LLM
+    3. 构建 system prompt（M4-31）：根据任务类型、标题、分析参数生成提示词
+    4. 生成工作流计划（M4-27-30）：根据任务类型规划执行步骤
+    5. 存储任务记录到内存（MVP）或数据库
+    6. 通过 asyncio.create_task 在后台启动 Agent 循环
+    """
     task_id = str(uuid.uuid4())
     now = datetime.now(UTC)
 
-    # M4-36: Sensitivity analysis
+    # 敏感度分析：根据文档来源和任务类型决定 LLM 路由
     sensitivity_result = determine_sensitivity(body)
 
-    # M4-31: Build system prompt
+    # 构建系统提示词（模板渲染）
     system_prompt = render_system_prompt(
         task_type=body.type.value,
         title=body.title,
@@ -173,11 +182,11 @@ async def create_task(project_id: str, body: CreateTaskRequest) -> CreateTaskRes
         comparison_dimensions=body.analysis_params.comparison_dimensions,
     )
 
-    # M4-27-30: Workflow plan and sections
+    # 根据任务类型获取工作流计划和初始章节列表
     workflow_plan = get_workflow_plan(body.type.value)
     initial_sections = get_initial_sections(body.type.value)
 
-    # Store task record
+    # 存储任务记录（MVP 阶段使用内存字典，生产环境应使用数据库）
     _tasks[task_id] = {
         "task_id": task_id,
         "project_id": project_id,
@@ -196,14 +205,14 @@ async def create_task(project_id: str, body: CreateTaskRequest) -> CreateTaskRes
         "created_at": now,
         "started_at": None,
         "completed_at": None,
-        # Internal fields
+        # 内部字段（以下划线开头，不暴露给 API）
         "_system_prompt": system_prompt,
         "_workflow_plan": workflow_plan,
         "_initial_sections": initial_sections,
         "_output_formats": body.output_formats,
     }
 
-    # M4-03: Dispatch as background task
+    # 异步启动 Agent 循环（不阻塞 HTTP 响应）
     asyncio.create_task(_run_agent(task_id))
 
     return CreateTaskResponse(task_id=task_id, status="pending", created_at=now)
@@ -220,7 +229,7 @@ async def list_tasks(
     status: str | None = Query(None),
     type: str | None = Query(None),
 ) -> TaskListResponse:
-    """List tasks for a project with pagination and optional filters."""
+    """列出 tasks for a project with pagination and optional filters."""
     items = [
         t
         for t in _tasks.values()
@@ -259,7 +268,7 @@ async def list_tasks(
 
 @app.get("/api/tasks/{task_id}", response_model=TaskDetailResponse)
 async def get_task_detail(task_id: str) -> TaskDetailResponse:
-    """Get full task details."""
+    """获取 full task details."""
     return _build_detail(task_id)
 
 
@@ -343,7 +352,7 @@ async def retry_task(task_id: str) -> dict[str, Any]:
 
 @app.get("/api/tasks/{task_id}/output", response_model=OutputPreviewResponse)
 async def preview_output(task_id: str) -> OutputPreviewResponse:
-    """Get Markdown preview of task output."""
+    """获取 Markdown preview of task output."""
     t = _tasks.get(task_id)
     if not t:
         raise HTTPException(
@@ -375,7 +384,7 @@ async def preview_output(task_id: str) -> OutputPreviewResponse:
 
 @app.get("/api/tasks/{task_id}/output/citations", response_model=list[CitationItem])
 async def list_citations(task_id: str) -> list[CitationItem]:
-    """List all citations for a completed task."""
+    """列出 all citations for a completed task."""
     t = _tasks.get(task_id)
     if not t:
         raise HTTPException(
@@ -400,7 +409,7 @@ async def list_citations(task_id: str) -> list[CitationItem]:
 
 @app.get("/api/tasks/{task_id}/output/citations/{citation_id}", response_model=CitationDetailResponse)
 async def get_citation_detail(task_id: str, citation_id: str) -> CitationDetailResponse:
-    """Get a single citation detail."""
+    """获取 a single citation detail."""
     citations_data = _outputs.get(f"{task_id}:citations", [])
     for c in citations_data:
         if c.get("ref_id") == citation_id:
@@ -468,12 +477,22 @@ def _ext_for_format(fmt: str) -> str:
 
 
 async def _run_agent(task_id: str) -> None:
-    """Execute the Agent loop for a task in the background."""
+    """在后台执行任务的 Agent 循环（M4-03）。
+    
+    Agent 循环流程：
+    1. 验证状态转换：pending/running → running（M4-11）
+    2. 构建 AgentState：包含任务上下文、工作流计划、剩余章节
+    3. 初始化 ProgressTracker：追踪每个步骤的完成进度
+    4. 创建 AgentLoopRunner：Agent 核心循环（搜索→分析→生成→迭代）
+    5. 设置 30 分钟整体超时（M4-44）
+    6. 存储结果：Markdown 内容 + 引用列表
+    7. 更新任务状态：completed / failed
+    """
     t = _tasks.get(task_id)
     if not t:
         return
 
-    # M4-11: Validate state transition (allow no-op when already running, e.g., from retry)
+    # 验证状态转换（M4-11）：允许从 pending 或 retry 转到 running
     current_status = t["status"]
     if current_status != "running":
         try:
@@ -485,7 +504,7 @@ async def _run_agent(task_id: str) -> None:
         t["started_at"] = datetime.now(UTC)
 
     try:
-        # Build AgentState
+        # 构建 Agent 状态对象
         state = AgentState(
             task_id=task_id,
             project_id=t["project_id"],
@@ -498,10 +517,10 @@ async def _run_agent(task_id: str) -> None:
         state.plan = t.get("_workflow_plan", "")
         state.remaining_sections = list(t.get("_initial_sections", []))
 
-        # Setup progress tracker
+        # 初始化进度追踪器
         progress = ProgressTracker(t["type"])
 
-        # Run Agent loop
+        # 创建 Agent 循环运行器
         runner = AgentLoopRunner(
             state=state,
             tool_registry=_tool_registry,
@@ -509,22 +528,22 @@ async def _run_agent(task_id: str) -> None:
             progress=progress,
         )
 
-        # M4-44: 30-minute overall timeout
+        # M4-44：30 分钟整体超时保护
         try:
             final_state = await asyncio.wait_for(runner.run(), timeout=settings.task_timeout_minutes * 60)
         except TimeoutError:
             logger.warning("Task %s: Timeout after %d minutes", task_id, settings.task_timeout_minutes)
-            # Force format_output with available content
+            # 超时后强制格式化当前已有的输出内容
             await runner._force_format_output()
             final_state = runner.state
 
-        # Store results
+        # 存储输出结果（Markdown 预览）
         _outputs[task_id] = {
             "content": _build_markdown_content(final_state),
             "format": "markdown",
         }
 
-        # Store citations
+        # 存储引用列表（供 citation-service 查询）
         _outputs[f"{task_id}:citations"] = [
             {
                 "ref_id": c.ref_id,
@@ -536,7 +555,7 @@ async def _run_agent(task_id: str) -> None:
             for c in final_state.citations.values()
         ]
 
-        # Check for errors
+        # 检查是否有致命错误
         if final_state.fatal_error:
             t["status"] = "failed"
             t["error_message"] = final_state.fatal_error
@@ -555,7 +574,7 @@ async def _run_agent(task_id: str) -> None:
 
 
 def _build_markdown_content(state: AgentState) -> str:
-    """Build a simple Markdown preview from generated sections."""
+    """构建 a simple Markdown preview from generated sections."""
     lines = [f"# {state.title}\n"]
     for section in state.generated_sections:
         lines.append(f"## {section.title}\n")

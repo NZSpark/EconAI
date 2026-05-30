@@ -111,7 +111,7 @@ class TestExtractMetadataAuthors:
 
         content = _make_content(metadata_hints={"author": "FallbackAuthor"})
         result = extract_metadata(content, b"fake", "doc.pdf", custom_metadata={"author": None})
-        # None is falsy, so or-chain falls through to hints
+        # 无 is falsy, so or-chain falls through to hints
         assert result.authors == ["FallbackAuthor"]
 
     def test_authors_whitespace_only_string(self) -> None:
@@ -148,7 +148,7 @@ class TestExtractMetadataTitle:
     def test_title_fallback_to_first_line(self) -> None:
         from document_service.metadata_extractor import extract_metadata
 
-        # Empty filename → _clean_filename returns "" → falls through to first line
+        # 空 filename → _clean_filename returns "" → falls through to first line
         content = _make_content(full_text="This is the actual title\nMore body text")
         result = extract_metadata(content, b"fake", "")
         assert result.title == "This is the actual title"

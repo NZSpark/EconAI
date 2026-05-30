@@ -1,4 +1,4 @@
-"""Shared Pydantic models used across all PolicyAI services."""
+"""所有 PolicyAI 服务使用的共享 Pydantic 模型。"""
 
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ class DocumentFormat(StrEnum):
     image = "image"
 
 
-# ----- Error Response ---------------------------------------------------------
+# ----- 错误响应 ---------------------------------------------------------
 
 
 class ErrorDetail(BaseModel):
@@ -72,7 +72,7 @@ class ErrorResponse(BaseModel):
     error: ErrorDetail
 
 
-# ----- Pagination -------------------------------------------------------------
+# ----- 分页 -------------------------------------------------------------
 
 
 class PaginationParams(BaseModel):
@@ -88,13 +88,13 @@ class PaginatedResponse[T](BaseModel):
     pages: int
 
 
-# ----- Common domain models ---------------------------------------------------
+# ----- 通用领域模型 ---------------------------------------------------
 
 
 class HealthResponse(BaseModel):
-    """Health check response — shared across all services.
+    """健康检查响应 — 在所有服务间共享。
 
-    Allows extra fields so services can include dependency status and config info.
+    允许额外字段，以便服务可以包含依赖状态和配置信息。
     """
 
     model_config = {"extra": "allow"}
@@ -104,7 +104,7 @@ class HealthResponse(BaseModel):
 
 
 class IndexEvent(BaseModel):
-    """Index event published by document-service to kb:index:request."""
+    """文档服务发布到 kb:index:request 的索引事件。"""
 
     event_id: str = Field(default_factory=lambda: str(uuid4()))
     event_type: str = "document.parsed"
@@ -116,7 +116,7 @@ class IndexEvent(BaseModel):
 
 
 class Message(BaseModel):
-    """A single message in the Agent conversation (OpenAI-compatible)."""
+    """Agent 对话中的单条消息（兼容 OpenAI）。"""
 
     role: str  # system | user | assistant | tool
     content: str | None = None

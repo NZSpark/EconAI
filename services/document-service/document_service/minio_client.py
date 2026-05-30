@@ -23,7 +23,7 @@ _client = MinIOClient(_cfg)
 
 
 def get_minio_client() -> MinIOClient:
-    """Get the document-service MinIO client."""
+    """获取 the document-service MinIO client."""
     return _client
 
 
@@ -33,7 +33,7 @@ def reset_minio_client() -> None:
 
 
 def upload_file(file_data: bytes, object_path: str, content_type: str = "application/octet-stream") -> str:
-    """Upload file bytes to MinIO."""
+    """上传 file bytes to MinIO."""
     try:
         return _client.upload_file(file_data, object_path, content_type)
     except S3Error as e:
@@ -49,7 +49,7 @@ def download_file(object_path: str) -> bytes:
 
 
 def delete_file(object_path: str) -> None:
-    """Delete an object from MinIO."""
+    """删除 an object from MinIO."""
     try:
         _client.delete_file(object_path)
     except S3Error as e:

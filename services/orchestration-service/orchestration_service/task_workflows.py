@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 _templates: dict[str, str] = {}
 
-# Default templates (embedded, fallback when template dir is not available)
+# 默认 templates (embedded, fallback when template dir is not available)
 
 
 DEFAULT_TEMPLATES: dict[str, str] = {
@@ -196,7 +196,7 @@ _WORKFLOW_PLANS: dict[str, str] = {
 9. format_output: Generate final output""",
 }
 
-# Default sections per task type
+# 默认 sections per task type
 _DEFAULT_SECTIONS: dict[str, list[str]] = {
     "literature_review": [
         "研究背景与范围",
@@ -293,10 +293,10 @@ def render_system_prompt(
 
 
 def get_initial_sections(task_type: str) -> list[str]:
-    """Get the default section list for a task type."""
+    """获取 the default section list for a task type."""
     return list(_DEFAULT_SECTIONS.get(task_type, []))
 
 
 def get_workflow_plan(task_type: str) -> str:
-    """Get the workflow plan text for a task type."""
+    """获取 the workflow plan text for a task type."""
     return _WORKFLOW_PLANS.get(task_type, "")

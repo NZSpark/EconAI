@@ -21,7 +21,7 @@ def _unique_name(name: str) -> str:
 def _setup_project(
     base_url: str, auth_headers: dict[str, str], admin_user_id: str
 ) -> str:
-    """Create a group + project and return project_id."""
+    """创建 a group + project and return project_id."""
     resp = httpx.post(
         f"{base_url}/api/admin/groups",
         json={"name": _unique_name("ExportGroup")},
@@ -55,7 +55,7 @@ def _create_task(
     task_type: str = "literature_review",
     output_formats: list[str] | None = None,
 ) -> dict:
-    """Create a task and return response JSON."""
+    """创建 a task and return response JSON."""
     resp = httpx.post(
         f"{base_url}/api/projects/{project_id}/tasks",
         json={

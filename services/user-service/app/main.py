@@ -60,7 +60,7 @@ app.add_middleware(
 
 @app.get("/health")
 async def health() -> dict[str, object]:
-    """Health check — verifies Redis connectivity."""
+    """健康检查 — verifies Redis connectivity."""
     import contextlib
 
     redis_ok = False

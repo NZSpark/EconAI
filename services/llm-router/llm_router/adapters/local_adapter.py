@@ -48,7 +48,7 @@ class LocalAdapter:
         self._timeout = timeout_s or settings.llm_request_timeout_s
 
     async def embed(self, texts: list[str], model_id: str) -> list[list[float]]:
-        """Generate embeddings for the given texts via the local LLM endpoint.
+        """生成 embeddings for the given texts via the local LLM endpoint.
 
         Calls the OpenAI-compatible /v1/embeddings endpoint.
         """
@@ -82,7 +82,7 @@ class LocalAdapter:
         return []  # unreachable due to _map_http_error always raising
 
     async def chat(self, request: ChatRequest, model_id: str) -> ChatResponse:
-        """Execute a chat completion via the local LLM endpoint.
+        """执行 a chat completion via the local LLM endpoint.
 
         Strips the "local:" prefix from the model_id if present and sends
         the request to the OpenAI-compatible endpoint.
@@ -157,7 +157,7 @@ class LocalAdapter:
         )
 
     def _build_payload(self, request: ChatRequest, api_model: str) -> dict[str, Any]:
-        """Build the OpenAI-compatible payload from our unified request."""
+        """构建 the OpenAI-compatible payload from our unified request."""
         messages_payload: list[dict[str, Any]] = []
         for msg in request.messages:
             msg_dict: dict[str, Any] = {"role": msg.role}

@@ -1,4 +1,4 @@
-"""Data models and schemas for the LLM Router service."""
+"""LLM 路由服务的数据模型和模式。"""
 
 from llm_router.models.schemas import (
     ChatRequest,

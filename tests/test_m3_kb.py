@@ -33,7 +33,7 @@ class TestKBSearch:
     """POST /api/projects/{project_id}/search and /api/institutional/search."""
 
     def test_project_search_empty(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Search with empty knowledge base returns valid response."""
+        """搜索 with empty knowledge base returns valid response."""
         resp = httpx.post(
             f"{base_url}/api/projects/00000000-0000-0000-0000-000000000001/search",
             json={"query": "test query", "top_k": 5},

@@ -24,7 +24,7 @@ def _unique_name(name: str) -> str:
 def _setup_project(
     base_url: str, auth_headers: dict[str, str], admin_user_id: str
 ) -> str:
-    """Create a group + project and return project_id."""
+    """创建 a group + project and return project_id."""
     resp = httpx.post(
         f"{base_url}/api/admin/groups",
         json={"name": _unique_name("DocOpGroup")},
@@ -53,7 +53,7 @@ def _setup_project(
 
 
 def _create_text_file(filename: str, content: str = "Hello, this is a test document for PolicyAI.") -> str:
-    """Create a temporary text file and return its path."""
+    """创建 a temporary text file and return its path."""
     tmpdir = tempfile.mkdtemp()
     filepath = os.path.join(tmpdir, filename)
     Path(filepath).write_text(content)
@@ -61,7 +61,7 @@ def _create_text_file(filename: str, content: str = "Hello, this is a test docum
 
 
 def _create_pdf_file(filename: str = "test.pdf") -> str:
-    """Create a minimal valid PDF file."""
+    """创建 a minimal valid PDF file."""
     # Minimal valid PDF
     pdf_content = (
         b"%PDF-1.4\n"
@@ -86,7 +86,7 @@ def _upload_document(
     filename: str | None = None,
     is_internal: bool = False,
 ) -> httpx.Response:
-    """Upload a document via the API."""
+    """上传 a document via the API."""
     with open(filepath, "rb") as f:
         files = {"file": (filename or os.path.basename(filepath), f)}
         data = {"is_internal": str(is_internal).lower()}
@@ -105,7 +105,7 @@ class TestDocumentUpload:
     def test_upload_text_file(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Upload a simple .txt file."""
+        """上传 a simple .txt file."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
         filepath = _create_text_file("test_upload.txt", "PolicyAI document upload test content.")
 
@@ -125,7 +125,7 @@ class TestDocumentUpload:
     def test_upload_pdf_file(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Upload a PDF file."""
+        """上传 a PDF file."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
         filepath = _create_pdf_file("test.pdf")
 
@@ -140,7 +140,7 @@ class TestDocumentUpload:
     def test_upload_with_is_internal(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Upload a file marked as internal."""
+        """上传 a file marked as internal."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
         filepath = _create_text_file("internal_test.txt", "Internal document content.")
 
@@ -211,7 +211,7 @@ class TestDocumentListAndDetail:
     def test_list_documents_default(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """List documents with default pagination."""
+        """列出 documents with default pagination."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
 
         resp = httpx.get(
@@ -230,7 +230,7 @@ class TestDocumentListAndDetail:
     def test_list_documents_filter_by_status(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """List documents filtered by parse status."""
+        """列出 documents filtered by parse status."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
 
         for status in ["pending", "parsing", "ready", "error"]:
@@ -251,7 +251,7 @@ class TestDocumentListAndDetail:
     def test_list_documents_filter_by_format(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """List documents filtered by format."""
+        """列出 documents filtered by format."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
 
         resp = httpx.get(
@@ -368,7 +368,7 @@ class TestDocumentReindex:
     def test_reindex_nonexistent_document(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Reindex non-existent document returns 404."""
+        """重建索引 non-existent document returns 404."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
 
         resp = httpx.post(

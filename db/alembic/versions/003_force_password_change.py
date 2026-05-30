@@ -1,8 +1,8 @@
-"""Add force_password_change column to users table.
+"""向 users 表添加 force_password_change 列。
 
-Revision ID: 003
-Revises: 002
-Create Date: 2026-05-24
+版本 ID: 003
+上一版本: 002
+创建日期: 2026-05-24
 """
 
 from typing import Sequence, Union

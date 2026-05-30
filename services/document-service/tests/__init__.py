@@ -1,1 +1,1 @@
-"""Tests for the Document Parsing Service (M2)."""
+"""测试辅助函数。"""

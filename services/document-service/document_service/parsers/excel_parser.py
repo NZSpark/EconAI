@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExcelParser(BaseParser):
-    """Parse .xlsx/.xls/.csv files using openpyxl, falling back to pandas."""
+    """解析 .xlsx/.xls/.csv files using openpyxl, falling back to pandas."""
 
     def supported_format(self) -> str:
         return "xlsx"
@@ -59,7 +59,7 @@ class ExcelParser(BaseParser):
 
             wb.close()
         except Exception:
-            # Fallback to pandas
+            # 回退 to pandas
             return self._parse_pandas_fallback(file_data, filename)
 
         full_text = "\n".join(full_text_parts)
@@ -74,7 +74,7 @@ class ExcelParser(BaseParser):
         )
 
     def _parse_csv(self, file_data: bytes, filename: str) -> ParsedContent:
-        """Parse CSV files."""
+        """解析 CSV files."""
         import csv as csv_module
         try:
             text = file_data.decode("utf-8")

@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 def ocr_image_bytes(image_bytes: bytes, language: str = "chi_sim+eng") -> str:
-    """Run Tesseract OCR on raw image bytes.
+    """运行 Tesseract OCR on raw image bytes.
 
     Args:
         image_bytes: Raw image data (PNG, JPEG, etc.).
@@ -71,7 +71,7 @@ def ocr_image_bytes(image_bytes: bytes, language: str = "chi_sim+eng") -> str:
 def extract_images_from_pdf(
     file_data: bytes, language: str = "chi_sim+eng"
 ) -> list[dict[str, Any]]:
-    """Extract and OCR all embedded images from a PDF document.
+    """提取 and OCR all embedded images from a PDF document.
 
     Uses PyMuPDF (fitz) to find embedded images on each page via
     page.get_images(full=True), then runs OCR on each extracted image.
@@ -153,7 +153,7 @@ def extract_images_from_pdf(
 def extract_images_from_docx(
     file_data: bytes, language: str = "chi_sim+eng"
 ) -> list[dict[str, Any]]:
-    """Extract and OCR all embedded images from a DOCX document.
+    """提取 and OCR all embedded images from a DOCX document.
 
     Iterates part relationships in the python-docx document object
     to find image parts, then runs OCR on each.
@@ -247,7 +247,7 @@ def extract_images_from_docx(
 def extract_images_from_pptx(
     file_data: bytes, language: str = "chi_sim+eng"
 ) -> list[dict[str, Any]]:
-    """Extract and OCR all embedded images from a PPTX presentation.
+    """提取 and OCR all embedded images from a PPTX presentation.
 
     Iterates each slide's shapes, finds PICTURE shapes, and runs OCR.
 
@@ -343,7 +343,7 @@ _DATA_URI_PATTERN = re.compile(
 def extract_images_from_html(
     file_data: bytes, language: str = "chi_sim+eng"
 ) -> list[dict[str, Any]]:
-    """Extract and OCR base64-encoded data-URI images from HTML content.
+    """提取 and OCR base64-encoded data-URI images from HTML content.
 
     Args:
         file_data: Raw HTML file bytes.

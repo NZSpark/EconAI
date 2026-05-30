@@ -1,7 +1,7 @@
-"""Celery worker entry point for the orchestration queue (M4-03).
+"""编排队列的 Celery worker 入口（M4-03）。
 
-In production, the Agent loop runs inside a Celery task with a 30-minute
-soft time limit. For MVP/testing, the app.py uses asyncio.create_task instead.
+生产环境中，Agent 循环在 Celery 任务中运行，带有 30 分钟的软时间限制。
+对于 MVP/测试，app.py 改用 asyncio.create_task。
 """
 
 from __future__ import annotations
@@ -33,15 +33,15 @@ app.conf.update(
 
 @app.task(name="orchestration.run_agent", bind=True)
 def run_agent_task(self: object, task_id: str) -> dict[str, str]:
-    """Celery task wrapper for the Agent loop."""
-    logger.info("Celery task started for task_id=%s", task_id)
+    """Agent 循环的 Celery 任务包装器。"""
+    logger.info("Celery 任务已启动，task_id=%s", task_id)
 
     from orchestration_service.app import _run_agent
 
     try:
         asyncio.get_event_loop().run_until_complete(_run_agent(task_id))
     except Exception:
-        logger.exception("Celery task failed for task_id=%s", task_id)
+        logger.exception("Celery 任务失败，task_id=%s", task_id)
         raise
 
     return {"task_id": task_id, "status": "completed"}
@@ -49,9 +49,9 @@ def run_agent_task(self: object, task_id: str) -> dict[str, str]:
 
 @task_prerun.connect
 def on_task_prerun(task_id: str | None = None, task: object | None = None, **kwargs: object) -> None:
-    logger.info("Celery task starting: %s", task_id)
+    logger.info("Celery 任务启动中: %s", task_id)
 
 
 @task_failure.connect
 def on_task_failure(task_id: str | None = None, exception: Exception | None = None, **kwargs: object) -> None:
-    logger.error("Celery task failed: %s — %s", task_id, exception)
+    logger.error("Celery 任务失败: %s — %s", task_id, exception)

@@ -1,4 +1,4 @@
-"""Project management router."""
+"""。"""
 
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ async def create_project(
     user_id = _get_user_id(request)
     target_group_id = uuid.UUID(body.group_id)
 
-    # Verify the user belongs to the target group
+    # 验证 the user belongs to the target group
     group_ids = await _get_user_group_ids(db, user_id)
     if target_group_id not in group_ids:
         raise HTTPException(

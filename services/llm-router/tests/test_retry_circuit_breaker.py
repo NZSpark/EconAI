@@ -17,7 +17,7 @@ from llm_router.routing.circuit_breaker import CircuitBreaker, CircuitState
 
 
 class TestCircuitBreakerStateMachine:
-    """Tests for the CircuitBreaker state machine."""
+    """测试辅助函数。"""
 
     def test_initial_state_closed(self) -> None:
         """Fresh breaker starts CLOSED."""
@@ -116,7 +116,7 @@ class TestCircuitBreakerStateMachine:
 
 
 class TestRetryStrategy:
-    """Tests for the retry logic in _execute_with_retry (indirectly)."""
+    """测试辅助函数。"""
 
     def test_rate_limit_retry_count(self) -> None:
         """429 should retry up to llm_retry_max_429 times."""

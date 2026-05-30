@@ -1,4 +1,4 @@
-"""Tests for auth_service.py — M8-03 through M8-07."""
+"""测试辅助函数。"""
 
 from __future__ import annotations
 

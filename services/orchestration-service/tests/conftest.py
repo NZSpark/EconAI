@@ -1,4 +1,4 @@
-"""Shared test fixtures for orchestration-service tests."""
+"""编排服务测试的共享夹具 tests."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from orchestration_service.state import AgentState
 
 @pytest.fixture
 def mock_llm_response() -> MagicMock:
-    """Mock successful LLM Router HTTP response."""
+    """模拟成功的 LLM 路由 HTTP 响应。"""
     mock = MagicMock()
     mock.raise_for_status = MagicMock()
     mock.json.return_value = {
@@ -41,7 +41,7 @@ def mock_llm_response() -> MagicMock:
 
 @pytest.fixture
 def mock_kb_response() -> MagicMock:
-    """Mock successful KB service HTTP response."""
+    """模拟成功的 KB 服务 HTTP 响应。"""
     mock = MagicMock()
     mock.raise_for_status = MagicMock()
     mock.json.return_value = {
@@ -73,7 +73,7 @@ def mock_kb_response() -> MagicMock:
 
 @pytest.fixture
 def mock_citation_response() -> MagicMock:
-    """Mock successful citation service HTTP response."""
+    """模拟成功的引文服务 HTTP 响应。"""
     mock = MagicMock()
     mock.raise_for_status = MagicMock()
     mock.json.return_value = {
@@ -102,7 +102,7 @@ def mock_citation_response() -> MagicMock:
 
 @pytest.fixture
 def mock_output_response() -> MagicMock:
-    """Mock successful output service HTTP response."""
+    """模拟成功的输出服务 HTTP 响应。"""
     mock = MagicMock()
     mock.raise_for_status = MagicMock()
     mock.json.return_value = {
@@ -120,7 +120,7 @@ def mock_output_response() -> MagicMock:
 
 @pytest.fixture
 def agent_state() -> AgentState:
-    """Create a standard AgentState for testing."""
+    """创建测试用的标准 AgentState。"""
     return AgentState(
         task_id="task-test-001",
         project_id="proj-test-001",
@@ -134,13 +134,13 @@ def agent_state() -> AgentState:
 
 @pytest.fixture
 def progress_tracker() -> ProgressTracker:
-    """Create a progress tracker for testing."""
+    """创建测试用的进度追踪器。"""
     return ProgressTracker("literature_review")
 
 
 @pytest.fixture
 def create_task_request() -> CreateTaskRequest:
-    """Standard task creation request."""
+    """标准任务创建请求。"""
     return CreateTaskRequest(
         type=TaskType.literature_review,
         title="Digital Trade Rules Impact Analysis",

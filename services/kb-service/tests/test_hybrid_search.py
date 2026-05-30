@@ -160,7 +160,7 @@ class TestHybridSearch:
         assert len(page1) == 5
         assert len(page2) <= 5
         assert total == total2
-        # Pages should not overlap
+        # 分页s should not overlap
         p1_ids = {r["chunk_id"] for r in page1}
         p2_ids = {r["chunk_id"] for r in page2}
         assert p1_ids.isdisjoint(p2_ids)

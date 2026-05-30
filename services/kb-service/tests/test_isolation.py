@@ -1,4 +1,4 @@
-"""Tests for knowledge base isolation and permission checks (M3-34)."""
+"""测试辅助函数。"""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ class TestIsolation:
     def test_project_a_cannot_see_project_b_data(self, client: TestClient) -> None:
         _setup_isolation_test_data()
 
-        # Index data for project A
+        # 索引 data for project A
         import asyncio
 
         from kb_service import app as app_module
@@ -64,12 +64,12 @@ class TestIsolation:
 
         asyncio.run(index_a())
 
-        # Search project A — should find results
+        # 搜索 project A — should find results
         resp_a = client.post("/api/projects/proj-a/search", json={"query": "economic forecast"})
         assert resp_a.status_code == 200
         assert resp_a.json()["total_hits"] > 0
 
-        # Search project B — should find nothing
+        # 搜索 project B — should find nothing
         resp_b = client.post("/api/projects/proj-b/search", json={"query": "economic forecast"})
         assert resp_b.status_code == 200
         assert resp_b.json()["total_hits"] == 0
@@ -140,7 +140,7 @@ class TestIsolation:
 
         asyncio.run(index())
 
-        # Archive then restore
+        # 归档 then restore
         resp_archive = client.post("/internal/lifecycle/archive/project/proj-restored")
         assert resp_archive.status_code == 200
 
@@ -153,7 +153,7 @@ class TestIsolation:
 
         resp = client.post("/api/projects/proj-restored/search", json={"query": "monetary policy"})
         assert resp.status_code == 200
-        # Results should be findable after restore
+        # 结果s should be findable after restore
         assert resp.json()["total_hits"] > 0
 
     def test_document_archive_and_restore(self, client: TestClient) -> None:

@@ -27,12 +27,12 @@ def _add_admin_to_group(
 
 
 class TestProjectSearch:
-    """Search projects by name — Section 3.1."""
+    """搜索 projects by name — Section 3.1."""
 
     def test_search_project_by_name_partial_match(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Search with partial name returns matching projects."""
+        """搜索 with partial name returns matching projects."""
         # Create a group
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
@@ -72,7 +72,7 @@ class TestProjectSearch:
     def test_search_project_no_match(
         self, base_url: str, auth_headers: dict[str, str]
     ) -> None:
-        """Search with non-matching string returns empty results."""
+        """搜索 with non-matching string returns empty results."""
         resp = httpx.get(
             f"{base_url}/api/projects",
             params={"search": "ZZZ_NONEXISTENT_PROJECT_ZZZ"},
@@ -87,7 +87,7 @@ class TestProjectSearch:
     def test_search_project_case_insensitive(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Search is case-insensitive (ILIKE)."""
+        """搜索 is case-insensitive (ILIKE)."""
         resp = httpx.post(
             f"{base_url}/api/admin/groups",
             json={"name": _unique_name("CaseGroup")},

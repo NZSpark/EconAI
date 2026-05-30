@@ -1,4 +1,4 @@
-"""LDAP authentication service with connection pooling."""
+"""LDAP 认证服务（带连接池）。"""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def ldap_authenticate(username: str, password: str) -> dict[str, Any] | None:
-    """Authenticate via LDAP bind. Returns user attributes on success, None on failure."""
+    """通过 LDAP bind 认证。成功返回用户属性，失败返回 None。"""
     if not settings.ldap_enabled:
         return None
 
@@ -61,7 +61,7 @@ async def ldap_authenticate(username: str, password: str) -> dict[str, Any] | No
 
 
 def map_ldap_groups(ldap_groups: list[str]) -> list[str]:
-    """Map LDAP group DNs to local project group IDs using configured mapping."""
+    """使用配置的映射将 LDAP 组 DN 映射到本地项目组 ID。"""
     if not settings.ldap_group_mapping:
         return []
     mapped: list[str] = []

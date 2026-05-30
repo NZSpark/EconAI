@@ -1,4 +1,4 @@
-"""Tests for Output Service FastAPI endpoints."""
+"""测试辅助函数。"""
 
 from collections.abc import AsyncGenerator
 

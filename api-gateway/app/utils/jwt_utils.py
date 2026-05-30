@@ -1,4 +1,4 @@
-"""JWT utilities compatible with M8 User Service token format."""
+"""与 M8 用户服务令牌格式兼容的 JWT 工具。"""
 
 from __future__ import annotations
 
@@ -15,11 +15,11 @@ from app.config import settings
 def create_access_token(
     user_id: str, username: str, role: str, group_ids: list[str]
 ) -> str:
-    """Create a JWT access token (compatible with M8 format).
+    """创建 JWT 访问令牌（兼容 M8 格式）。
 
-    Payload: sub, username, role, exp, iat, jti, type=access
-    NOTE: group_ids NOT included to keep the token compact and avoid
-    431 (Request Header Fields Too Large) errors.
+    载荷: sub, username, role, exp, iat, jti, type=access
+    注意: group_ids 不包含在令牌中以保持令牌紧凑，避免
+    431（请求头字段过大）错误。
     """
     now = datetime.now(UTC)
     payload: dict[str, Any] = {
@@ -35,9 +35,9 @@ def create_access_token(
 
 
 def create_refresh_token(user_id: str) -> str:
-    """Create a JWT refresh token (compatible with M8 format).
+    """创建 JWT 刷新令牌（兼容 M8 格式）。
 
-    Payload: sub, exp, iat, jti, type=refresh
+    载荷: sub, exp, iat, jti, type=refresh
     """
     now = datetime.now(UTC)
     payload: dict[str, Any] = {
@@ -51,19 +51,19 @@ def create_refresh_token(user_id: str) -> str:
 
 
 def decode_token(token: str) -> dict[str, Any]:
-    """Decode and verify a JWT token. Raises on expiry or invalid signature."""
+    """解码并验证 JWT 令牌。过期或无效签名时抛出异常。"""
     try:
         return cast("dict[str, Any]", jwt.decode(
             token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
         ))
     except ExpiredSignatureError as e:
-        raise ExpiredSignatureError("Token has expired") from e
+        raise ExpiredSignatureError("令牌已过期") from e
     except JWTError as e:
-        raise JWTError("Invalid token") from e
+        raise JWTError("无效令牌") from e
 
 
 def get_token_jti(token: str) -> str | None:
-    """Extract the JTI (JWT ID) from a token without full verification."""
+    """从不完全验证的令牌中提取 JTI（JWT ID）。"""
     try:
         payload = jwt.decode(
             token,

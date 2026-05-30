@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class PDFParser(BaseParser):
-    """Parse PDF files using PyMuPDF (fitz).
+    """解析 PDF files using PyMuPDF (fitz).
 
     Extracts: text (per-page), tables, section headers from TOC,
     and embedded images with OCR recognition.
@@ -27,7 +27,7 @@ class PDFParser(BaseParser):
         return "pdf"
 
     def parse(self, file_data: bytes, filename: str) -> ParsedContent:
-        """Extract text from PDF, per-page, with table and image detection."""
+        """提取 text from PDF, per-page, with table and image detection."""
         try:
             import fitz  # PyMuPDF
         except ImportError as e:
@@ -124,7 +124,7 @@ class PDFParser(BaseParser):
         )
 
     def extract_metadata_hints(self, file_data: bytes, filename: str) -> dict[str, Any]:
-        """Extract PDF metadata hints."""
+        """提取 PDF metadata hints."""
         try:
             import fitz
             doc = fitz.open(stream=file_data, filetype="pdf")

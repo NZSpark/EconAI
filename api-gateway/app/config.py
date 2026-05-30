@@ -1,4 +1,4 @@
-"""API Gateway configuration from environment variables."""
+"""从环境变量加载的 API 网关配置。"""
 
 from __future__ import annotations
 
@@ -6,13 +6,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables and .env file."""
+    """从环境变量和 .env 文件加载的应用配置。"""
 
     model_config = SettingsConfigDict(
         env_prefix="API_GATEWAY_", env_file=".env", extra="ignore"
     )
 
-    # ——— Application ———
+    # ——— 应用 ———
     app_name: str = "PolicyAI API Gateway"
     debug: bool = False
     host: str = "0.0.0.0"
@@ -28,23 +28,23 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     token_blacklist_enabled: bool = True
 
-    # ——— Rate Limiting ———
+    # ——— 速率限制 ———
     rate_limit_enabled: bool = True
     rate_limit_per_user: int = 100
     rate_limit_per_ip: int = 300
     rate_limit_upload: int = 20
     rate_limit_task_create: int = 10
 
-    # ——— Audit ———
+    # ——— 审计 ———
     audit_log_enabled: bool = True
 
     # ——— CORS ———
     cors_origins: str = '["*"]'
 
-    # ——— Request ———
+    # ——— 请求 ———
     max_request_size_mb: int = 100
 
-    # ——— Backend Services ———
+    # ——— 后端服务 ———
     user_service_url: str = "http://user-service:8007"
     document_service_url: str = "http://document-service:8001"
     kb_service_url: str = "http://kb-service:8002"
@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     citation_service_url: str = "http://citation-service:8005"
     output_service_url: str = "http://output-service:8006"
 
-    # ——— Proxy ———
+    # ——— 代理 ———
     proxy_timeout_s: float = 120.0
     proxy_max_retries: int = 2
 

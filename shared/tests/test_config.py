@@ -1,4 +1,4 @@
-"""Tests for shared config loader."""
+"""共享配置加载器的测试。"""
 
 from __future__ import annotations
 
@@ -47,6 +47,6 @@ class TestAppSettings:
             assert settings.debug is True
 
     def test_extra_fields_allowed(self) -> None:
-        """Extra fields should be allowed (extra=allow)."""
+        """应允许额外字段（extra=allow）。"""
         settings = AppSettings(some_custom_key="value")
         assert settings.some_custom_key == "value"  # type: ignore[attr-defined]

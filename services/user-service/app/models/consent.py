@@ -13,7 +13,7 @@ from app.database import Base
 
 
 class UserConsent(Base):
-    """Records user consent for data processing (GDPR)."""
+    """记录用户对数据处理的同意（GDPR）。"""
 
     __tablename__ = "user_consents"
 

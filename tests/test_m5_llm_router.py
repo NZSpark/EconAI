@@ -31,7 +31,7 @@ class TestLLMModels:
     """GET /internal/llm/models — Section 6.2.2."""
 
     def test_list_models(self) -> None:
-        """List available models returns valid response."""
+        """列出 available models returns valid response."""
         resp = httpx.get(f"{LLM_SVC}/internal/llm/models", timeout=10)
         assert resp.status_code == 200, resp.text
         body = resp.json()

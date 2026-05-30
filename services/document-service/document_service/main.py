@@ -1,9 +1,9 @@
-"""Entry point for the Document Service.
+"""文档服务入口。
 
-Usage:
+用法:
     uvicorn document_service.main:app --host 0.0.0.0 --port 8001
 
-For Celery worker:
+Celery worker:
     celery -A document_service.celery_app worker --loglevel=info -Q document
 """
 

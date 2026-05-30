@@ -30,7 +30,7 @@ class PageRange:
 
     @classmethod
     def parse(cls, raw: str) -> PageRange | None:
-        """Parse a page range string like '45-48', '12', 'p1-5', or 'p12'.
+        """解析 a page range string like '45-48', '12', 'p1-5', or 'p12'.
 
         Strips non-numeric prefixes (e.g. 'p', 'pp') before parsing.
 
@@ -65,18 +65,18 @@ class PageRange:
             return cls(start=page, end=page)
 
     def contains(self, other: PageRange) -> bool:
-        """Check if this range fully contains other range."""
+        """检查 if this range fully contains other range."""
         return self.start <= other.start and self.end >= other.end
 
     def overlaps(self, other: PageRange) -> bool:
-        """Check if this range overlaps with other range."""
+        """检查 if this range overlaps with other range."""
         return self.start <= other.end and other.start <= self.end
 
 
 def page_range_matches(
     ref_pages: PageRange, chunk_pages: PageRange
 ) -> bool:
-    """Check if chunk.page_start <= ref.page_start and chunk.page_end >= ref.page_end.
+    """检查 if chunk.page_start <= ref.page_start and chunk.page_end >= ref.page_end.
 
     (M6-08: exact page range matching)
     """
@@ -91,19 +91,27 @@ def page_range_matches(
 def page_overlap(
     ref_pages: PageRange, chunk_pages: PageRange
 ) -> float:
-    """Calculate Jaccard-like page overlap between ref and chunk page ranges.
-
-    Returns a value 0.0-1.0, where 1.0 means identical ranges.
-
-    (M6-09: page overlap when exact match fails)
+    """计算引用页码与文档块页码的 Jaccard 式重叠度。
+    
+    公式：overlap / union
+    - overlap = 两个区间的交集大小
+    - union   = 两个区间的并集大小
+    - 返回值 0.0-1.0，1.0 表示完全相同的页码范围
+    
+    例如：引用 p45-48，文档块 p46-50
+    - overlap = [46,48] 长度 3
+    - union   = [45,50] 长度 6
+    - 重叠度  = 3/6 = 0.5
     """
     if not ref_pages.overlaps(chunk_pages):
         return 0.0
 
+    # 计算交集区间
     overlap_start = max(ref_pages.start, chunk_pages.start)
     overlap_end = min(ref_pages.end, chunk_pages.end)
     overlap_len = overlap_end - overlap_start + 1
 
+    # 计算并集大小
     ref_len = ref_pages.end - ref_pages.start + 1
     chunk_len = chunk_pages.end - chunk_pages.start + 1
     union_len = ref_len + chunk_len - overlap_len
@@ -123,7 +131,7 @@ def page_overlap(
 
 
 def _simple_tokenize(text: str) -> dict[str, int]:
-    """Tokenize text into a bag-of-words frequency map."""
+    """分词 text into a bag-of-words frequency map."""
     import re
 
     tokens = re.findall(r"[一-鿿]+|[a-zA-Z]+", text.lower())
@@ -238,13 +246,17 @@ def determine_confidence(
     similarity: float,
     threshold: float,
 ) -> str:
-    """Determine confidence level based on page matching and semantic similarity.
-
-    (M6-11)
-    - direct: exact page match AND similarity > threshold
-    - fuzzy: similarity > threshold but no exact page match, OR doc_id exists
-             but page doesn't match exactly
-    - uncertain: no match found at all
+    """根据页码匹配和语义相似度确定引用置信度级别。
+    
+    三级分类（M6-11）：
+    - "direct"    : 精确页码匹配 AND 语义相似度 > 阈值
+                    例如：引用写"p45-48"，文档块正好是 p45-48，且语义匹配
+    - "fuzzy"     : 语义相似度 > 阈值，但页码不完全匹配
+                    例如：引用写"p45"，文档块是 p42-50，语义匹配但页码是模糊的
+    - "uncertain" : 没有任何匹配
+                    引用可能指向了不存在的文档或页码完全错误
+    
+    返回值直接影响前端展示：direct=绿色，fuzzy=黄色，uncertain=红色
     """
     if has_exact_page_match and similarity >= threshold:
         return "direct"
@@ -294,20 +306,24 @@ class VerificationResult:
 
 
 class CitationVerifier:
-    """Verifies parsed citations against available context chunks.
-
-    Flow (M6-12):
-      1. Accept parsed citations + context chunks
-      2. For each citation, find matching chunks
-      3. Compute similarity and page overlap
-      4. Assign confidence (direct/fuzzy/uncertain)
-      5. Generate summary (M6-13)
+    """引用验证器 —— 验证 LLM 生成的引用是否能在源文档中找到对应的内容。
+    
+    验证流程（M6-12）：
+      1. 接收解析后的引用 + 知识库返回的上下文文档块
+      2. 为每个引用查找匹配的文档块
+      3. 计算语义相似度（embedding cosine）和页码重叠度
+      4. 分配置信度级别（direct / fuzzy / uncertain）
+      5. 生成验证摘要（M6-13）：总数、精确、模糊、不确定的统计
+    
+    为什么需要引用验证？
+    LLM 有时会"幻觉"——编造不存在的引用或页码。
+    验证器通过实际比对 LLM 输出和源文档，确保每条引用都有据可查。
     """
 
     def __init__(
         self,
-        similarity_threshold: float = 0.85,
-        embed_fn: Any | None = None,
+        similarity_threshold: float = 0.85,   # 语义相似度阈值（默认0.85）
+        embed_fn: Any | None = None,           # embedding 函数（可选，不传则用词袋模型）
     ):
         self._threshold = similarity_threshold
         self._embed_fn = embed_fn
@@ -317,18 +333,20 @@ class CitationVerifier:
         parsed_result: CitationParserResult,
         context_chunks: list[ContextChunk],
     ) -> VerificationResult:
-        """Verify all parsed citations against available chunks.
+        """验证所有解析出的引用。
 
         Args:
-            parsed_result: Output from CitationParser.
-            context_chunks: Available chunks from the KB service.
+            parsed_result: CitationParser 的输出（解析出的引用列表）。
+            context_chunks: 知识库返回的上下文文档块。
 
         Returns:
-            VerificationResult with verified citations and summary.
+            VerificationResult，包含验证后的引用和统计摘要。
         """
         verified: list[VerifiedCitation] = []
+        # 构建 document_id → chunks 索引，加速查找
         chunk_index = self._build_chunk_index(context_chunks)
 
+        # 遍历每个句子中的每个引用
         for sent_citation in parsed_result.sentences:
             for ref in sent_citation.citations:
                 verified_cit = await self._verify_single(
@@ -347,7 +365,7 @@ class CitationVerifier:
     def _build_chunk_index(
         self, chunks: list[ContextChunk]
     ) -> dict[str, list[ContextChunk]]:
-        """Build a document_id -> chunks index for fast lookup."""
+        """构建 a document_id -> chunks index for fast lookup."""
         index: dict[str, list[ContextChunk]] = {}
         for chunk in chunks:
             index.setdefault(chunk.document_id, []).append(chunk)

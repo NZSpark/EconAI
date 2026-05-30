@@ -15,7 +15,7 @@ import httpx
 
 
 def _unique_name(name: str) -> str:
-    """Generate a unique name to avoid collision with previous test runs."""
+    """生成 a unique name to avoid collision with previous test runs."""
     return f"{name}_{int(time.time() * 1000) % 1000000}"
 
 
@@ -23,7 +23,7 @@ class TestAdminUserFlow:
     """Complete admin user management flow (M8 + M1)."""
 
     def test_full_user_lifecycle(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Create → list → update → deactivate a user, verifying each step."""
+        """创建 → list → update → deactivate a user, verifying each step."""
         uname = _unique_name("lifecycle")
         # Step 1: Create user
         resp = httpx.post(

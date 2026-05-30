@@ -1,1 +1,1 @@
-"""PolicyAI Output Generation Service (M7)."""
+"""PolicyAI 输出生成服务（M7）。"""

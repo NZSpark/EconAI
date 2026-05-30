@@ -62,7 +62,7 @@ def _estimate_tokens(text: str) -> int:
 
 
 def _is_cjk(char: str) -> bool:
-    """Check if a character is CJK (Chinese, Japanese, Korean)."""
+    """检查 if a character is CJK (Chinese, Japanese, Korean)."""
     cp = ord(char)
     return (
         (0x4E00 <= cp <= 0x9FFF) or    # CJK Unified Ideographs

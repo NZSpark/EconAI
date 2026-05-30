@@ -1,1 +1,1 @@
-"""Tests for the shared package."""
+"""共享包的测试。"""

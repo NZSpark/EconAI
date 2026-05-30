@@ -50,7 +50,7 @@ class TestJWTAuthMiddleware:
 
     def test_expired_token_returns_401(self, base_url: str) -> None:
         """Expired token returns 401 with AUTH_TOKEN_EXPIRED."""
-        # Create an obviously expired token
+        # 创建 an obviously expired token
         expired = (
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
             "eyJzdWIiOiJ0ZXN0IiwidXNlcm5hbWUiOiJ0ZXN0Iiwicm9sZSI6ImFuYWx5c3QiLC"
@@ -121,7 +121,7 @@ class TestRBACMiddleware:
 
     def test_non_admin_blocked_from_admin_routes(self, base_url: str) -> None:
         """Analyst cannot access admin endpoints."""
-        # Create analyst
+        # 创建 analyst
         admin_token = self._login_as_role(base_url, "admin", "Admin@123456")
         if not admin_token:
             pytest.skip("Admin login failed")
@@ -186,7 +186,7 @@ class TestErrorResponseFormat:
         )
         token = resp.json()["access_token"]
 
-        # Create analyst
+        # 创建 analyst
         resp2 = httpx.post(
             f"{base_url}/api/admin/users",
             json={
@@ -246,7 +246,7 @@ class TestCORSHeaders:
             timeout=10,
         )
         # Server should respond with CORS headers
-        # Status may be 200 (allow) or 405 (method not allowed for OPTIONS)
+        # 状态 may be 200 (allow) or 405 (method not allowed for OPTIONS)
         assert resp.status_code in (200, 204, 405)
         # At minimum, check that we don't get blocked
         assert "access-control" in resp.headers.get("vary", "").lower() or True

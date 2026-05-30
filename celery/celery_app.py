@@ -1,4 +1,4 @@
-"""Celery application factory for PolicyAI."""
+"""PolicyAI 的 Celery 应用工厂。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ celery_app = Celery(
     "policyai",
     broker=CELERY_BROKER_URL,
     backend=CELERY_RESULT_BACKEND,
-    include=[],  # tasks registered by each service at import time
+    include=[],  # 任务由各服务在导入时注册
 )
 
 celery_app.conf.update(

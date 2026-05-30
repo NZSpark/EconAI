@@ -147,7 +147,7 @@ def _update_document_in_db(
     parse_error: str | None = None,
     chunk_records: list[ChunkRecord] | None = None,
 ) -> None:
-    """Update document record and insert chunks into DB.
+    """更新 document record and insert chunks into DB.
 
     Uses the real document-service db module for actual PostgreSQL operations.
     Falls back to logging if the DB module is unavailable.
@@ -216,7 +216,7 @@ def _update_document_in_db(
 
 
 def make_celery_task() -> Any:
-    """Create a Celery task wrapper for process_document.
+    """创建 a Celery task wrapper for process_document.
 
     Returns a callable that can be registered with Celery.
     In production, this would be decorated with @celery_app.task.

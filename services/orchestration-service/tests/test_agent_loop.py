@@ -80,7 +80,7 @@ def _make_tool_call_response(tool_name: str = "search_kb", args: dict[str, Any] 
 
 
 class TestAgentLoopRunner:
-    """Tests for the AgentLoopRunner (M4-50)."""
+    """测试辅助函数。"""
 
     @pytest.mark.asyncio
     async def test_finish_on_first_iteration(self, agent_state: AgentState) -> None:
@@ -116,7 +116,7 @@ class TestAgentLoopRunner:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                # Return tool call response
+                # 返回 tool call response
                 m = MagicMock()
                 m.raise_for_status = MagicMock()
                 import json
@@ -149,7 +149,7 @@ class TestAgentLoopRunner:
                 }
                 return m
             else:
-                # Return finish response
+                # 返回 finish response
                 m = MagicMock()
                 m.raise_for_status = MagicMock()
                 m.json.return_value = {
@@ -224,7 +224,7 @@ class TestAgentLoopRunner:
         progress = ProgressTracker("literature_review")
         registry = create_tool_registry()
 
-        # Return text that has a tool name in it
+        # 返回 text that has a tool name in it
         mock1 = MagicMock()
         mock1.raise_for_status = MagicMock()
         mock1.json.return_value = {
@@ -266,7 +266,7 @@ class TestAgentLoopRunner:
 
 
 class TestAgentState:
-    """Tests for AgentState management (M4-12, M4-13)."""
+    """测试辅助函数。"""
 
     def test_initial_state(self, agent_state: AgentState) -> None:
         assert agent_state.task_id == "task-test-001"
@@ -328,7 +328,7 @@ class TestAgentState:
 
 
 class TestProgressTracker:
-    """Tests for ProgressTracker (M4-38, M4-39)."""
+    """测试辅助函数。"""
 
     def test_initial_total(self) -> None:
         pt = ProgressTracker("literature_review")
@@ -383,7 +383,7 @@ class TestMaxIterationsFallback:
         agent_state.remaining_sections = ["Section A"]
         agent_state.add_section("Section A", "Some content", 10)
 
-        # Mock LLM to always return tool calls (never finish)
+        # 模拟 LLM to always return tool calls (never finish)
         import json
 
         def make_always_tool() -> MagicMock:

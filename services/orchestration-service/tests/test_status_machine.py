@@ -1,4 +1,4 @@
-"""M4-49: Task status machine transition tests."""
+"""M4-49: 任务状态机转换测试 tests."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from orchestration_service.status_machine import (
 
 
 class TestValidateTransition:
-    """Test state transition validation."""
+    """测试状态转换验证。"""
 
     def test_pending_to_running_valid(self) -> None:
         assert validate_transition(TaskStatus.pending, TaskStatus.running) is True
@@ -58,7 +58,7 @@ class TestValidateTransition:
 
 
 class TestAssertValidTransition:
-    """Test the assert_variant that raises on invalid."""
+    """测试在无效时抛出的断言变体。"""
 
     def test_valid_does_not_raise(self) -> None:
         assert_valid_transition(TaskStatus.pending, TaskStatus.running)
@@ -73,7 +73,7 @@ class TestAssertValidTransition:
 
 
 class TestIsTerminal:
-    """Test terminal state detection."""
+    """测试终态检测。"""
 
     @pytest.mark.parametrize("status", [TaskStatus.completed, TaskStatus.cancelled])
     def test_terminal_states(self, status: TaskStatus) -> None:
@@ -85,7 +85,7 @@ class TestIsTerminal:
 
 
 class TestIsValidStatus:
-    """Test status string validation."""
+    """测试状态字符串验证。"""
 
     def test_all_enum_values_valid(self) -> None:
         for s in TaskStatus:
@@ -98,7 +98,7 @@ class TestIsValidStatus:
 
 
 class TestAllTransitions:
-    """Verify all transitions match the expected state machine."""
+    """验证所有转换与预期状态机匹配。"""
 
     def test_pending_transitions(self) -> None:
         valid = {s for s in TaskStatus if validate_transition("pending", s)}

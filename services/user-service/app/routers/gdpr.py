@@ -1,4 +1,11 @@
-"""GDPR compliance router: data access, deletion, portability, consent."""
+"""GDPR 合规路由 —— 数据访问、删除、可携带性、用户同意管理。
+
+实现 GDPR 要求的核心用户权利：
+- 数据访问权（GET /data）：用户可查看自己的所有数据
+- 数据删除权（DELETE /data）：用户可请求删除所有个人数据（匿名化处理）
+- 数据可携带权（GET /data/export）：用户可导出自己的数据
+- 同意管理（PUT /consent）：用户可管理数据处理和分析的同意状态
+"""
 
 from __future__ import annotations
 
@@ -19,6 +26,7 @@ router = APIRouter(prefix="/api/user", tags=["gdpr"])
 
 
 def _get_user_id(request: Request) -> uuid.UUID:
+    """从请求头或 request.state 获取当前用户 ID。"""
     uid = request.headers.get("X-User-ID") or getattr(request.state, "user_id", None)
     if not uid:
         raise HTTPException(
@@ -37,6 +45,10 @@ def _get_user_id(request: Request) -> uuid.UUID:
 async def get_user_data(
     request: Request, db: AsyncSession = Depends(get_db)
 ) -> dict[str, Any]:
+    """获取用户的所有个人数据（GDPR 数据访问权）。
+    
+    返回：个人资料 + 项目列表 + 同意状态
+    """
     user_id = _get_user_id(request)
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
@@ -82,6 +94,13 @@ async def get_user_data(
 async def delete_user_data(
     request: Request, db: AsyncSession = Depends(get_db)
 ) -> dict[str, Any]:
+    """删除用户的所有个人数据（GDPR 被遗忘权）。
+    
+    操作：
+    1. 级联删除用户创建的所有项目
+    2. 删除同意记录
+    3. 匿名化用户资料（不物理删除，保留审计记录）
+    """
     user_id = _get_user_id(request)
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
@@ -89,21 +108,21 @@ async def delete_user_data(
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    # Cascade delete user's projects
+    # 级联删除用户的项目
     projects_result = await db.execute(
         select(Project).where(Project.created_by == user_id)
     )
     for project in projects_result.scalars().all():
         await db.delete(project)
 
-    # Remove consent records
+    # 删除同意记录
     consent_result = await db.execute(
         select(UserConsent).where(UserConsent.user_id == user_id)
     )
     if consent := consent_result.scalar_one_or_none():
         await db.delete(consent)
 
-    # Anonymize user profile
+    # 匿名化用户资料（保留记录以满足审计要求）
     user.username = f"deleted_{user.id}"
     user.email = f"anonymized_{user.id}@deleted.local"
     user.display_name = None
@@ -118,6 +137,10 @@ async def delete_user_data(
 async def export_user_data(
     request: Request, db: AsyncSession = Depends(get_db)
 ) -> dict[str, Any]:
+    """导出用户的所有个人数据（GDPR 数据可携带权）。
+    
+    当前实现等同于 GET /data，未来可扩展为 JSON/CSV 文件下载。
+    """
     return await get_user_data(request, db)
 
 
@@ -128,6 +151,11 @@ async def update_consent(
     processing_consent: bool = False,
     analytics_consent: bool = False,
 ) -> dict[str, Any]:
+    """更新用户的同意状态（GDPR 同意管理）。
+    
+    - processing_consent: 是否同意数据处理
+    - analytics_consent: 是否同意数据分析
+    """
     user_id = _get_user_id(request)
 
     result = await db.execute(select(UserConsent).where(UserConsent.user_id == user_id))

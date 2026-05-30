@@ -18,7 +18,7 @@ def _unique_name(name: str) -> str:
 def _setup_project(
     base_url: str, auth_headers: dict[str, str], admin_user_id: str
 ) -> str:
-    """Create a group + project and return project_id."""
+    """创建 a group + project and return project_id."""
     resp = httpx.post(
         f"{base_url}/api/admin/groups",
         json={"name": _unique_name("TaskTestGroup")},
@@ -53,7 +53,7 @@ def _create_task(
     task_type: str = "literature_review",
     title: str | None = None,
 ) -> dict:
-    """Create a task and return response JSON."""
+    """创建 a task and return response JSON."""
     resp = httpx.post(
         f"{base_url}/api/projects/{project_id}/tasks",
         json={
@@ -168,7 +168,7 @@ class TestTaskListFilter:
 
 
 class TestTaskCreateAllTypes:
-    """Create tasks of all 4 types — Section 5.1."""
+    """创建 tasks of all 4 types — Section 5.1."""
 
     TASK_TYPES = [
         ("literature_review", "文献综述测试"),
@@ -186,7 +186,7 @@ class TestTaskCreateAllTypes:
         task_type: str,
         title: str,
     ) -> None:
-        """Create each task type and verify response."""
+        """创建 each task type and verify response."""
         project_id = _setup_project(base_url, auth_headers, admin_user_id)
 
         resp = httpx.post(

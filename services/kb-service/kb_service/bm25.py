@@ -15,27 +15,34 @@ logger = logging.getLogger(__name__)
 
 
 class BM25Searcher:
-    """Performs BM25 keyword search against document_chunks using PostgreSQL FTS.
-
-    Uses two strategies:
-    - tsvector/tsquery ('simple' config) for Latin-script queries (fast, exact)
-    - pg_trgm word_similarity() for CJK-heavy queries (fuzzy, n-gram based)
-
-    The pg_trgm path is automatically selected when the query contains CJK
-    characters so that Chinese word boundaries are handled via trigram overlap
-    rather than per-character tokenization.
+    """基于 PostgreSQL 全文搜索的 BM25 关键词搜索引擎。
+    
+    双路径搜索策略：
+    1. tsvector/tsquery（'simple' 配置）：适用于英文/拉丁字符查询
+       - 快速，精确，利用 GIN 索引
+    2. pg_trgm word_similarity()：适用于中文/CJK 查询
+       - 三元组模糊匹配，无需分词就能处理中文
+       - 如果 jieba 分词成功，优先用 tsquery（更精确）
+    
+    自动检测：查询中包含 CJK 字符 → 触发 trigram 路径
     """
 
     def __init__(self, pool: asyncpg.Pool | None = None) -> None:
         self._pool = pool
 
     async def _get_pool(self) -> asyncpg.Pool:
+        """获取或创建 asyncpg 连接池。
+        
+        asyncpg 是 PostgreSQL 的高性能异步驱动，比 SQLAlchemy async 模式更快。
+        这里直接用 asyncpg 而不是 SQLAlchemy 的 session，因为：
+        1. 全文搜索是只读操作，不需要 ORM 的对象映射
+        2. asyncpg 的连接池管理更高效（基于 uvloop）
+        3. 原始 SQL 更容易控制 FTS 查询的细节
+        """
         if self._pool is not None:
             return self._pool
-        # Use KB_DATABASE_URL env var directly because the AppSettings property
-        # for database_url is computed from postgres_host (always localhost).
-        # Convert SQLAlchemy DSN (postgresql+asyncpg://) to asyncpg format (postgresql://).
         db_url = os.getenv("KB_DATABASE_URL", settings.database_url)
+        # SQLAlchemy DSN (postgresql+asyncpg://) → asyncpg 格式 (postgresql://)
         db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
         self._pool = await asyncpg.create_pool(db_url, min_size=1, max_size=5)
         return self._pool
@@ -157,20 +164,22 @@ class BM25Searcher:
         document_ids: list[str] | None = None,
         chunk_types: list[str] | None = None,
     ) -> list[dict[str, Any]]:
-        """Search document_chunks using PostgreSQL FTS or pg_trgm.
-
-        Automatically selects the trigram path when the query contains CJK
-        characters, otherwise falls back to tsvector/tsquery.
+        """在 document_chunks 表上执行 BM25 关键词搜索。
+        
+        搜索路径选择逻辑：
+        - 查询包含 CJK 字符：
+          1. 先用 jieba 分词 → 如果得到有效 token，用 tsquery（精确）
+          2. 如果 jieba 分词失败 → 用 pg_trgm word_similarity()（模糊）
+        - 纯英文/拉丁字符查询：直接用 tsvector/tsquery
         """
         pool = await self._get_pool()
+        # 构建 WHERE 条件（project_id, document_ids, chunk_types 过滤）
         conditions, extra_params, param_idx = self._build_conditions(
             project_id, document_ids, chunk_types
         )
 
         if contains_cjk(query):
-            # Try jieba tokenization first for better precision with FTS.
-            # If jieba produces usable tokens, use tsquery; otherwise fall
-            # back to pg_trgm fuzzy matching.
+            # CJK 查询：尝试 jieba 分词 + tsquery
             tokens = tokenize(query)
             tsquery = " & ".join(t for t in tokens if t.isalnum())
             if tsquery:
@@ -178,10 +187,12 @@ class BM25Searcher:
                 params[1:1] = extra_params
                 logger.debug("BM25 using FTS path (CJK + jieba tokens)")
             else:
+                # jieba 分词无结果 → 退化为 pg_trgm 三元组模糊匹配
                 sql, params = self._build_trgm_sql(conditions, param_idx, query, top_k)
                 params[1:1] = extra_params
                 logger.debug("BM25 using pg_trgm fallback (CJK, no jieba tokens)")
         else:
+            # 英文查询：标准 tsvector/tsquery 路径
             tokens = tokenize(query)
             tsquery = " & ".join(t for t in tokens if t.isalnum())
             if not tsquery:
@@ -249,7 +260,7 @@ class InMemoryBM25Searcher:
         document_ids: list[str] | None = None,
         chunk_types: list[str] | None = None,
     ) -> list[dict[str, Any]]:
-        """Search with simple keyword overlap scoring.
+        """搜索 with simple keyword overlap scoring.
 
         Uses tokenize() for Chinese-aware tokenization so that both
         Chinese and English queries produce meaningful token sets.

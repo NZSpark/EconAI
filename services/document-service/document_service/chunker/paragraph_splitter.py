@@ -127,7 +127,7 @@ def chunk_paragraph_level(
 
 
 def _split_oversized_paragraph(para: str, max_tokens: int, overlap_tokens: int) -> list[str]:
-    """Split an oversized paragraph at sentence boundaries."""
+    """分割 an oversized paragraph at sentence boundaries."""
     sentences = _split_sentences(para)
     sub_chunks: list[str] = []
     current: list[str] = []
@@ -151,7 +151,7 @@ def _split_oversized_paragraph(para: str, max_tokens: int, overlap_tokens: int) 
 
 
 def _split_sentences(text: str) -> list[str]:
-    """Split text into sentences, preserving sentence-ending punctuation."""
+    """分割 text into sentences, preserving sentence-ending punctuation."""
     parts = SENTENCE_BOUNDARY.split(text)
     sentences: list[str] = []
     for i in range(0, len(parts) - 1, 2):
@@ -165,7 +165,7 @@ def _split_sentences(text: str) -> list[str]:
 
 
 def _extract_overlap(text: str, overlap_tokens: int) -> str:
-    """Extract approximately overlap_tokens from the end of text."""
+    """提取 approximately overlap_tokens from the end of text."""
     if not text:
         return ""
 

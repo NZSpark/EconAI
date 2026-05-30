@@ -173,7 +173,7 @@ class CitationDetailResponse(BaseModel):
 # ── Agent state ─────────────────────────────────────────────────────────────
 
 
-# Message — imported from shared.models
+# 消息 — imported from shared.models
 
 
 class ChunkInfo(BaseModel):
@@ -302,10 +302,10 @@ class SensitivityResult(BaseModel):
     reason: str
 
 
-# ErrorDetail, ErrorResponse — imported from shared.models
+# 错误Detail, ErrorResponse — imported from shared.models
 
 __all__ = [
-    # Local
+    # 本地
     "LLMPreference",
     "KBSources",
     "AnalysisParams",

@@ -1,4 +1,4 @@
-"""Models package."""
+"""模型包。"""
 
 from app.models.audit_log import AuditLog
 from app.models.consent import UserConsent

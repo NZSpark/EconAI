@@ -69,7 +69,7 @@ class TestUpdateDocumentStatusAuthor:
         await db.update_document_status(None, "doc-2", "ready", author="")
 
         stored = db._in_memory_docs["doc-2"]
-        # Empty string passes the `if author is not None` check → stored as ""
+        # 空 string passes the `if author is not None` check → stored as ""
         # This is the current behavior; code only guards against None, not empty.
         assert stored.setdefault("metadata", {}).get("authors") == ""
 
@@ -88,7 +88,7 @@ class TestUpdateDocumentStatusAuthor:
         from document_service import db
 
         _make_doc("doc-4")
-        # Real code does: author=", ".join(doc_metadata.authors) or None
+        # 真实 code does: author=", ".join(doc_metadata.authors) or None
         from document_service.models import DocumentMetadata
 
         md = DocumentMetadata(authors=[])  # default
@@ -97,7 +97,7 @@ class TestUpdateDocumentStatusAuthor:
         await db.update_document_status(None, "doc-4", "ready", author=author_val)
 
         stored = db._in_memory_docs["doc-4"]
-        # None → not stored under metadata.authors
+        # 无 → not stored under metadata.authors
         assert "authors" not in stored.get("metadata", {})
         assert stored["parse_status"] == "ready"
 
@@ -164,7 +164,7 @@ class TestUpdateDocumentStatusGeneral:
 
 
 # ---------------------------------------------------------------------------
-# End-to-end: full pipeline produces valid author value
+# 结束-to-end: full pipeline produces valid author value
 # ---------------------------------------------------------------------------
 
 

@@ -1,4 +1,4 @@
-"""Celery configuration values, read from environment variables."""
+"""Celery 配置值，从环境变量读取。"""
 
 from __future__ import annotations
 

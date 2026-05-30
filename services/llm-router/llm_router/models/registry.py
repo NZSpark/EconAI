@@ -55,7 +55,7 @@ class ModelRegistry:
                 self._init_defaults()
 
     def _init_defaults(self) -> None:
-        """Initialize a minimal default registry for fallback."""
+        """初始化 a minimal default registry for fallback."""
         defaults = [
             ModelInfo(id="auto", provider="auto", type="auto", description="auto-routing"),
             ModelInfo(id="claude-sonnet-4-6", provider="anthropic", type="cloud", description="Claude Sonnet 4.6"),
@@ -71,11 +71,11 @@ class ModelRegistry:
         self._load()
 
     def get_model(self, model_id: str) -> ModelInfo | None:
-        """Get a model by its ID."""
+        """获取 a model by its ID."""
         return self._models.get(model_id)
 
     def list_models(self) -> list[ModelInfo]:
-        """List all registered models."""
+        """列出 all registered models."""
         return list(self._models.values())
 
     @property
@@ -91,13 +91,13 @@ class ModelRegistry:
         return [m for m in self._models.values() if m.type == model_type]
 
     def get_cloud_models(self) -> list[ModelInfo]:
-        """Get all cloud models."""
+        """获取 all cloud models."""
         return self.get_models_by_type("cloud")
 
     def get_local_models(self) -> list[ModelInfo]:
-        """Get all local models."""
+        """获取 all local models."""
         return self.get_models_by_type("local")
 
     def has_model(self, model_id: str) -> bool:
-        """Check if a model ID is registered."""
+        """检查 if a model ID is registered."""
         return model_id in self._models

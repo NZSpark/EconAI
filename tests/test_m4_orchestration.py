@@ -33,7 +33,7 @@ class TestTaskCreation:
     def test_create_task_minimal(
         self, base_url: str, auth_headers: dict[str, str], admin_user_id: str
     ) -> None:
-        """Create analysis task returns 201 with task_id."""
+        """创建 analysis task returns 201 with task_id."""
         # Need a project
         resp = httpx.post(
             f"{base_url}/api/admin/groups",

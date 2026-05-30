@@ -11,7 +11,7 @@ from document_service.config import config
 
 
 def create_celery_app() -> Any:
-    """Create and configure the Celery application.
+    """创建 and configure the Celery application.
 
     Returns a Celery app instance configured with:
       - Redis broker

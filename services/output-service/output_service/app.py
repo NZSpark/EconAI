@@ -113,13 +113,13 @@ class GenerateResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Health check
+# 健康检查
 # ---------------------------------------------------------------------------
 
 
 @app.get("/health")
 async def health() -> dict[str, object]:
-    """Health check endpoint."""
+    """健康检查 endpoint."""
     return {
         "status": "ok",
         "service": cfg.SERVICE_NAME,
@@ -142,7 +142,7 @@ async def health() -> dict[str, object]:
     responses={400: {"model": ErrorResponse}},
 )
 async def generate_output(request: GenerateRequest) -> GenerateResponse:
-    """Generate output files for the given formats.
+    """生成 output files for the given formats.
 
     Accepts sections + citations + metadata, generates all requested formats,
     stores in memory (and MinIO when available), returns output metadata.
@@ -233,7 +233,7 @@ async def generate_output(request: GenerateRequest) -> GenerateResponse:
     responses={404: {"model": ErrorResponse}},
 )
 async def preview_output(task_id: str) -> dict[str, Any]:
-    """Get Markdown preview of the output for a task."""
+    """获取 Markdown preview of the output for a task."""
     entry = _output_store.get(task_id)
     if entry is None:
         raise HTTPException(
@@ -299,7 +299,7 @@ async def export_output(
 
 
 def _make_storage_path(task_id: str, format_name: str) -> str:
-    """Generate a MinIO storage path for an output file."""
+    """生成 a MinIO storage path for an output file."""
     prefix = cfg.OUTPUT_STORAGE_PATH.rstrip("/")
     ext = EXTENSION_MAP.get(format_name, format_name)
     return f"{prefix}/task-{task_id}/output.{ext}"

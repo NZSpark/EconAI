@@ -26,7 +26,7 @@ class TestChangePassword:
     ) -> None:
         """Change own password successfully and login with new password."""
         uname = _unique_name("pwdtest")
-        # Create a test user
+        # 创建 a test user
         resp = httpx.post(
             f"{base_url}/api/admin/users",
             json={
@@ -41,7 +41,7 @@ class TestChangePassword:
         if resp.status_code != 201:
             pytest.skip(f"Cannot create test user: {resp.text}")
 
-        # Login as test user
+        # 登录 as test user
         time.sleep(RATE_LIMIT_DELAY)
         login_resp = httpx.post(
             f"{base_url}/api/auth/login",
@@ -66,7 +66,7 @@ class TestChangePassword:
             f"Got {change_resp.status_code}: {change_resp.text}"
         )
 
-        # Verify: old password no longer works
+        # 验证: old password no longer works
         time.sleep(RATE_LIMIT_DELAY)
         login_old = httpx.post(
             f"{base_url}/api/auth/login",
@@ -77,7 +77,7 @@ class TestChangePassword:
             f"Old password should be rejected, got {login_old.status_code}"
         )
 
-        # Verify: new password works
+        # 验证: new password works
         time.sleep(RATE_LIMIT_DELAY)
         login_new = httpx.post(
             f"{base_url}/api/auth/login",
@@ -93,7 +93,7 @@ class TestChangePassword:
     ) -> None:
         """Change password with wrong old password returns 400/401."""
         uname = _unique_name("pwdtest2")
-        # Create a test user
+        # 创建 a test user
         resp = httpx.post(
             f"{base_url}/api/admin/users",
             json={
@@ -108,7 +108,7 @@ class TestChangePassword:
         if resp.status_code != 201:
             pytest.skip(f"Cannot create test user: {resp.text}")
 
-        # Login as test user
+        # 登录 as test user
         time.sleep(RATE_LIMIT_DELAY)
         login_resp = httpx.post(
             f"{base_url}/api/auth/login",
@@ -117,7 +117,7 @@ class TestChangePassword:
         )
         user_token = login_resp.json()["access_token"]
 
-        # Try to change password with wrong old password
+        # 尝试 to change password with wrong old password
         time.sleep(RATE_LIMIT_DELAY)
         change_resp = httpx.post(
             f"{base_url}/api/auth/change-password",
@@ -159,7 +159,7 @@ class TestChangePassword:
         )
         user_token = login_resp.json()["access_token"]
 
-        # Try with a too-short password
+        # 尝试 with a too-short password
         time.sleep(RATE_LIMIT_DELAY)
         change_resp = httpx.post(
             f"{base_url}/api/auth/change-password",

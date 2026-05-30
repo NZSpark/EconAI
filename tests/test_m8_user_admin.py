@@ -12,7 +12,7 @@ import pytest
 
 
 def _unique_username(name: str) -> str:
-    """Generate a unique username to avoid collision with previous test runs."""
+    """生成 a unique username to avoid collision with previous test runs."""
     return f"{name}_{int(time.time() * 1000) % 1000000}"
 
 
@@ -22,7 +22,7 @@ class TestUserCRUD:
     created_user_ids: list[str] = []
 
     def test_create_user_minimal(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Create a user with minimal fields (Section 9.2.3)."""
+        """创建 a user with minimal fields (Section 9.2.3)."""
         uname = _unique_username("testmin")
         resp = httpx.post(
             f"{base_url}/api/admin/users",
@@ -42,7 +42,7 @@ class TestUserCRUD:
         self.created_user_ids.append(body["user_id"])
 
     def test_create_user_full(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Create a user with all optional fields."""
+        """创建 a user with all optional fields."""
         uname = _unique_username("testfull")
         resp = httpx.post(
             f"{base_url}/api/admin/users",
@@ -157,7 +157,7 @@ class TestUserCRUD:
         assert resp2.status_code == 204
 
     def test_update_nonexistent_user(self, base_url: str, auth_headers: dict[str, str]) -> None:
-        """Update non-existent user returns 404."""
+        """更新 non-existent user returns 404."""
         resp = httpx.put(
             f"{base_url}/api/admin/users/00000000-0000-0000-0000-000000000099",
             json={"display_name": "Ghost"},

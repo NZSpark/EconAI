@@ -1,1 +1,1 @@
-"""Multi-granularity chunking module for the Document Parsing Service (M2)."""
+"""文档处理服务（M2）的多粒度分块模块。"""

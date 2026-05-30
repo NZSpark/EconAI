@@ -29,7 +29,7 @@ REMOVE_CLASSES = [
 
 
 class HTMLParser(BaseParser):
-    """Parse HTML and MHTML files using BeautifulSoup."""
+    """解析 HTML and MHTML files using BeautifulSoup."""
 
     def supported_format(self) -> str:
         return "html"
@@ -83,7 +83,7 @@ class HTMLParser(BaseParser):
         body = soup.find("body")
         body_text = body.get_text(separator="\n", strip=True) if body else soup.get_text(separator="\n", strip=True)
 
-        # Clean up excessive whitespace
+        # 清理 excessive whitespace
         lines = [line.strip() for line in body_text.split("\n") if line.strip()]
         clean_text = "\n".join(lines)
 

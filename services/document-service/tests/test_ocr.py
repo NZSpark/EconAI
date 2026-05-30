@@ -18,7 +18,7 @@ class TestOCRProcessor:
         from document_service.parsers.ocr_processor import OCRProcessor
         proc = OCRProcessor(language="chi_sim+eng")
 
-        # Create fake PDF header with no actual content
+        # 创建 fake PDF header with no actual content
         # OCR processor should handle the error gracefully
         fake_pdf = b"%PDF-1.4\nthis is not a valid PDF"
         result = proc.parse(fake_pdf, "bad.pdf")
@@ -32,7 +32,7 @@ class TestOCRProcessor:
         from document_service.parsers.ocr_processor import OCRProcessor
         proc = OCRProcessor(language="chi_sim+eng")
 
-        # Create a simple 1x1 PNG
+        # 创建 a simple 1x1 PNG
         import io
 
         from PIL import Image
@@ -63,7 +63,7 @@ class TestOCRProcessor:
         assert len(result.pages) > 0
 
     def test_ocr_with_chinese_language_setting(self) -> None:
-        """OCR processor accepts Chinese + English language."""
+        """ 。"""
         from document_service.parsers.ocr_processor import OCRProcessor
         proc = OCRProcessor(language="chi_sim+eng")
         assert "chi_sim" in proc._language
@@ -76,12 +76,12 @@ class TestOCRProcessor:
 
 
 # ---------------------------------------------------------------------------
-# Format Identifier OCR detection tests
+# 格式 Identifier OCR detection tests
 # ---------------------------------------------------------------------------
 
 
 class TestFormatIdentifierOCR:
-    """Tests for OCR detection logic (M2-09)."""
+    """测试辅助函数。"""
 
     def test_needs_ocr_for_image_formats(self) -> None:
         from document_service.format_identifier import needs_ocr

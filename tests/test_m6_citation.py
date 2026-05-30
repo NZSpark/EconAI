@@ -1,6 +1,6 @@
-"""M6 Citation Service tests — Sections 7.2, 7.3 of detailed-design.md.
+"""M6 引文服务测试 — detailed-design.md 第 7.2、7.3 节。
 
-Tests: health check, citation verification.
+测试: 健康检查、引文验证。
 """
 
 from __future__ import annotations
@@ -19,19 +19,19 @@ def _service_ready() -> bool:
         return False
 
 
-@pytest.mark.skipif(not _service_ready(), reason="Citation service not available")
+@pytest.mark.skipif(not _service_ready(), reason="引文服务不可用")
 class TestCitationHealth:
     def test_health(self) -> None:
         resp = httpx.get(f"{CIT_SVC}/health", timeout=5)
         assert resp.status_code == 200
 
 
-@pytest.mark.skipif(not _service_ready(), reason="Citation service not available")
+@pytest.mark.skipif(not _service_ready(), reason="引文服务不可用")
 class TestCitationVerify:
-    """POST /internal/citations/verify — Section 7.2.1."""
+    """POST /internal/citations/verify — 第 7.2.1 节。"""
 
     def test_verify_empty_text(self) -> None:
-        """Empty text returns valid or error response."""
+        """空文本返回有效或错误响应。"""
         resp = httpx.post(
             f"{CIT_SVC}/internal/citations/verify",
             json={"text": "", "context_chunk_ids": []},
@@ -40,26 +40,26 @@ class TestCitationVerify:
         assert resp.status_code in (200, 400)
 
     def test_verify_with_markup(self) -> None:
-        """Text with [ref:...] markup is parsed."""
+        """含 [ref:...] 标记的文本被解析。"""
         resp = httpx.post(
             f"{CIT_SVC}/internal/citations/verify",
             json={
-                "text": "Studies show [ref:doc_123:p45-48] that policy matters.",
+                "text": "研究表明 [ref:doc_123:p45-48] 政策很重要。",
                 "context_chunk_ids": [],
             },
             timeout=10,
         )
-        # Should return 200 with citation objects or 400/500
-        assert resp.status_code in (200, 400, 500), f"Got {resp.status_code}: {resp.text}"
+        # 应返回 200 含引文对象，或 400/500
+        assert resp.status_code in (200, 400, 500), f"状态码 {resp.status_code}: {resp.text}"
 
     def test_verify_with_uncertain_reference(self) -> None:
-        """Text with [ref:uncertain] is handled."""
+        """含 [ref:uncertain] 的文本被处理。"""
         resp = httpx.post(
             f"{CIT_SVC}/internal/citations/verify",
             json={
-                "text": "This trend may continue [ref:uncertain].",
+                "text": "这一趋势可能会持续 [ref:uncertain]。",
                 "context_chunk_ids": [],
             },
             timeout=10,
         )
-        assert resp.status_code in (200, 400, 500), f"Got {resp.status_code}: {resp.text}"
+        assert resp.status_code in (200, 400, 500), f"状态码 {resp.status_code}: {resp.text}"

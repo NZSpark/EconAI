@@ -1,8 +1,8 @@
-"""Initial baseline schema — full PolicyAI database.
+"""初始基线数据库模式 — 完整的 PolicyAI 数据库。
 
-Revision ID: 001_base
-Revises: None
-Create Date: 2026-05-18
+版本 ID: 001_base
+上一版本: 无
+创建日期: 2026-05-18
 """
 
 from typing import Sequence, Union
@@ -16,7 +16,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Extensions
+    # 扩展
     op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
     op.execute('CREATE EXTENSION IF NOT EXISTS "pg_trgm"')
 
@@ -254,11 +254,11 @@ def upgrade() -> None:
     op.execute("CREATE INDEX idx_llm_usage_model ON llm_usage_logs(model)")
     op.execute("CREATE INDEX idx_llm_usage_created_at ON llm_usage_logs(created_at DESC)")
 
-    # ── audit immutability ──
+    # ── 审计不可变性 ──
     op.execute("REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM PUBLIC")
     op.execute("REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM policyai")
 
-    # ── updated_at trigger ──
+    # ── updated_at 触发器 ──
     op.execute(
         """CREATE OR REPLACE FUNCTION update_updated_at_column()
         RETURNS TRIGGER AS $$

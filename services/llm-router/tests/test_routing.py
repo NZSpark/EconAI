@@ -14,7 +14,7 @@ from llm_router.routing.engine import RoutingDecision, RoutingEngine
 
 
 class TestAutoRouting:
-    """Tests for automatic routing based on sensitivity."""
+    """测试辅助函数。"""
 
     def test_auto_low_sensitivity_routes_to_cloud(self, routing_engine: RoutingEngine) -> None:
         """sensitivity=low + model=auto → cloud."""
@@ -34,7 +34,7 @@ class TestAutoRouting:
 
 
 class TestExplicitModel:
-    """Tests for explicitly specified models."""
+    """测试辅助函数。"""
 
     def test_explicit_cloud_model(self, routing_engine: RoutingEngine) -> None:
         """model='claude-sonnet-4-6' → cloud, claude adapter."""
@@ -76,7 +76,7 @@ class TestExplicitModel:
 
 
 class TestFallbackToLocal:
-    """Tests for the fallback_to_local parameter."""
+    """测试辅助函数。"""
 
     def test_fallback_to_local_allowed_for_low_sensitivity(self, routing_engine: RoutingEngine) -> None:
         """Fallback to local when sensitivity=low."""
@@ -99,7 +99,7 @@ class TestFallbackToLocal:
 
 
 class TestCanFallback:
-    """Tests for the can_fallback_to_local method."""
+    """测试辅助函数。"""
 
     def test_can_fallback_low_sensitivity(self, routing_engine: RoutingEngine) -> None:
         """Low sensitivity allows fallback."""
@@ -111,7 +111,7 @@ class TestCanFallback:
 
 
 class TestRoutingDecisionDataclass:
-    """Tests for the RoutingDecision dataclass."""
+    """测试辅助函数。"""
 
     def test_routing_decision_fields(self) -> None:
         """All fields are accessible."""

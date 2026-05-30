@@ -1,6 +1,6 @@
-"""Tests for Citation Service FastAPI endpoints (M6-29).
+"""引文服务 FastAPI 端点测试 (M6-29).
 
-All tests use httpx AsyncClient against a TestClient app.
+所有测试使用 httpx AsyncClient 对 TestClient 应用进行测试。
 """
 
 from collections.abc import AsyncGenerator, Generator
@@ -16,13 +16,13 @@ from citation_service.verifier import CitationVerifier, MatchedChunk, Verificati
 
 @pytest.fixture
 def app() -> FastAPI:
-    """Return the FastAPI app."""
+    """返回 FastAPI 应用。"""
     return fastapi_app
 
 
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
-    """Return an async HTTP test client."""
+    """返回异步 HTTP 测试客户端。"""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
@@ -30,14 +30,14 @@ async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture(autouse=True)
 def clear_store() -> Generator[None, None, None]:
-    """Clear the in-memory citation store before each test."""
+    """每个测试前清理内存引文存储。"""
     _citation_store.clear()
     yield
     _citation_store.clear()
 
 
 class TestHealthEndpoint:
-    """M6 -- health check."""
+    """M6 -- 健康检查。"""
 
     async def test_health_returns_ok(self, client: AsyncClient) -> None:
         response = await client.get("/health")
@@ -48,7 +48,7 @@ class TestHealthEndpoint:
 
 
 class TestVerifyEndpoint:
-    """M6-14/M6-15: POST /internal/citations/verify."""
+    """M6-14/M6-15: POST /internal/citations/verify。"""
 
     async def test_verify_single_citation_direct(self, client: AsyncClient) -> None:
         request_body = {
@@ -91,11 +91,11 @@ class TestVerifyEndpoint:
         assert response.status_code == 200
         data = response.json()
 
-        # With default threshold 0.85 and unrelated content, should be uncertain
+        # 默认阈值 0.85 且内容不相关时，应为 uncertain
         assert data["citations"][0]["confidence"] == "uncertain"
 
     async def test_verify_direct_confidence(self, client: AsyncClient) -> None:
-        # Put the ref marker before the period so sentence includes the claim text
+        # 将引用标记放在句号前，使句子包含声明文本
         request_body = {
             "text": "GDP grew 5% in 2023 driven by strong industrial output [ref:report:p1-5].",
             "context_chunks": [
@@ -144,8 +144,8 @@ class TestVerifyEndpoint:
         assert summary["total"] == 2
 
     async def test_verify_matched_chunks_in_response(self, client: AsyncClient) -> None:
-        # Use long, highly similar sentence+chunk to exceed the 0.85 threshold
-        # despite the [ref:...] marker adding extra tokens to the sentence.
+        # 使用长且高度相似的句子+分块以超过 0.85 阈值
+        # 尽管 [ref:...] 标记会向句子添加额外 token。
         content = (
             "GDP grew five percent in the year driven by strong industrial "
             "output in the manufacturing sector that saw significant growth"
@@ -195,7 +195,7 @@ class TestVerifyEndpoint:
 
 
 class TestListCitationsEndpoint:
-    """M6-16: GET /api/tasks/{task_id}/output/citations."""
+    """M6-16: GET /api/tasks/{task_id}/output/citations。"""
 
     async def test_list_citations_returns_stored_data(self, client: AsyncClient) -> None:
         vc = VerifiedCitation(
@@ -251,7 +251,7 @@ class TestListCitationsEndpoint:
 
 
 class TestCitationDetailEndpoint:
-    """M6-17/M6-18: GET /api/tasks/{task_id}/output/citations/{citation_id}."""
+    """M6-17/M6-18: GET /api/tasks/{task_id}/output/citations/{citation_id}。"""
 
     async def test_citation_detail_returns_full_info(self, client: AsyncClient) -> None:
         mc = MatchedChunk(

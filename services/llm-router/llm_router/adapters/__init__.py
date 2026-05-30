@@ -1,4 +1,4 @@
-"""LLM adapters: ClaudeAdapter, LocalAdapter, and exception types."""
+"""LLM 适配器: ClaudeAdapter, LocalAdapter 和异常类型。"""
 
 from llm_router.adapters.claude_adapter import ClaudeAdapter
 from llm_router.adapters.exceptions import (
